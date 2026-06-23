@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warehouse Management — Giriş</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/popup.js" defer></script>
+  <style>
+    body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+    .login-wrap{display:flex;width:100%;max-width:800px;margin:20px;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative}
+    .login-side{background:#111111;width:260px;padding:40px 28px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border-right:0.5px solid #2a2a2a}
+    .login-side img{height:48px;width:auto;margin-bottom:16px;opacity:.9}
+    .login-side h2{font-size:16px;font-weight:700;color:rgba(255,255,255,.85);margin-bottom:4px}
+    .login-side p{font-size:10px;color:rgba(255,255,255,.3);line-height:1.5}
+    .login-side .ver{font-size:9px;color:rgba(255,255,255,.15);margin-top:24px}
+    .login-main{flex:1;background:var(--bg-white);padding:40px 36px;display:flex;flex-direction:column;justify-content:center;position:relative}
+    .login-main h1{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
+    .login-main .sub{font-size:11px;color:var(--text3);margin-bottom:28px}
+    .input-grup{margin-bottom:16px}
+    .input-grup label{display:block;font-size:10px;font-weight:600;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+    .input-grup .input-ikon{position:relative}
+    .input-grup .input-ikon i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px}
+    .input-grup .input-ikon input{padding-left:36px;margin-bottom:0;min-height:40px;background:var(--bg-hover);border:1px solid var(--border);color:var(--text);font-size:12px;border-radius:var(--radius)}
+    .input-grup .input-ikon input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(91,141,239,.08)}
+    .giris-btn{width:100%;padding:11px;font-size:12px;justify-content:center;margin-top:4px;background:#3ecf8e;border-color:#3ecf8e;color:#111;font-weight:700;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;gap:6px;border:1px solid #3ecf8e;font-family:inherit;transition:all .15s}
+    .giris-btn:hover{background:#4ee0a0;border-color:#4ee0a0}
+    .hata-mesaj{display:none;background:var(--red-dim);border:1px solid rgba(199,80,80,.25);color:var(--red);padding:9px 12px;border-radius:var(--radius);font-size:11px;margin-bottom:14px;text-align:center}
+    .hata-mesaj.goster{display:block}
+
+    /* Tema toggle - sağ üst köşe */
+    .login-tema-btn{
+      position:absolute;top:14px;right:14px;
+      width:34px;height:34px;border-radius:50%;
+      border:1px solid var(--border);background:var(--bg-hover);
+      color:var(--text3);font-size:14px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      padding:0;transition:all .2s;
+    }
+    .login-tema-btn:hover{
+      border-color:var(--blue);color:var(--blue);
+      background:var(--bg-white);
+      transform:rotate(20deg);
+    }
+
+    @media(max-width:640px){.login-side{display:none}.login-wrap{max-width:400px}}
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-side">
+      <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
+      <h2>Warehouse Data Management</h2>
+      <p>Shipment tracking and warehouse management system</p>
+      <div class="ver">V4.0</div>
+    </div>
+    <div class="login-main">
+
+      <!-- Tema toggle butonu -->
+      <button class="login-tema-btn" id="temaToggleTopbar" onclick="temaToggle()" title="Tema Değiştir">
+        <i class="fa-solid fa-sun"></i>
+      </button>
+
+      <h1>Hoş Geldiniz</h1>
+      <div class="sub">Devam etmek için giriş yapın</div>
+
+      <div class="hata-mesaj" id="hataMesaj">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span id="hataMesajMetin">Kullanıcı adı veya şifre hatalı.</span>
+      </div>
+
+      <div class="input-grup">
+        <label>Kullanıcı Adı</label>
+        <div class="input-ikon">
+          <i class="fa-solid fa-user"></i>
+          <input type="text" id="kullanici" placeholder="Kullanıcı adınız..." autocomplete="username">
+        </div>
+      </div>
+
+      <div class="input-grup">
+        <label>Şifre</label>
+        <div class="input-ikon">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" id="sifre" placeholder="Şifreniz..." autocomplete="current-password">
+        </div>
+      </div>
+
+      <button class="giris-btn" onclick="girisYap()">
+        <i class="fa-solid fa-right-to-bracket"></i> Giriş Yap
+      </button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("keydown", e => { if(e.key==="Enter") girisYap() })
+
+    async function girisYap(){
+      const kullanici = document.getElementById("kullanici").value.trim()
+      const sifre = document.getElementById("sifre").value.trim()
+      const hataDiv = document.getElementById("hataMesaj")
+      const hataMetin = document.getElementById("hataMesajMetin")
+
+      if(!kullanici || !sifre){
+        hataMetin.innerText = "Lütfen tüm alanları doldurun."
+        hataDiv.classList.add("goster")
+        return
+      }
+
+      hataDiv.classList.remove("goster")
+
+      try {
+        const res = await fetch("/login", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({kullanici, sifre})
+        })
+        const json = await res.json()
+
+        if(json.durum === "ok"){
+          window.location.href = "/"
+        } else {
+          hataMetin.innerText = json.mesaj
+          hataDiv.classList.add("goster")
+          document.getElementById("sifre").value = ""
+          document.getElementById("sifre").focus()
+        }
+      } catch(e){
+        hataMetin.innerText = "Bağlantı hatası: " + e.message
+        hataDiv.classList.add("goster")
+      }
+    }
+  </script>
+</body>
+</html>

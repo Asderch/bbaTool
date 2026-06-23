@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Sevkiyat Detay</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/popup.js" defer></script>
+  <style>
+    .kt{width:100%;border-collapse:collapse;font-size:12px}
+    .kt th{background:var(--bg-hover);color:var(--text3);padding:9px 8px;font-size:10px;font-weight:600;text-align:center;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+    .kt td{padding:8px;border-bottom:1px solid var(--border);text-align:center;vertical-align:top;color:var(--text)}.kt tr:hover td{background:var(--bg-hover)}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+    .toolbar-sol{display:flex;gap:8px;flex-wrap:wrap}
+    .ekle-row{display:grid;grid-template-columns:1fr 1.5fr 1fr 1.5fr 1fr 80px 80px;gap:8px;align-items:end;margin-bottom:8px}
+    .ekle-grup{display:flex;flex-direction:column;gap:2px}.ekle-grup label{font-size:10px;font-weight:600;color:var(--text3)}.ekle-grup input,.ekle-grup select{margin-bottom:0;padding:7px 9px;font-size:12px}
+    .import-btn{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+    .sablon-btn{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+    .import-table {width: 100%;border-collapse: collapse;table-layout: fixed;}
+    .import-table th,
+    .import-table td {padding: 14px 16px;text-align: left;vertical-align: middle;box-sizing: border-box;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}
+    .import-table th {font-size: 12px;font-weight: 700;color: #7f8a99;}
+    .import-table td {font-size: 14px;color: #e8edf2;}
+    .import-table th:nth-child(1),
+    .import-table td:nth-child(1) {width: 50px;text-align: center;}
+    .import-table th:nth-child(2),
+    .import-table td:nth-child(2) {width: 180px;}
+    .import-table th:nth-child(3),
+    .import-table td:nth-child(3) {width: 320px;}
+    .import-table th:nth-child(4),
+    .import-table td:nth-child(4) {width: 140px;}
+    .import-table th:nth-child(5),
+    .import-table td:nth-child(5) {width: auto;}
+    .import-table th:nth-child(6),
+    .import-table td:nth-child(6) {width: 120px;text-align: right;}
+    .import-table th:nth-child(7),
+    .import-table td:nth-child(7) {width: 90px;text-align: center;}
+    @media(max-width:768px){.ekle-row{grid-template-columns:1fr 1fr}.plan-bk{flex-direction:column;text-align:center}.ozet-strip{flex-direction:column}}
+  </style>
+</head>
+<body>
+
+<div class="shell">
+<nav class="sidebar">
+  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>V4.0</span></div>
+  <div class="nav-section">Main Data</div>
+  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+  <div class="nav-section">Sevkiyat</div>
+  <a href="/sevkiyat-planlar" class="nav-item active"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+  <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+  <div class="nav-section">Araçlar</div>
+  <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+  <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+  <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+  <div class="nav-section">Raporlama</div>
+  <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+  <div class="sidebar-footer">
+    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+  <i class="fa-solid fa-sun"></i> Açık Tema
+</button>
+    <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>
+  </div>
+</nav>
+<div class="main-area">
+<div class="topbar">
+  <div><div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span>Sevkiyat / Planlar<span class="bc-sep">›</span><span class="bc-current">Sevkiyat Detay</span></div><div class="topbar-title" id="topbarPlanAdi">Sevkiyat Detay</div><div class="topbar-sub">Plan detayları ve kalem yönetimi</div></div>
+  <div class="topbar-actions">
+    <button class="btn cikti-btn excel" onclick="excelCikti()"><i class="fa-solid fa-file-excel"></i> Excel</button>
+    <button class="btn cikti-btn pdf" onclick="pdfCikti()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+    <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()">
+  <i class="fa-solid fa-sun"></i>
+</button>
+    <div class="topbar-avatar" title="Profil">BA</div>
+  </div>
+</div>
+<div class="content">
+
+  <div id="filtreMenu" style="position:absolute;background:var(--bg-white);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow);padding:8px;display:none;max-height:250px;overflow:auto;z-index:9999"></div>
+
+    <div class="plan-bk"><div><h2 id="planAdi">Yükleniyor...</h2><div class="bilgi" id="planBilgi"></div><div class="plan-progress-bg"><div class="plan-progress-fill" id="planProgress"></div></div></div><div class="yb" id="planYuzde">%0</div></div>
+    <div class="ozet-strip">
+      <div class="ozet-mini plan"><div class="sayi" id="oPlanlanan">0</div><div class="et">Planlanan</div></div>
+      <div class="ozet-mini gond"><div class="sayi" id="oGonderilen">0</div><div class="et">Gönderilen</div></div>
+      <div class="ozet-mini fazla"><div class="sayi" id="oFazla">0</div><div class="et">Fazla Gönderim</div></div>
+      <div class="ozet-mini kalan"><div class="sayi" id="oKalan">0</div><div class="et">Kalan</div></div>
+      <div class="ozet-mini devreden"><div class="sayi" id="oDevreden">0</div><div class="et">Devreden</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" id="ekleBtn" onclick="ekleGoster()"><i class="fa-solid fa-plus"></i> Kalem Ekle</button>
+        <button class="btn import-btn" id="importBtn" onclick="excelImportEt()"><i class="fa-solid fa-file-import"></i> Excel'den Aktar</button>
+        <button class="btn sablon-btn" onclick="sablonIndir()"><i class="fa-solid fa-download"></i> Şablon İndir</button>
+      </div>
+    </div>
+    <div class="import-onizleme" id="importOnizleme">
+      <h3><i class="fa-solid fa-file-import"></i> İçe Aktarma Önizleme</h3>
+      <div style="display:flex;gap:14px;margin:12px 0;font-size:13px;font-weight:700;color:var(--primary)"><span><i class="fa-solid fa-list"></i> <span id="importAdet">0</span> kalem</span><span><i class="fa-solid fa-weight-hanging"></i> <span id="importToplam">0</span></span></div>
+      <div style="max-height:300px;overflow-y:auto;" id="importTabloAlani"></div>
+      <div style="display:flex;gap:10px;margin-top:14px;"><button class="btn" onclick="importOnayla()"><i class="fa-solid fa-check"></i> Tümünü Ekle</button><button class="btn temizle" onclick="importIptal()"><i class="fa-solid fa-xmark"></i> İptal</button></div>
+    </div>
+    <div class="ekle-kart" id="ekleKart">
+      <h3><i class="fa-solid fa-plus-circle"></i> Yeni Kalem Ekle</h3>
+      <div class="ekle-row">
+        <div class="ekle-grup"><label>Yüklenici Firma</label><input type="text" id="eYuklenici" placeholder="ABC İnşaat"></div>
+        <div class="ekle-grup"><label>Sipariş No</label><input type="text" id="eSiparisNo" placeholder="AKU-90VFA..."></div>
+        <div class="ekle-grup"><label>Mal Grubu</label><input type="text" id="eMalGrubu" placeholder="Profil, Sac..."></div>
+        <div class="ekle-grup"><label>Malzeme Tanımı</label><input type="text" id="eMalzeme" placeholder="UPE 200"></div>
+        <div class="ekle-grup"><label>Miktar (KG)</label><input type="number" id="eMiktar" value="0" step="0.01"></div>
+        <div class="ekle-grup"><label>Birim</label><select id="eBirim"><option value="KG" selected>KG</option><option value="Adet">Adet</option><option value="Metre">Metre</option></select></div>
+        <div class="ekle-grup"><label>&nbsp;</label><button class="btn" onclick="kalemEkle()" style="padding:8px 14px;font-size:12px"><i class="fa-solid fa-plus"></i></button></div>
+      </div>
+      <button class="btn temizle" onclick="ekleGizle()" style="font-size:12px;padding:6px 12px;margin-top:8px"><i class="fa-solid fa-xmark"></i> Kapat</button>
+    </div>
+    <div class="toolbar"><div class="toolbar-sol">
+      <button class="btn" onclick="topluGonderimBaslat()" style="background:#217346">
+        <i class="fa-solid fa-truck-fast"></i> Toplu Gönderim
+      </button>
+      <button class="btn" onclick="topluDevretBaslat()">
+        <i class="fa-solid fa-share"></i> Seçilenleri Devret
+      </button>
+      <button class="btn" onclick="topluKalanIptalBaslat()" style="background:#ad1457">
+        <i class="fa-solid fa-ban"></i> Toplu Kalan İptal
+      </button>
+      <button class="filtre-btn aktif" onclick="filtrele('tumu',this)">Tümü</button>
+      <button class="filtre-btn" onclick="filtrele('Bekliyor',this)">Bekliyor</button>
+      <button class="filtre-btn" onclick="filtrele('Kısmi',this)">Kısmi</button>
+      <button class="filtre-btn" onclick="filtrele('Gönderildi',this)">Gönderildi</button>
+      <button class="filtre-btn" onclick="filtrele('Devreden',this)">Devreden</button>
+
+    </div></div>
+    <div id="icerik"><div class="bos"><i class="fa-solid fa-spinner fa-spin"></i><p>Yükleniyor...</p></div></div>
+  </div>
+  <div class="modal-bg" id="gondModal" onclick="if(event.target===this)gondKapat()">
+    <div class="modal-ic"><h3><i class="fa-solid fa-truck"></i> Gönderim Yap</h3>
+      <p style="font-size:13px;color:#666;margin-bottom:6px" id="gondBilgi"></p>
+      <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:#555">Gönderilecek Miktar (KG)</label><input type="number" id="gondMiktar" step="0.01" style="margin-top:4px"></div>
+      <div style="margin-bottom:14px"><label style="font-size:12px;font-weight:700;color:#555">Tır Plakası</label><input type="text" id="gondPlaka" placeholder="34 ABC 1234" style="margin-top:4px"></div>
+      <div style="display:flex;gap:10px"><button class="btn" onclick="gondOnayla()" style="font-size:13px"><i class="fa-solid fa-check"></i> Gönder</button><button class="btn temizle" onclick="gondKapat()" style="font-size:13px"><i class="fa-solid fa-xmark"></i> İptal</button></div>
+    </div>
+  </div>
+  <div class="modal-bg" id="devirModal" onclick="if(event.target===this)devirKapat()">
+    <div class="modal-ic"><h3><i class="fa-solid fa-share"></i> Kalemi Devret</h3>
+      <p style="font-size:13px;color:#666;margin-bottom:14px" id="devirBilgi"></p>
+      <select id="devirHedef" style="width:100%;margin-bottom:14px"></select>
+      <div style="display:flex;gap:10px"><button class="btn" onclick="devirOnayla()" style="font-size:13px"><i class="fa-solid fa-check"></i> Devret</button><button class="btn temizle" onclick="devirKapat()" style="font-size:13px"><i class="fa-solid fa-xmark"></i> İptal</button></div>
+    </div>
+  </div>
+
+  <!-- TOPLU GÖNDERİM MODALI -->
+  <div class="modal-bg" id="topluGondModal" onclick="if(event.target===this)topluGondKapat()">
+    <div class="modal-ic" style="max-width:700px;max-height:80vh;overflow-y:auto">
+      <h3><i class="fa-solid fa-truck-fast"></i> Toplu Gönderim</h3>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:700;color:#555">Tır Plakası (tüm kalemler için)</label>
+        <input type="text" id="topluGondPlaka" placeholder="34 ABC 1234" style="margin-top:4px">
+      </div>
+      <div style="font-size:12px;color:#666;margin-bottom:10px"><strong id="topluGondAdet">0</strong> kalem seçildi</div>
+      <div id="topluGondListe" style="max-height:350px;overflow-y:auto"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn" onclick="topluGondOnayla()" id="topluGondBtn" style="font-size:13px;background:#217346"><i class="fa-solid fa-check"></i> Tümünü Gönder</button>
+        <button class="btn temizle" onclick="topluGondKapat()" style="font-size:13px"><i class="fa-solid fa-xmark"></i> İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GÖNDERİM DÜZENLEME MODALI -->
+  <div class="modal-bg" id="hareketDuzenleModal" onclick="if(event.target===this)hareketDuzenleKapat()">
+    <div class="modal-ic">
+      <h3><i class="fa-solid fa-pen"></i> Gönderim Düzenle</h3>
+      <p style="font-size:13px;color:#666;margin-bottom:10px" id="hareketDuzenleBilgi"></p>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:700;color:#555">Yeni Miktar</label>
+        <input type="number" id="hareketYeniMiktar" step="0.01" style="margin-top:4px">
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn" onclick="hareketDuzenleKaydet()" id="hareketDuzenleBtn" style="font-size:13px"><i class="fa-solid fa-check"></i> Kaydet</button>
+        <button class="btn temizle" onclick="hareketDuzenleKapat()" style="font-size:13px"><i class="fa-solid fa-xmark"></i> İptal</button>
+      </div>
+    </div>
+  </div>
+
+    </div>
+  </div>
+
+</div><!-- /content -->
+</div><!-- /main-area -->
+</div><!-- /shell -->
+  <script>
+    const planId=parseInt(window.location.pathname.split("/").pop())
+    if(isNaN(planId)){window.location.href="/sevkiyat-planlar";throw "Geçersiz plan ID"}
+    
+// degisiklik icin burasi
+    
+    let planData=null,
+kalemler=[],
+mevcutFiltre="tumu",
+kullaniciRol="hazirlayan",
+gondKalemId=null,
+devirKalemId=null
+
+/* filtre düzenleme */
+let kolonFiltreleri={
+yuklenici:null,
+malgrubu:null
+}
+
+
+    window.addEventListener("load",async()=>{try{const r=await fetch("/api/kullanici-bilgi");const b=await r.json();kullaniciRol=b.rol}catch(e){};detayYukle()})
+
+
+    function ekleGoster(){document.getElementById("ekleKart").classList.add("goster")}
+
+    function seciliKalemleriAl(){
+      const secililer=[]
+      
+      document.querySelectorAll(".kalemSec:checked").forEach(c=>{
+        secililer.push(parseInt(c.value))
+      })
+      
+      return secililer
+
+}
+
+    function tumunuSec(cb){
+      
+      document.querySelectorAll(".kalemSec").forEach(x=>{
+        
+        if(!x.disabled){
+          x.checked = cb.checked
+        }})
+
+}
+
+    let topluDevretKalemler=[]
+    
+    function topluDevretBaslat(){
+      const secililer = seciliKalemleriAl()
+      
+      if(secililer.length===0){
+        
+        bildirim("Devretmek için kalem seçin.","Uyarı","uyari")
+        return
+      
+      }
+      
+      topluDevretKalemler = secililer
+      
+      document.getElementById("devirBilgi").innerHTML =
+      secililer.length + " kalem devredilecek."
+      planListesiYukle()
+      document.getElementById("devirModal").classList.add("goster")
+    }
+
+async function planListesiYukle(){
+
+try{
+
+const r=await fetch("/api/sevkiyat/plan-liste")
+const p=await r.json()
+
+const d=p.filter(x=>x.id!==planId && x.durum==="Aktif")
+
+const s=document.getElementById("devirHedef")
+s.innerHTML=""
+
+d.forEach(x=>{
+s.innerHTML+=`<option value="${x.id}">${x.plan_adi}</option>`
+})
+
+}catch(e){
+
+bildirim("Planlar yüklenemedi","Hata","hata")
+
+}
+
+}
+
+
+    function filtreMenuAc(kolon,el,e){
+
+let menu=document.getElementById("filtreMenu")
+
+const rect = el.getBoundingClientRect()
+
+menu.style.left = rect.left + "px"
+menu.style.top = (rect.bottom + window.scrollY) + "px"
+menu.style.display="block"
+
+let values=[]
+
+if(kolon==="yuklenici"){
+values=[...new Set(
+kalemler.map(k=>k.yuklenici_firma).filter(v=>v)
+)]
+}
+
+if(kolon==="malgrubu"){
+values=[...new Set(
+kalemler.map(k=>k.mal_grubu).filter(v=>v)
+)]
+}
+
+let html=`<div style="font-weight:700;margin-bottom:6px;color:#666">
+Filtre Seç
+</div>`
+
+values.forEach(v=>{
+html+=`
+<div style="cursor:pointer;padding:4px"
+onclick="kolonFiltreSec('${kolon}','${v}')">
+${v}
+</div>`
+})
+
+html+=`
+<div style="margin-top:6px;color:#c62828;cursor:pointer"
+onclick="kolonFiltreTemizle('${kolon}')">
+Filtreyi temizle
+</div>
+`
+
+menu.innerHTML=html
+}
+
+function kolonFiltreSec(kolon,value){
+
+kolonFiltreleri[kolon]=value
+
+document.getElementById("filtreMenu").style.display="none"
+
+console.log("filtre:",kolon,value)
+
+tabloGoster()
+
+}
+
+function kolonFiltreTemizle(kolon){
+
+kolonFiltreleri[kolon]=null
+
+document.getElementById("filtreMenu").style.display="none"
+
+tabloGoster()
+
+}
+
+
+
+
+    function ekleGizle(){document.getElementById("ekleKart").classList.remove("goster")}
+    async function detayYukle(){
+      try{
+        
+        const r=await fetch("/api/sevkiyat/plan-detay/"+planId)
+        if(!r.ok) throw new Error("API hata: "+r.status)
+        
+        const d=await r.json()
+        if(d.durum==="hata") throw new Error(d.mesaj||"Plan bulunamadı")
+        
+        planData=d.plan
+        kalemler=d.kalemler
+        
+        document.getElementById("planAdi").innerText=planData.plan_adi
+        
+        document.getElementById("planBilgi").innerHTML=
+        `${planData.plan_tipi} · ${planData.baslangic} — ${planData.bitis} · ${planData.olusturan_ad}`
+        
+        ozetGuncelle(kalemler)
+        tabloGoster()
+      
+      }catch(e){
+        
+        document.getElementById("icerik").innerHTML=
+        '<div class="bos"><i class="fa-solid fa-circle-exclamation"></i><p>'+e.message+'</p></div>'
+
+}
+}
+    function filtrele(t,b){mevcutFiltre=t;document.querySelectorAll(".filtre-btn").forEach(x=>x.classList.remove("aktif"));b.classList.add("aktif");tabloGoster()}
+    function tabloGoster(){
+      let l = [...kalemler]
+
+
+      if(kolonFiltreleri.yuklenici){
+l=l.filter(k=>k.yuklenici_firma===kolonFiltreleri.yuklenici)
+}
+if(kolonFiltreleri.malgrubu){
+l=l.filter(k=>k.mal_grubu===kolonFiltreleri.malgrubu)
+}
+
+if(mevcutFiltre!=="tumu"){
+l = l.filter(k => k.durum === mevcutFiltre)
+}
+ozetGuncelle(l)
+      if(l.length===0){document.getElementById("icerik").innerHTML='<div class="bos"><i class="fa-solid fa-box-open"></i><p>Kalem bulunamadı.</p></div>';return}
+      
+      
+      /* thead filtre düzenleme */
+
+let h=`<table class="kt"><thead><tr>
+<th>
+<input type="checkbox" onclick="tumunuSec(this)">
+</th>
+<th>S.No</th>
+
+<th onclick="filtreMenuAc('yuklenici', this, event)" style="cursor:pointer">
+Yüklenici 
+<i class="fa-solid fa-filter filtre-ikon ${kolonFiltreleri.yuklenici ? 'filtre-aktif' : ''}"></i>
+</th>
+
+<th>Sipariş No</th>
+
+<th onclick="filtreMenuAc('malgrubu', this, event)" style="cursor:pointer">
+Mal Grubu 
+<i class="fa-solid fa-filter filtre-ikon ${kolonFiltreleri.malgrubu ? 'filtre-aktif' : ''}"></i>
+</th>
+
+<th>Malzeme</th>
+<th>Planlanan</th>
+<th>Gönderilen</th>
+<th>Fazla Gönderim</th>
+<th>Kalan</th>
+<th>Birim</th>
+<th>Durum</th>
+<th>Gönderim Geçmişi</th>
+<th>İşlem</th>
+
+</tr></thead><tbody>`
+
+  /* thead */
+
+
+      l.forEach((k,i)=>{
+        const gonderilenGosterim = k.gonderilen_gosterim ?? Math.min(k.gonderilen_miktar, k.planlanan_miktar)
+        const fazla = k.fazla_miktar ?? Math.max(k.gonderilen_miktar - k.planlanan_miktar, 0)
+        const kalan = Math.max(k.planlanan_miktar - gonderilenGosterim, 0)
+        const dc=k.durum==="Bekliyor"?"bek":k.durum==="Kısmi"?"kis":k.durum==="Gönderildi"?"gon":"dev"
+        const dn=k.devreden_plan_adi?`<a href="/sevkiyat-detay/${k.devreden_plan_id}" class="devir-notu" style="cursor:pointer;text-decoration:none" title="Kaynak plana git"><i class="fa-solid fa-arrow-right-from-bracket" style="font-size:8px"></i> ${k.devreden_plan_adi}'den devir</a>`:""
+        const hn=k.hedef_plan_adi?`<a href="/sevkiyat-detay/${k.hedef_plan_id}" class="devir-notu" style="cursor:pointer;text-decoration:none;color:var(--blue)" title="Hedef plana git"><i class="fa-solid fa-arrow-right-to-bracket" style="font-size:8px"></i> → ${k.hedef_plan_adi}</a>`:""
+        
+        const pct = k.planlanan_miktar > 0
+        ? Math.min((gonderilenGosterim / k.planlanan_miktar) * 100, 100)
+        : 0
+
+        let gecmis="";const gonderimHrk=(k.hareketler||[]).filter(hr=>hr.islem==="gonder");if(gonderimHrk.length>0){gecmis='<div class="hareket-liste">';gonderimHrk.forEach(hr=>{const duzenleBtn=kullaniciRol==="admin"?`<button class="ib duzenle" onclick="hareketDuzenleBaslat(${hr.id}, ${hr.miktar}, '${k.birim}', '${(k.malzeme_tanimi||"").replace(/'/g,"\\'")}')" style="padding:1px 5px;font-size:9px" title="Düzenle"><i class="fa-solid fa-pen" style="font-size:8px"></i></button>`:"";gecmis+=`<div class="hareket-satir"><span class="h-tarih">${hr.tarih.substring(0,16)}</span><span class="h-miktar">${fN(hr.miktar)} ${k.birim}</span>${hr.tir_plaka?`<span class="h-plaka"><i class="fa-solid fa-truck" style="font-size:8px"></i> ${hr.tir_plaka}</span>`:""}<span class="h-kisi">${hr.yapan_ad}</span>${duzenleBtn}</div>`});gecmis+='</div>'}else gecmis='<span style="color:#ccc;font-size:10px">—</span>'
+        let isl="";if(k.durum!=="Gönderildi"&&k.durum!=="Devreden"){
+          isl+=`<button class="ib gonder" onclick="gondBaslat(${k.id})"><i class="fa-solid fa-truck"></i> Gönder</button> `;
+          isl+=`<button class="ib devret" onclick="devirBaslat(${k.id})"><i class="fa-solid fa-share"></i> Devret</button> `;
+          if(kalan>0)isl+=`<button class="ib iptal" onclick="kalanIptal(${k.id})" title="Kalan miktarı iptal et"><i class="fa-solid fa-ban"></i> Kalan İptal</button> `;
+          if(k.durum==="Bekliyor"&&kullaniciRol==="admin")isl+=`<button class="ib sil" onclick="kalemSil(${k.id})"><i class="fa-solid fa-trash"></i></button> `;
+isl += `<button class="ib duzenle" onclick="duzenleBaslat(${k.id})">
+<i class="fa-solid fa-pen"></i>
+</button> `
+        }
+        if(kullaniciRol==="admin"&&k.gonderilen_miktar>0)isl+=`<button class="ib sifirla" onclick="kalemSifirla(${k.id})"><i class="fa-solid fa-rotate-left"></i></button> `
+        h+=`<tr>
+          <td>
+            <input type="checkbox" class="kalemSec" value="${k.id}" 
+            ${k.durum==="Gönderildi" || k.durum==="Devreden" ? "disabled" : ""}>
+            </td><td>${i+1}</td>
+          <td>${k.yuklenici_firma||"-"}</td>
+          <td style="font-size:10px">${k.siparis_no||"-"}</td>
+          <td>${k.mal_grubu||"-"}</td>
+          <td style="text-align:left">
+            ${k.malzeme_tanimi}${dn}${hn}
+            </td>
+            <td><strong>${fN(k.planlanan_miktar)}</strong></td>
+              <td>
+                <strong style="color:#217346">${fN(k.gonderilen_gosterim ?? k.gonderilen_miktar)}</strong>
+                ${
+                (k.fazla_miktar || 0) > 0
+                ? `<div style="font-size:9px;color:#1976d2;font-weight:700">+${fN(k.fazla_miktar)} fazla</div>`
+                : ""
+                }
+                <div class="prog-bar">
+                  <div class="prog-fill ${k.durum==="Kısmi"?"kis":""}" style="width:${pct}%"></div>
+                  </div>
+                  </td>
+                <td>
+                  ${kalan>0
+                  ? `<strong style="color:#e67e22">${fN(kalan)}</strong>`
+                  : `<span style="color:#217346;font-weight:700">Tamam</span>`
+                  }
+                  
+                  </td>
+                  <td>${k.birim}</td>
+                  <td><span class="dr ${dc}">${k.durum}</span></td>
+                  <td>${gecmis}</td>
+                  <td style="white-space:nowrap">${isl}</td>
+                  
+                  </tr>`})
+                  h+=`</tbody></table>`
+                  document.getElementById("icerik").innerHTML=h
+}
+                
+
+    
+    function gondBaslat(id){gondKalemId=id;const k=kalemler.find(x=>Number(x.id)===Number(id));if(!k)return;
+      document.getElementById("gondBilgi").innerHTML=`<strong>${k.malzeme_tanimi}</strong><br>
+Planlanan: ${fN(k.planlanan_miktar)} — Gönderilen: ${fN(k.gonderilen_gosterim ?? k.gonderilen_miktar)}<br>
+Fazla Gönderim: <strong>${fN(k.fazla_miktar || 0)} ${k.birim}</strong><br>
+Kalan: <strong>${fN(k.kalan_miktar)} ${k.birim}</strong>`
+    ;document.getElementById("gondMiktar").value="";document.getElementById("gondMiktar").placeholder=`Miktar girin (${k.birim})`;document.getElementById("gondPlaka").value="";document.getElementById("gondModal").classList.add("goster")}
+    function gondKapat(){document.getElementById("gondModal").classList.remove("goster");gondKalemId=null}
+    async function gondOnayla(){const m=parseFloat(document.getElementById("gondMiktar").value);const p=document.getElementById("gondPlaka").value.trim();if(!m||m<=0){bildirim("Miktar giriniz.","Eksik Bilgi","uyari");return};const btn=event.target.closest("button");if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gönderiliyor...'};try{const r=await fetch("/api/sevkiyat/kalem-gonder",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:gondKalemId,miktar:m,tir_plaka:p})});const j=await r.json();if(j.durum==="ok"){gondKapat();detayYukle();toast("Gönderim başarılı","basari")}else bildirim(j.mesaj,"Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-check"></i> Gönder'}}}
+    async function devirBaslat(id){devirKalemId=id;const k=kalemler.find(x=>x.id===id);if(!k)return;document.getElementById("devirBilgi").innerHTML=`<strong>${k.malzeme_tanimi}</strong> — Kalan <strong>${fN(k.kalan_miktar)} ${k.birim}</strong> devredilecek.`;try{const r=await fetch("/api/sevkiyat/plan-liste");const p=await r.json();const d=p.filter(x=>x.id!==planId&&x.durum==="Aktif");const s=document.getElementById("devirHedef");s.innerHTML="";if(d.length===0){bildirim("Aktarılacak başka aktif plan yok.","Bilgi","bilgi");return};d.forEach(x=>{s.innerHTML+=`<option value="${x.id}">${x.plan_adi}</option>`});document.getElementById("devirModal").classList.add("goster")}catch(e){bildirim("Planlar yüklenemedi","Hata","hata")}}
+    function devirKapat(){document.getElementById("devirModal").classList.remove("goster")
+    devirKalemId=null
+    topluDevretKalemler=[]
+  }
+    async function devirOnayla(){
+      
+      const hedef = document.getElementById("devirHedef").value
+      if(!hedef) return
+      
+      let secililer = []
+      
+      if(topluDevretKalemler.length>0){
+        secililer = topluDevretKalemler
+      }
+      else if(devirKalemId){
+        secililer = [devirKalemId]
+      }
+      
+      if(secililer.length===0){
+        bildirim("Kalem seçilmedi","Uyarı","uyari")
+        return
+      }
+      
+      try{
+        
+        const r = await fetch("/api/sevkiyat/kalem-toplu-devret",{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json"
+          },
+          body:JSON.stringify({
+            kalem_ids:secililer,
+            hedef_plan_id:parseInt(hedef)
+          })
+        })
+        
+        const j = await r.json()
+        
+        if(j.durum==="ok"){
+          
+          document.querySelectorAll(".kalemSec").forEach(c=>{
+            c.checked=false
+          })
+          
+          devirKapat()
+          detayYukle()
+          
+          toast(j.adet+" kalem devredildi","basari")
+        
+        }else{
+          
+          bildirim(j.mesaj,"Hata","hata")
+        
+        }
+      
+      }catch(e){
+        
+        bildirim("Sunucuya bağlanılamadı","Bağlantı Hatası","hata")
+      }
+    }
+
+
+    async function kalemEkle(){const m=document.getElementById("eMalzeme").value.trim();const mi=parseFloat(document.getElementById("eMiktar").value);if(!m||!mi){bildirim("Malzeme ve miktar giriniz.","Eksik Bilgi","uyari");return};const btn=event.target.closest("button");if(btn){btn.disabled=true};try{const r=await fetch("/api/sevkiyat/kalem-ekle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan_id:planId,yuklenici_firma:document.getElementById("eYuklenici").value.trim(),siparis_no:document.getElementById("eSiparisNo").value.trim(),mal_grubu:document.getElementById("eMalGrubu").value.trim(),malzeme_tanimi:m,miktar:mi,birim:document.getElementById("eBirim").value})});const j=await r.json();if(j.durum==="ok"){document.getElementById("eMalzeme").value="";document.getElementById("eMiktar").value="0";detayYukle()}else bildirim(j.mesaj,"Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}finally{if(btn){btn.disabled=false}}}
+    async function kalemSil(id){const s=await onayla("Bu kalemi silmek istediğinize emin misiniz?","Kalem Sil",{onayText:"Sil",tehlike:true});if(!s)return;try{const r=await fetch("/api/sevkiyat/kalem-sil",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});const j=await r.json();if(j.durum==="ok"){detayYukle();toast("Kalem silindi","basari")}else bildirim(j.mesaj,"Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}}
+    async function kalemSifirla(id){const s=await onayla("Tüm gönderim geçmişi sıfırlanacak.\nBu işlem geri alınamaz.","Gönderim Sıfırla",{onayText:"Sıfırla",tehlike:true});if(!s)return;try{const r=await fetch("/api/sevkiyat/kalem-sifirla",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});const j=await r.json();if(j.durum==="ok"){detayYukle();toast("Gönderim sıfırlandı","basari")}else bildirim(j.mesaj,"Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}}
+
+    async function kalanIptal(id){
+      const k=kalemler.find(x=>x.id===id)
+      if(!k)return
+      const kalan=Math.max(k.planlanan_miktar - Math.min(k.gonderilen_miktar, k.planlanan_miktar), 0)
+      if(kalan<=0){bildirim("Bu kalemde iptal edilecek kalan yok.","Bilgi","bilgi");return}
+      const s=await onayla(`${k.malzeme_tanimi}\n\nKalan ${fN(kalan)} ${k.birim} iptal edilecek.\nPlanlanan miktar ${fN(k.gonderilen_miktar)} olarak güncellenecek.`,"Kalan İptal",{onayText:"İptal Et",tehlike:true})
+      if(!s)return
+      try{
+        const r=await fetch("/api/sevkiyat/kalem-kalan-iptal",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})})
+        const j=await r.json()
+        if(j.durum==="ok"){toast(`${fN(j.iptal_edilen)} ${k.birim} kalan iptal edildi`,"basari");detayYukle()}
+        else bildirim(j.mesaj,"Hata","hata")
+      }catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}
+    }
+    
+    function tabloGoster(){
+  let l = [...kalemler]
+
+  if(kolonFiltreleri.yuklenici){
+    l = l.filter(k => k.yuklenici_firma === kolonFiltreleri.yuklenici)
+  }
+
+  if(kolonFiltreleri.malgrubu){
+    l = l.filter(k => k.mal_grubu === kolonFiltreleri.malgrubu)
+  }
+
+  if(mevcutFiltre !== "tumu"){
+    l = l.filter(k => k.durum === mevcutFiltre)
+  }
+
+  ozetGuncelle(l)
+
+  if(!l.length){
+    document.getElementById("icerik").innerHTML =
+      '<div class="bos"><i class="fa-solid fa-box-open"></i><p>Kalem bulunamadı.</p></div>'
+    return
+  }
+
+  let h=`<table class="kt"><thead><tr>
+    <th><input type="checkbox" onclick="tumunuSec(this)"></th>
+    <th>S.No</th>
+
+    <th onclick="filtreMenuAc('yuklenici', this, event)" style="cursor:pointer">
+      Yüklenici
+      <i class="fa-solid fa-filter filtre-ikon ${kolonFiltreleri.yuklenici ? 'filtre-aktif' : ''}"></i>
+    </th>
+
+    <th>Sipariş No</th>
+
+    <th onclick="filtreMenuAc('malgrubu', this, event)" style="cursor:pointer">
+      Mal Grubu
+      <i class="fa-solid fa-filter filtre-ikon ${kolonFiltreleri.malgrubu ? 'filtre-aktif' : ''}"></i>
+    </th>
+
+    <th>Malzeme</th>
+    <th>Planlanan</th>
+    <th>Gönderilen</th>
+    <th>Fazla Gönderim</th>
+    <th>Kalan</th>
+    <th>Birim</th>
+    <th>Durum</th>
+    <th>Gönderim Geçmişi</th>
+    <th>İşlem</th>
+  </tr></thead><tbody>`
+
+  l.forEach((k,i)=>{
+    const planlanan = Number(k.planlanan_miktar || 0)
+    const gonderilenGosterim = Number(
+      k.gonderilen_gosterim ?? Math.min(Number(k.gonderilen_miktar || 0), planlanan)
+    )
+    const fazla = Number(
+      k.fazla_miktar ?? Math.max(Number(k.gonderilen_miktar || 0) - planlanan, 0)
+    )
+    const kalan = Math.max(planlanan - gonderilenGosterim, 0)
+
+    const dc = k.durum==="Bekliyor" ? "bek"
+      : k.durum==="Kısmi" ? "kis"
+      : k.durum==="Gönderildi" ? "gon"
+      : "dev"
+
+    const dn = k.devreden_plan_adi
+      ? `<a href="/sevkiyat-detay/${k.devreden_plan_id}" class="devir-notu" style="cursor:pointer;text-decoration:none" title="Kaynak plana git"><i class="fa-solid fa-arrow-right-from-bracket" style="font-size:8px"></i> ${k.devreden_plan_adi}'den devir</a>`
+      : ""
+
+    const pct = planlanan > 0
+      ? Math.min((gonderilenGosterim / planlanan) * 100, 100)
+      : 0
+
+    let gecmis = ""
+    const gonderimHareketleri = (k.hareketler || []).filter(hr => hr.islem === "gonder")
+    if(gonderimHareketleri.length > 0){
+      gecmis = '<div class="hareket-liste">'
+      gonderimHareketleri.forEach(hr=>{
+        const duzenleBtn = kullaniciRol === "admin" ? `<button class="ib duzenle" onclick="hareketDuzenleBaslat(${hr.id}, ${hr.miktar}, '${k.birim}', '${(k.malzeme_tanimi||'').replace(/'/g,"\\'")}')" style="padding:1px 5px;font-size:9px" title="Düzenle"><i class="fa-solid fa-pen" style="font-size:8px"></i></button>` : ""
+        gecmis += `
+          <div class="hareket-satir">
+            <span class="h-tarih">${hr.tarih.substring(0,16)}</span>
+            <span class="h-miktar">${fN(hr.miktar)} ${k.birim}</span>
+            ${hr.tir_plaka ? `<span class="h-plaka"><i class="fa-solid fa-truck" style="font-size:8px"></i> ${hr.tir_plaka}</span>` : ""}
+            <span class="h-kisi">${hr.yapan_ad}</span>
+            ${duzenleBtn}
+          </div>`
+      })
+      gecmis += '</div>'
+    }else{
+      gecmis = '<span style="color:#ccc;font-size:10px">—</span>'
+    }
+
+    let isl = ""
+    if(k.durum !== "Gönderildi" && k.durum !== "Devreden"){
+      isl += `<button class="ib gonder" onclick="gondBaslat(${k.id})"><i class="fa-solid fa-truck"></i> Gönder</button> `
+      isl += `<button class="ib devret" onclick="devirBaslat(${k.id})"><i class="fa-solid fa-share"></i> Devret</button> `
+      if(kalan > 0){
+        isl += `<button class="ib iptal" onclick="kalanIptal(${k.id})" title="Kalan miktarı iptal et"><i class="fa-solid fa-ban"></i> Kalan İptal</button> `
+      }
+      if(k.durum==="Bekliyor" && kullaniciRol==="admin"){
+        isl += `<button class="ib sil" onclick="kalemSil(${k.id})"><i class="fa-solid fa-trash"></i></button> `
+      }
+      isl += `<button class="ib duzenle" onclick="duzenleBaslat(${k.id})"><i class="fa-solid fa-pen"></i></button> `
+    }
+
+    if(kullaniciRol==="admin" && Number(k.gonderilen_miktar || 0) > 0){
+      isl += `<button class="ib sifirla" onclick="kalemSifirla(${k.id})"><i class="fa-solid fa-rotate-left"></i></button> `
+    }
+
+    h += `<tr>
+      <td>
+        <input type="checkbox" class="kalemSec" value="${k.id}" ${k.durum==="Gönderildi" || k.durum==="Devreden" ? "disabled" : ""}>
+      </td>
+      <td>${i+1}</td>
+      <td>${k.yuklenici_firma || "-"}</td>
+      <td style="font-size:10px">${k.siparis_no || "-"}</td>
+      <td>${k.mal_grubu || "-"}</td>
+      <td style="text-align:left">${k.malzeme_tanimi}${dn}${k.hedef_plan_id ? `<a href="/sevkiyat-detay/${k.hedef_plan_id}" class="devir-notu" style="cursor:pointer;text-decoration:none;color:var(--blue)" title="Hedef plana git"><i class="fa-solid fa-arrow-right-to-bracket" style="font-size:8px"></i> ${k.hedef_plan_adi}'e devredildi</a>` : ""}</td>
+
+      <td><strong>${fN(planlanan)}</strong></td>
+
+      <td>
+        <strong style="color:#217346">${fN(gonderilenGosterim)}</strong>
+        <div class="prog-bar">
+          <div class="prog-fill ${k.durum==="Kısmi" ? "kis" : ""}" style="width:${pct}%"></div>
+        </div>
+      </td>
+
+      <td>
+        ${fazla > 0
+          ? `<strong class="fazla-gonderim">${fN(fazla)}</strong>`
+          : `<span style="color:#bbb">0</span>`
+        }
+      </td>
+
+      <td>
+        ${kalan > 0
+          ? `<strong style="color:#e67e22">${fN(kalan)}</strong>`
+          : `<span style="color:#217346;font-weight:700">Tamam</span>`
+        }
+      </td>
+
+      <td>${k.birim}</td>
+      <td><span class="dr ${dc}">${k.durum}</span></td>
+      <td>${gecmis}</td>
+      <td style="white-space:nowrap">${isl}</td>
+    </tr>`
+  })
+
+  h += `</tbody></table>`
+  document.getElementById("icerik").innerHTML = h
+}
+    
+    async function pdfCikti(){
+
+const exportKalemler = kalemler.map(k=>{
+return {...k}
+})
+
+try{
+
+const r=await fetch("/kaydet/sevkiyat-pdf",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+plan_adi:planData.plan_adi,
+tarih_arali:planData.baslangic+" - "+planData.bitis,
+kalemler:exportKalemler
+})
+})
+
+const j=await r.json()
+
+if(j.durum==="ok")
+toast("PDF kaydedildi","basari")
+else
+bildirim(j.mesaj,"Hata","hata")
+
+}catch(e){
+bildirim(e.message,"Bağlantı Hatası","hata")
+}
+
+}
+    
+    
+    async function excelCikti(){
+
+const exportKalemler = kalemler.map(k=>{
+return {...k}
+})
+
+try{
+
+const r=await fetch("/kaydet/sevkiyat-excel",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+plan_adi:planData.plan_adi,
+kalemler:exportKalemler
+})
+})
+
+const j=await r.json()
+
+if(j.durum==="ok")
+toast("Excel kaydedildi","basari")
+else
+bildirim(j.mesaj,"Hata","hata")
+
+}catch(e){
+bildirim(e.message,"Bağlantı Hatası","hata")
+}
+
+}
+
+    
+    let importKalemler=[]
+    async function excelImportEt(){try{const r=await fetch("/api/sevkiyat/import-oku",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});const j=await r.json();if(j.durum==="ok"){importKalemler=j.kalemler;document.getElementById("importAdet").innerText=importKalemler.length;document.getElementById("importToplam").innerText=fKg(importKalemler.reduce((t,k)=>t+(k.birim==="KG"?k.miktar:0),0));let h=`<div style="margin-bottom:10px;font-size:12px;color:#666"><i class="fa-solid fa-file-excel"></i> Dosya: <strong>${j.dosya}</strong></div><table class="import-tablo"><thead><tr><th>#</th><th>Yüklenici</th><th>Sipariş</th><th>Mal Gr.</th><th>Malzeme</th><th>Miktar</th><th>Birim</th></tr></thead><tbody>`;importKalemler.forEach((k,i)=>{h+=`<tr><td>${i+1}</td><td>${k.yuklenici_firma||"-"}</td><td style="font-size:10px">${k.siparis_no||"-"}</td><td>${k.mal_grubu||"-"}</td><td style="text-align:left">${k.malzeme_tanimi}</td><td><strong>${fN(k.miktar)}</strong></td><td>${k.birim}</td></tr>`});h+=`</tbody></table>`;document.getElementById("importTabloAlani").innerHTML=h;document.getElementById("importOnizleme").classList.add("goster")}else bildirim(j.mesaj||"Dosya okunamadı.","Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}}
+    async function importOnayla(){if(!importKalemler.length)return;try{const r=await fetch("/api/sevkiyat/kalem-toplu-ekle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan_id:planId,kalemler:importKalemler})});const j=await r.json();if(j.durum==="ok"){toast(j.eklenen+" kalem eklendi!","basari");importIptal();detayYukle()}else bildirim(j.mesaj,"Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}}
+    function importIptal(){importKalemler=[];document.getElementById("importOnizleme").classList.remove("goster")}
+    async function sablonIndir(){try{const r=await fetch("/api/sevkiyat/sablon-indir",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});const j=await r.json();if(j.durum==="ok"){toast("Şablon kaydedildi","basari");await fetch("/api/import-klasor-ac",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})}else bildirim(j.mesaj,"Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}}
+    function fN(v){return new Intl.NumberFormat("tr-TR",{minimumFractionDigits:0,maximumFractionDigits:2}).format(v)}
+    function fKg(v){if(!v)return"0 KG";if(v>=1000)return(v/1000).toFixed(1)+" Ton";return Math.round(v)+" KG"}
+
+function ozetGuncelle(liste){
+  const tp = liste.reduce((t,k) => t + Number(k.planlanan_miktar || 0), 0)
+
+  const tg = liste.reduce((t,k) => {
+    const planlanan = Number(k.planlanan_miktar || 0)
+    const gonderilen = Number(k.gonderilen_miktar || 0)
+    return t + Math.min(gonderilen, planlanan)
+  }, 0)
+
+  const tf = liste.reduce((t,k) => {
+    const planlanan = Number(k.planlanan_miktar || 0)
+    const gonderilen = Number(k.gonderilen_miktar || 0)
+    return t + Math.max(gonderilen - planlanan, 0)
+  }, 0)
+
+  const dev = liste
+    .filter(k => k.durum === "Devreden")
+    .reduce((t,k) => t + Number(k.kalan_miktar || 0), 0)
+
+  const tk = Math.max(tp - tg - dev, 0)
+
+  document.getElementById("oPlanlanan").innerText = fKg(tp)
+  document.getElementById("oGonderilen").innerText = fKg(tg)
+  document.getElementById("oFazla").innerText = fKg(tf)
+  document.getElementById("oKalan").innerText = fKg(tk)
+  document.getElementById("oDevreden").innerText = fKg(dev)
+
+  const yuzde = tp > 0 ? Math.min(Math.round((tg / tp) * 100), 100) : 0
+  document.getElementById("planYuzde").innerText = "%" + yuzde
+  document.getElementById("planProgress").style.width = yuzde + "%"
+
+  // Fazla gönderim kutucuğunu sadece varsa göster
+  const fazlaKutu = document.getElementById("oFazla").closest(".ozet-mini")
+  if(fazlaKutu) fazlaKutu.style.display = tf > 0 ? "" : "none"
+}
+
+    
+    let duzenleKalemId=null
+    function duzenleBaslat(id){
+
+duzenleKalemId=id
+
+const k=kalemler.find(x=>x.id===id)
+
+if(!k)return
+
+document.getElementById("dYuklenici").value=k.yuklenici_firma||""
+document.getElementById("dSiparis").value=k.siparis_no||""
+document.getElementById("dMalGrubu").value=k.mal_grubu||""
+document.getElementById("dMalzeme").value=k.malzeme_tanimi||""
+document.getElementById("dMiktar").value=k.planlanan_miktar
+
+document.getElementById("duzenleModal").classList.add("goster")
+
+}
+
+function duzenleKapat(){
+
+document.getElementById("duzenleModal").classList.remove("goster")
+duzenleKalemId=null
+
+}
+
+async function duzenleKaydet(){
+
+try{
+
+const btn=event.target.closest("button")
+if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Kaydediliyor...'}
+
+const r=await fetch("/api/sevkiyat/kalem-guncelle",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+id:duzenleKalemId,
+yuklenici_firma:document.getElementById("dYuklenici").value,
+siparis_no:document.getElementById("dSiparis").value,
+mal_grubu:document.getElementById("dMalGrubu").value,
+malzeme_tanimi:document.getElementById("dMalzeme").value,
+planlanan_miktar:parseFloat(document.getElementById("dMiktar").value)
+
+})
+
+})
+
+const j=await r.json()
+
+if(j.durum==="ok"){
+
+duzenleKapat()
+detayYukle()
+
+}else{
+
+bildirim(j.mesaj,"Hata","hata")
+
+}
+
+}catch(e){
+
+bildirim("Sunucu hatası oluştu","Hata","hata")
+
+}
+
+}
+document.addEventListener("click",function(e){
+
+const menu=document.getElementById("filtreMenu")
+
+if(
+!menu.contains(e.target) &&
+!e.target.closest("th")
+){
+menu.style.display="none"
+}
+
+})
+
+// ---- TOPLU GÖNDERİM ----
+function topluGonderimBaslat(){
+  const secililer = seciliKalemleriAl()
+  if(secililer.length === 0){
+    bildirim("Gönderim yapılacak kalemleri seçin.","Uyarı","uyari")
+    return
+  }
+
+  const uygunKalemler = secililer
+    .map(id => kalemler.find(k => k.id === id))
+    .filter(k => k && k.durum !== "Gönderildi" && k.durum !== "Devreden")
+
+  if(uygunKalemler.length === 0){
+    bildirim("Seçilen kalemlerin hepsi zaten gönderilmiş veya devredilmiş.","Bilgi","bilgi")
+    return
+  }
+
+  document.getElementById("topluGondAdet").innerText = uygunKalemler.length
+
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+  html += '<thead><tr style="background:#f4f6f8"><th style="padding:6px;text-align:left">Malzeme</th><th style="padding:6px">Planlanan</th><th style="padding:6px">Gönderilen</th><th style="padding:6px">Kalan</th><th style="padding:6px">Gönderi Miktarı</th></tr></thead><tbody>'
+
+  uygunKalemler.forEach(k => {
+    const kalan = Math.max(k.planlanan_miktar - Math.min(k.gonderilen_miktar, k.planlanan_miktar), 0)
+    html += `<tr style="border-bottom:1px solid #eee">
+      <td style="padding:6px;text-align:left;font-size:11px">${k.malzeme_tanimi}</td>
+      <td style="padding:6px;text-align:center">${fN(k.planlanan_miktar)}</td>
+      <td style="padding:6px;text-align:center;color:#217346">${fN(k.gonderilen_miktar)}</td>
+      <td style="padding:6px;text-align:center;color:#e67e22;font-weight:700">${fN(kalan)}</td>
+      <td style="padding:6px;text-align:center"><input type="number" step="0.01" value="${kalan}" class="topluGondInput" data-id="${k.id}" style="width:90px;padding:4px 6px;font-size:12px;text-align:center;margin:0"></td>
+    </tr>`
+  })
+
+  html += '</tbody></table>'
+  document.getElementById("topluGondListe").innerHTML = html
+  document.getElementById("topluGondPlaka").value = ""
+  document.getElementById("topluGondModal").classList.add("goster")
+}
+
+function btnKilitle(btn) {
+  if (!btn || btn.disabled) return null   // zaten kilitliyse null döner
+  const eskiHtml = btn.innerHTML          // orijinal HTML'i sakla
+  btn.disabled = true                     // butonu disable et
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...'  // spinner göster
+  return eskiHtml                         // eski HTML'i döndür
+}
+
+function btnSerbest(btn, eskiHtml) {
+  if (!btn) return
+  btn.disabled = false                    // butonu aktif et
+  btn.innerHTML = eskiHtml                // orijinal HTML'i geri koy
+}
+
+function topluGondKapat(){
+  document.getElementById("topluGondModal").classList.remove("goster")
+}
+
+async function topluGondOnayla(){
+  const plaka = document.getElementById("topluGondPlaka").value.trim()
+  const inputs = document.querySelectorAll(".topluGondInput")
+  const gonderimler = []
+
+  inputs.forEach(inp => {
+    const miktar = parseFloat(inp.value)
+    const id = parseInt(inp.dataset.id)
+    if(miktar > 0) gonderimler.push({id, miktar})
+  })
+
+  if(gonderimler.length === 0){
+    bildirim("En az bir kalem için miktar girin.","Eksik Bilgi","uyari")
+    return
+  }
+
+  const btn = document.getElementById("topluGondBtn")
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gönderiliyor...'
+
+  try{
+    const r = await fetch("/api/sevkiyat/toplu-gonder", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({tir_plaka:plaka, gonderimler})
+    })
+    const j = await r.json()
+    if(j.durum === "ok"){
+      topluGondKapat()
+      document.querySelectorAll(".kalemSec").forEach(c => c.checked = false)
+      detayYukle()
+      toast(j.basarili + " kalem gönderildi","basari")
+    }else{
+      bildirim(j.mesaj,"Hata","hata")
+    }
+  }catch(e){
+    bildirim(e.message,"Bağlantı Hatası","hata")
+  }finally{
+    btn.disabled = false
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Tümünü Gönder'
+  }
+}
+
+// ---- TOPLU KALAN İPTAL ----
+async function topluKalanIptalBaslat(){
+  const secililer = seciliKalemleriAl()
+  if(secililer.length === 0){
+    bildirim("İptal edilecek kalemleri seçin.","Uyarı","uyari")
+    return
+  }
+
+  const uygunKalemler = secililer
+    .map(id => kalemler.find(k => k.id === id))
+    .filter(k => {
+      if(!k) return false
+      const kalan = Math.max(k.planlanan_miktar - Math.min(k.gonderilen_miktar, k.planlanan_miktar), 0)
+      return kalan > 0
+    })
+
+  if(uygunKalemler.length === 0){
+    bildirim("Seçilen kalemlerde iptal edilecek kalan yok.","Bilgi","bilgi")
+    return
+  }
+
+  const ozet = uygunKalemler.map(k => {
+    const kalan = Math.max(k.planlanan_miktar - Math.min(k.gonderilen_miktar, k.planlanan_miktar), 0)
+    return `• ${k.malzeme_tanimi}: ${fN(kalan)} ${k.birim}`
+  }).join("\n")
+
+  const s2 = await onayla(`${uygunKalemler.length} kalemin kalan miktarı iptal edilecek:\n\n${ozet}`, "Toplu Kalan İptal", {onayText:"İptal Et", tehlike:true})
+  if(!s2) return
+
+  try{
+    const r = await fetch("/api/sevkiyat/toplu-kalan-iptal", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({kalem_ids: uygunKalemler.map(k => k.id)})
+    })
+    const j = await r.json()
+    if(j.durum === "ok"){
+      document.querySelectorAll(".kalemSec").forEach(c => c.checked = false)
+      detayYukle()
+      toast(j.basarili + " kalemin kalanı iptal edildi","basari")
+    }else{
+      bildirim(j.mesaj,"Hata","hata")
+    }
+  }catch(e){
+    bildirim(e.message,"Bağlantı Hatası","hata")
+  }
+}
+
+// ---- GÖNDERİM DÜZENLEME ----
+let duzenleHareketId = null
+
+function hareketDuzenleBaslat(hareketId, mevcutMiktar, birim, malzeme){
+  duzenleHareketId = hareketId
+  document.getElementById("hareketDuzenleBilgi").innerHTML = `<strong>${malzeme}</strong><br>Mevcut miktar: <strong>${fN(mevcutMiktar)} ${birim}</strong>`
+  document.getElementById("hareketYeniMiktar").value = mevcutMiktar
+  document.getElementById("hareketDuzenleModal").classList.add("goster")
+}
+
+function hareketDuzenleKapat(){
+  document.getElementById("hareketDuzenleModal").classList.remove("goster")
+  duzenleHareketId = null
+}
+
+async function hareketDuzenleKaydet(){
+  const yeniMiktar = parseFloat(document.getElementById("hareketYeniMiktar").value)
+  if(isNaN(yeniMiktar) || yeniMiktar < 0){
+    bildirim("Geçerli bir miktar girin.","Eksik Bilgi","uyari")
+    return
+  }
+
+  const btn = document.getElementById("hareketDuzenleBtn")
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kaydediliyor...'
+
+  try{
+    const r = await fetch("/api/sevkiyat/hareket-guncelle", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({hareket_id: duzenleHareketId, yeni_miktar: yeniMiktar})
+    })
+    const j = await r.json()
+    if(j.durum === "ok"){
+      hareketDuzenleKapat()
+      detayYukle()
+      toast('Gönderim düzenlendi','basari')
+    }else{
+      bildirim(j.mesaj,"Hata","hata")
+    }
+  }catch(e){
+    bildirim(e.message,"Bağlantı Hatası","hata")
+  }finally{
+    btn.disabled = false
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Kaydet'
+  }
+}
+
+  </script>
+  <div class="modal-bg" id="duzenleModal" onclick="if(event.target===this)duzenleKapat()">
+
+<div class="modal-ic">
+
+<h3><i class="fa-solid fa-pen"></i> Kalem Düzenle</h3>
+
+<div style="margin-bottom:10px">
+<label>Yüklenici Firma</label>
+<input id="dYuklenici">
+</div>
+
+<div style="margin-bottom:10px">
+<label>Sipariş No</label>
+<input id="dSiparis">
+</div>
+
+<div style="margin-bottom:10px">
+<label>Mal Grubu</label>
+<input id="dMalGrubu">
+</div>
+
+<div style="margin-bottom:10px">
+<label>Malzeme Tanımı</label>
+<input id="dMalzeme">
+</div>
+
+<div style="margin-bottom:10px">
+<label>Planlanan Miktar</label>
+<input type="number" id="dMiktar">
+</div>
+
+<div style="display:flex;gap:10px">
+
+<button class="btn" onclick="duzenleKaydet()">
+<i class="fa-solid fa-check"></i> Kaydet
+</button>
+
+<button class="btn temizle" onclick="duzenleKapat()">
+İptal
+</button>
+
+
+
+</div>
+
+</div>
+
+</div>
+
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="fa-solid fa-chevron-up"></i>
+</button>
+<script>
+window.addEventListener('scroll',function(){
+  var b=document.getElementById('scrollTopBtn');
+  if(b)b.classList.toggle('visible',window.scrollY>300);
+});
+</script>
+
+</body>
+</html>

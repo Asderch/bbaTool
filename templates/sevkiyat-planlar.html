@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Sevkiyat Planları</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/popup.js" defer></script>
+  <style>
+    .plan-kart.tamamlandi .plan-kart-ad{color:#8a8a8a}
+    .plan-kart.tamamlandi .plan-kart-bilgi{color:#9a9a9a}
+    .plan-kart.tamamlandi .miktar-ozet{color:#9a9a9a}
+    .plan-kart.tamamlandi .plan-kart-yuzde{color:var(--red)}
+    .plan-kart.tamamlandi .progress-bar-fill{background:#d6a5a5 !important}
+    .plan-kart.tamamlandi .ozet-item{opacity:.72}
+  </style>
+</head>
+<body>
+<div class="shell">
+<nav class="sidebar">
+  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>V4.0</span></div>
+  <div class="nav-section">Main Data</div>
+  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+  <div class="nav-section">Sevkiyat</div>
+  <a href="/sevkiyat-planlar" class="nav-item active"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+  <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+  <div class="nav-section">Araçlar</div>
+  <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+  <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+  <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+  <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+  <div class="nav-section">Raporlama</div>
+  <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+  <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+  <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+  <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+  <div class="sidebar-footer">
+    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+  <i class="fa-solid fa-sun"></i> Açık Tema
+</button>
+    <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>
+  </div>
+</nav>
+<div class="main-area">
+<div class="topbar">
+  <div><div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span>Sevkiyat<span class="bc-sep">›</span><span class="bc-current">Sevkiyat Planları</span></div><div class="topbar-title">Sevkiyat Planları</div><div class="topbar-sub">Plan oluştur, düzenle ve takip et</div></div>
+  <div class="topbar-actions">
+    <button class="btn" id="yeniPlanBtn" onclick="yeniPlanGoster()"><i class="fa-solid fa-plus"></i> Yeni Plan</button>
+    <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
+    <div class="topbar-avatar" title="Profil">BA</div>
+  </div>
+</div>
+<div class="content">
+
+
+    <div class="liste-filtre">
+      <button class="filtre-btn aktif" onclick="tipFiltrele('Tümü', this)">Tümü</button>
+      <button class="filtre-btn" onclick="tipFiltrele('Yan Sanayi', this)">Yan Sanayi</button>
+      <button class="filtre-btn" onclick="tipFiltrele('90 VFA', this)">90 VFA</button>
+      <button class="filtre-btn" onclick="tipFiltrele('Satış', this)">Satış</button>
+
+      <button id="tumPlanToggleBtn" class="tamamlanan-toggle-btn" onclick="tumPlanlariToggle()">
+        Tamamlananları Göster
+      </button>
+    </div>
+
+    <div class="yeni-plan-toggle" id="yeniPlanForm">
+      <div class="yeni-plan-kart">
+        <h2><i class="fa-solid fa-calendar-plus"></i> Yeni Sevkiyat Planı</h2>
+
+        <div class="form-row">
+          <div class="form-grup">
+            <label>Plan Tipi</label>
+            <select id="planTipi" onchange="planAdiOlustur()">
+              <option value="Yan Sanayi">Yan Sanayi</option>
+              <option value="90 VFA">90 VFA</option>
+              <option value="Satış">Satış</option>
+            </select>
+          </div>
+
+          <div class="form-grup">
+            <label>Ek Not (opsiyonel)</label>
+            <input type="text" id="planEkNot" placeholder="Ek bilgi yazabilirsiniz..." oninput="planAdiOlustur()">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-grup">
+            <label>Başlangıç Tarihi</label>
+            <input type="date" id="planBaslangic" onchange="planAdiOlustur()">
+          </div>
+
+          <div class="form-grup">
+            <label>Bitiş Tarihi</label>
+            <input type="date" id="planBitis" onchange="planAdiOlustur()">
+          </div>
+        </div>
+
+        <div style="background:#f4f8fc;padding:12px 16px;border-radius:8px;margin-bottom:12px;border:1.5px dashed #c0d4f5">
+          <div style="font-size:11px;color:#888;font-weight:700;margin-bottom:4px">Plan Adı Önizleme</div>
+          <div id="planAdiOnizleme" style="font-size:15px;font-weight:800;color:var(--primary)">—</div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="btn" onclick="planOlustur()">
+            <i class="fa-solid fa-check"></i> Oluştur
+          </button>
+          <button class="btn temizle" onclick="yeniPlanGizle()">
+            <i class="fa-solid fa-xmark"></i> İptal
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="planListesi">
+      <div class="bos-durum">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <p>Yükleniyor...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="program-bilgi">
+    <div class="program-baslik">Warehouse Data Management</div>
+    <div class="program-detay">Hazırlayan: Berkcan Burak Akar</div>
+  </div>
+
+<script>
+  let kullaniciRol = "hazirlayan";
+  let aktifTipFiltre = "Tümü";
+  let tumPlanlariGoster = false;
+
+  window.addEventListener("load", async () => {
+    try {
+      const r = await fetch("/api/kullanici-bilgi");
+      const b = await r.json();
+      kullaniciRol = b.rol;
+    } catch(e) {}
+    planlariYukle();
+  });
+
+  function yeniPlanGoster() {
+    document.getElementById("yeniPlanForm").classList.add("goster");
+    planAdiOlustur();
+  }
+
+  function yeniPlanGizle() {
+    document.getElementById("yeniPlanForm").classList.remove("goster");
+  }
+
+  function tarihFormatla(dateStr) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    return String(d.getDate()).padStart(2,"0") + "." + String(d.getMonth()+1).padStart(2,"0") + "." + d.getFullYear();
+  }
+
+  function planAdiOlustur() {
+    const tip = document.getElementById("planTipi").value;
+    const bas = document.getElementById("planBaslangic").value;
+    const bit = document.getElementById("planBitis").value;
+    const ekNot = (document.getElementById("planEkNot").value || "").trim();
+
+    const tipAdi = {
+      "Yan Sanayi": "YAN SANAYİ SEVK PLANI",
+      "90 VFA": "90 VFA SEVK PLANI",
+      "Satış": "SATIŞ SEVK PLANI"
+    }[tip] || tip.toUpperCase() + " SEVK PLANI";
+
+    let tarihStr = "";
+    if (bas && bit) {
+      if (bas === bit) {
+        tarihStr = " (" + tarihFormatla(bas) + ")";
+      } else {
+        tarihStr = " (" + tarihFormatla(bas) + " — " + tarihFormatla(bit) + ")";
+      }
+    } else if (bas) {
+      tarihStr = " (" + tarihFormatla(bas) + ")";
+    }
+
+    let ad = tipAdi + tarihStr;
+    if (ekNot) ad += " " + ekNot;
+
+    document.getElementById("planAdiOnizleme").innerText = (bas || bit) ? ad : "Tarih seçiniz...";
+    return ad;
+  }
+
+  async function planOlustur() {
+    const t = document.getElementById("planTipi").value;
+    const b = document.getElementById("planBaslangic").value;
+    const bi = document.getElementById("planBitis").value;
+
+    if (!b || !bi) {
+      bildirim("Başlangıç ve bitiş tarihlerini seçiniz.","Eksik Bilgi","uyari");
+      return;
+    }
+
+    const a = planAdiOlustur();
+
+    try {
+      const r = await fetch("/api/sevkiyat/plan-yeni", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan_adi: a,
+          plan_tipi: t,
+          baslangic: b,
+          bitis: bi
+        })
+      });
+
+      const j = await r.json();
+
+      if (j.durum === "ok") {
+        yeniPlanGizle();
+        document.getElementById("planEkNot").value = "";
+        document.getElementById("planBaslangic").value = "";
+        document.getElementById("planBitis").value = "";
+        document.getElementById("planTipi").value = "Yan Sanayi";
+        planlariYukle();
+      } else {
+        bildirim(j.mesaj,"Hata","hata");
+      }
+    } catch(e) {
+      bildirim(e.message,"Bağlantı Hatası","hata");
+    }
+  }
+
+  function tipFiltrele(tip, btn) {
+    aktifTipFiltre = tip;
+
+    document.querySelectorAll(".liste-filtre .filtre-btn").forEach(x => {
+      x.classList.remove("aktif");
+    });
+
+    btn.classList.add("aktif");
+    planlariYukle();
+  }
+
+  function tumPlanlariToggle() {
+    tumPlanlariGoster = !tumPlanlariGoster;
+
+    const btn = document.getElementById("tumPlanToggleBtn");
+    btn.innerText = tumPlanlariGoster ? "Tamamlananları Gizle" : "Tamamlananları Göster";
+
+    if (tumPlanlariGoster) btn.classList.add("aktif");
+    else btn.classList.remove("aktif");
+
+    planlariYukle();
+  }
+
+  async function planlariYukle() {
+    try {
+      const r = await fetch("/api/sevkiyat/plan-liste");
+      let planlar = await r.json();
+
+      console.log("API'den gelen planlar:", planlar);
+
+      if (!Array.isArray(planlar)) {
+        document.getElementById("planListesi").innerHTML =
+          '<div class="bos-durum"><i class="fa-solid fa-circle-exclamation"></i><p>API veri döndürmedi.</p></div>';
+        return;
+      }
+
+      if (aktifTipFiltre !== "Tümü") {
+        planlar = planlar.filter(p => String(p.plan_tipi).trim() === aktifTipFiltre);
+      }
+
+      if (!tumPlanlariGoster) {
+        planlar = planlar.filter(p => {
+          const pm = Number(p.planlanan_miktar || 0);
+          const gm = Number(p.gonderilen_miktar || 0);
+          const devKg = Number((p.ozet?.["Devreden"]?.kg) || 0);
+          const bek = Number((p.ozet?.["Bekliyor"]?.adet) || 0);
+          const kis = Number((p.ozet?.["Kısmi"]?.adet) || 0);
+          const toplamKalem = Number(p.toplam_kalem || 0);
+
+          const kalanGoster = Math.max(pm - gm - devKg, 0);
+          const tamamlandiMi = toplamKalem > 0 && bek === 0 && kis === 0 && kalanGoster <= 0;
+
+          return !tamamlandiMi;
+        });
+      }
+
+      console.log("Ekrana basılacak planlar:", planlar);
+
+      if (planlar.length === 0) {
+        document.getElementById("planListesi").innerHTML =
+          '<div class="bos-durum"><i class="fa-solid fa-calendar-xmark"></i><p>Gösterilecek plan bulunamadı.</p></div>';
+        return;
+      }
+
+      let html = '<div class="plan-kartlar">';
+
+      planlar.forEach(p => {
+        const tc = String(p.plan_tipi).trim() === "Yan Sanayi" ? "yansanayi" : String(p.plan_tipi).trim() === "Satış" ? "satis" : "vfa";
+
+        const pm = Number(p.planlanan_miktar || 0);
+        const gm = Number(p.gonderilen_miktar || 0);
+        const devKg = Number((p.ozet?.["Devreden"]?.kg) || 0);
+        const bek = Number((p.ozet?.["Bekliyor"]?.adet) || 0);
+        const kis = Number((p.ozet?.["Kısmi"]?.adet) || 0);
+        const gon = Number((p.ozet?.["Gönderildi"]?.adet) || 0);
+        const dev = Number((p.ozet?.["Devreden"]?.adet) || 0);
+        const toplamKalem = Number(p.toplam_kalem || 0);
+
+        const kalanGoster = Math.max(pm - gm - devKg, 0);
+        const tamamlandiMi = toplamKalem > 0 && bek === 0 && kis === 0 && kalanGoster <= 0;
+
+        let dc = "aktif";
+        if (tamamlandiMi) dc = "tamamlandi";
+        else if (p.durum === "Kapatıldı") dc = "kapatildi";
+
+        const yuzde = Number(p.yuzde || 0);
+        const bc = yuzde < 30 ? "dusuk" : yuzde < 70 ? "orta" : "iyi";
+        const sg = kullaniciRol === "admin" ? "gorunur" : "";
+        const kartClass = tamamlandiMi ? "plan-kart tamamlandi" : "plan-kart";
+        const durumYazi = tamamlandiMi ? "Tamamlandı" : (p.durum || "Aktif");
+
+        const fazlaGonderim = Number(p.fazla_gonderim || 0);
+        html += `
+  <div class="${kartClass}" onclick="location.href='/sevkiyat-detay/${p.id}'">
+    <div class="plan-kart-ust">
+      <span class="plan-kart-ad">${p.plan_adi}</span>
+      <span>
+        <span class="plan-kart-tip ${tc}">${p.plan_tipi}</span>
+        <span class="durum-rozet ${dc}">${durumYazi}</span>
+      </span>
+    </div>
+
+    <div class="plan-kart-bilgi">
+      <span><i class="fa-solid fa-calendar"></i> ${p.baslangic} — ${p.bitis}</span>
+      <span><i class="fa-solid fa-box"></i> ${p.toplam_kalem} kalem</span>
+    </div>
+
+    <div class="miktar-ozet">
+      <span>Planlanan: <strong>${fKg(pm)}</strong></span>
+      <span>Gönderilen: <strong style="color:#217346">${fKg(gm)}</strong></span>
+      ${fazlaGonderim > 0 ? `<span>Fazla Gönderim: <strong style="color:#1976d2">${fKg(fazlaGonderim)}</strong></span>` : ""}
+      <span>Kalan: <strong style="color:#e67e22">${fKg(kalanGoster)}</strong></span>
+      ${devKg > 0 ? `<span>Devreden: <strong style="color:#c62828">${fKg(devKg)}</strong></span>` : ""}
+    </div>
+
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill ${bc}" style="width:${yuzde}%"></div>
+    </div>
+
+    <div class="plan-kart-alt">
+      <div class="plan-kart-ozet">
+        <span class="ozet-item bekliyor">Bekliyor: ${bek}</span>
+        ${kis > 0 ? `<span class="ozet-item kismi">Kısmi: ${kis}</span>` : ""}
+        <span class="ozet-item gonderildi">Gönderildi: ${gon}</span>
+        ${dev > 0 ? `<span class="ozet-item devreden">Devreden: ${dev}</span>` : ""}
+      </div>
+
+      <span class="plan-kart-yuzde">%${yuzde}</span>
+    </div>
+
+    <div style="margin-top:8px;text-align:right;" onclick="event.stopPropagation()">
+      <button class="sil-btn ${sg}" onclick="planSil(${p.id})">
+        <i class="fa-solid fa-trash"></i> Sil
+      </button>
+    </div>
+  </div>
+`;
+      });
+
+      html += '</div>';
+      document.getElementById("planListesi").innerHTML = html;
+
+    } catch(e) {
+      console.error("planlariYukle hata:", e);
+      document.getElementById("planListesi").innerHTML =
+        '<div class="bos-durum"><i class="fa-solid fa-circle-exclamation"></i><p>Planlar yüklenemedi.</p></div>';
+    }
+  }
+
+  async function planSil(id) {
+    event.stopPropagation();
+
+    const s = await onayla("Bu planı ve tüm kalemlerini silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz.", "Plan Sil", {onayText:"Sil", tehlike:true});
+    if (!s) return;
+
+    try {
+      const r = await fetch("/api/sevkiyat/plan-sil", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+
+      const j = await r.json();
+
+      if (j.durum === "ok") {
+        planlariYukle();
+        toast("Plan silindi", "basari");
+      } else {
+        bildirim(j.mesaj,"Hata","hata");
+      }
+    } catch(e) {
+      bildirim(e.message,"Bağlantı Hatası","hata");
+    }
+  }
+
+  function fKg(v) {
+    if (!v) return "0 KG";
+    if (v >= 1000) return (v / 1000).toFixed(1) + " Ton";
+    return Math.round(v) + " KG";
+  }
+</script>
+
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="fa-solid fa-chevron-up"></i>
+</button>
+<script>
+window.addEventListener('scroll',function(){
+  var b=document.getElementById('scrollTopBtn');
+  if(b)b.classList.toggle('visible',window.scrollY>300);
+});
+</script>
+
+</body>
+</html>

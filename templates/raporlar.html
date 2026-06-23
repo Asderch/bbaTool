@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raporlar</title>
+
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/popup.js" defer></script>
+
+  <style>
+
+    .modul-secim {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .modul-kart {
+      width: 200px;
+      background: #f4f6f8;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--primary);
+    }
+
+    .modul-kart:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(1,41,70,0.25);
+    }
+
+    .modul-kart i {
+      font-size: 36px;
+      margin-bottom: 14px;
+      display: block;
+      opacity: 0.8;
+    }
+
+    .modul-kart .modul-ad {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .modul-kart .modul-aciklama {
+      font-size: 11px;
+      opacity: 0.65;
+      margin-top: 4px;
+    }
+
+    #raporGorunum { display: none; }
+
+    .geri-modul-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #e8f0fe;
+      border: 1.5px solid #c0d4f5;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 9px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+    }
+
+    .geri-modul-btn:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      transform: translateX(-2px);
+      box-shadow: 0 4px 12px rgba(1,41,70,0.2);
+    }
+
+    .modul-baslik {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .modul-baslik i { font-size: 22px; color: var(--primary); }
+    .modul-baslik h2 { margin: 0; font-size: 18px; color: var(--primary); }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .toolbar-sol { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .filtre-btn {
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: white;
+      color: #666;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filtre-btn:hover,
+    .filtre-btn.aktif {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      transform: none;
+      box-shadow: none;
+    }
+
+    .klasor-btns { display: flex; gap: 8px; }
+
+    .klasor-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .klasor-btn.pdf-btn   { background: #fff0f0; color: #c82333; border: 1.5px solid #ffcccc; }
+    .klasor-btn.excel-btn { background: #f0fff4; color: #217346; border: 1.5px solid #b7e4c7; }
+    .klasor-btn:hover { opacity: 0.8; transform: none; box-shadow: none; }
+
+    .ozet-paneller {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .ozet-kart {
+      flex: 1;
+      background: var(--primary);
+      color: white;
+      padding: 16px 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .ozet-kart i { font-size: 28px; opacity: 0.7; }
+    .ozet-kart .sayi { font-size: 26px; font-weight: 800; line-height: 1; }
+    .ozet-kart .etiket { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+    .ozet-kart.pdf-kart   { background: #c82333; }
+    .ozet-kart.excel-kart { background: #217346; }
+
+    .dosya-tablo {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .dosya-tablo th {
+      background: var(--primary);
+      color: white;
+      padding: 11px 14px;
+      text-align: left;
+      font-weight: 700;
+    }
+
+    .dosya-tablo th:last-child { text-align: center; }
+
+    .dosya-tablo td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+
+    .dosya-tablo tr:hover td { background: #f4f8fc; }
+
+    .tip-rozet {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .tip-rozet.pdf   { background: #fff0f0; color: #c82333; }
+    .tip-rozet.excel { background: #f0fff4; color: #217346; }
+
+    .islem-btns {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .islem-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: all 0.2s;
+      padding: 0;
+    }
+
+    .islem-btn.ac    { background: #e8f0fe; color: #1a4a72; }
+    .islem-btn.sil   { background: #fff0f0; color: #c82333; }
+    .islem-btn.ac:hover  { background: var(--primary); color: white; transform: translateY(-1px); }
+    .islem-btn.sil:hover { background: #c82333; color: white; transform: translateY(-1px); }
+
+    .bos-durum {
+      text-align: center;
+      padding: 60px 20px;
+      color: #aaa;
+    }
+
+    .bos-durum i { font-size: 48px; margin-bottom: 16px; display: block; opacity: 0.3; }
+    .bos-durum p { font-size: 14px; font-weight: 600; }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="logo-alan">
+    <img src="/assets/logo/logo.png" alt="Logo">
+  </div>
+
+  <div class="container">
+
+    <div>
+      <a href="/" class="geri-btn">← Ana Menü</a>
+    </div>
+
+    <h1 class="ana-baslik">Raporlar</h1>
+
+    <!-- MODÜL SEÇİM EKRANI -->
+    <div id="modulSecim">
+
+      <div class="modul-secim">
+
+        <div class="modul-kart" onclick="modulSec('sevk')">
+          <i class="fa-solid fa-truck-loading ikon"></i>
+          <div class="modul-ad">Sevkiyat Plan</div>
+          <div class="modul-aciklama">Sevkiyat Plan Raporları</div>
+        </div>
+
+        <div class="modul-kart" onclick="modulSec('agirlik')">
+          <i class="fa-solid fa-weight-scale"></i>
+          <div class="modul-ad">Ağırlık Hesaplama</div>
+          <div class="modul-aciklama">Malzeme ağırlık raporları</div>
+        </div>
+
+
+
+      </div>
+
+    </div>
+
+    <!-- RAPOR GÖRÜNÜMÜ -->
+    <div id="raporGorunum">
+
+      <button class="geri-modul-btn" onclick="modulGeri()">
+        <i class="fa-solid fa-chevron-left"></i> Modül Seçimine Dön
+      </button>
+
+      <div class="modul-baslik">
+        <i id="modulIkon"></i>
+        <h2 id="modulAd"></h2>
+      </div>
+
+      <div class="ozet-paneller">
+        <div class="ozet-kart pdf-kart">
+          <i class="fa-regular fa-file-pdf"></i>
+          <div>
+            <div class="sayi" id="pdfSayi">0</div>
+            <div class="etiket">PDF Rapor</div>
+          </div>
+        </div>
+        <div class="ozet-kart excel-kart">
+          <i class="fa-solid fa-file-excel"></i>
+          <div>
+            <div class="sayi" id="excelSayi">0</div>
+            <div class="etiket">Excel Rapor</div>
+          </div>
+        </div>
+        <div class="ozet-kart">
+          <i class="fa-solid fa-folder-open"></i>
+          <div>
+            <div class="sayi" id="toplamSayi">0</div>
+            <div class="etiket">Toplam Dosya</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-sol">
+          <button class="filtre-btn aktif" onclick="filtrele('tumu', this)">
+            <i class="fa-solid fa-list"></i> Tümü
+          </button>
+          <button class="filtre-btn" onclick="filtrele('pdf', this)">
+            <i class="fa-regular fa-file-pdf"></i> PDF
+          </button>
+          <button class="filtre-btn" onclick="filtrele('excel', this)">
+            <i class="fa-solid fa-file-excel"></i> Excel
+          </button>
+        </div>
+        <div class="klasor-btns">
+          <button class="btn klasor-btn pdf-btn" onclick="klasorAc('pdf')">
+            <i class="fa-solid fa-folder-open"></i> PDF Klasörü
+          </button>
+          <button class="btn klasor-btn excel-btn" onclick="klasorAc('excel')">
+            <i class="fa-solid fa-folder-open"></i> Excel Klasörü
+          </button>
+        </div>
+      </div>
+
+      <div id="icerik">
+        <div class="bos-durum">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Yükleniyor...</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="program-bilgi">
+    <div class="program-baslik">Raporlar</div>
+    <div class="program-detay">Version 3.2</div>
+  </div>
+
+  <script>
+
+    const MODULLER = {
+      agirlik: {
+        ad:     "Ağırlık Hesaplama",
+        ikon:   "fa-solid fa-weight-scale",
+        prefix: "agirlik_"
+      },
+      sevk: {
+        ad:     "Sevkiyat Plani",
+        ikon:   "fa-solid fa-door-open",
+        prefix: "sevkiyat_"
+      }
+    }
+
+    let tumDosyalar  = []
+    let mevcutFiltre = "tumu"
+    let mevcutModul  = null
+
+    function modulSec(modul) {
+      mevcutModul = modul
+      const m = MODULLER[modul]
+
+      document.getElementById("modulSecim").style.display  = "none"
+      document.getElementById("raporGorunum").style.display = "block"
+      document.getElementById("modulAd").innerText = m.ad
+      document.getElementById("modulIkon").className = m.ikon
+      document.getElementById("modulIkon").style.color = "var(--primary)"
+      document.getElementById("modulIkon").style.fontSize = "22px"
+
+      mevcutFiltre = "tumu"
+      document.querySelectorAll(".filtre-btn").forEach((b,i) => {
+        b.classList.toggle("aktif", i === 0)
+      })
+
+      dosyalariYukle()
+    }
+
+    function modulGeri() {
+      document.getElementById("raporGorunum").style.display = "none"
+      document.getElementById("modulSecim").style.display   = "block"
+      tumDosyalar = []
+      mevcutModul = null
+    }
+
+    async function dosyalariYukle() {
+      document.getElementById("icerik").innerHTML = `
+        <div class="bos-durum">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Yükleniyor...</p>
+        </div>`
+      try {
+        const res = await fetch("/api/raporlar")
+        const hepsi = await res.json()
+        const prefix = MODULLER[mevcutModul].prefix
+        tumDosyalar = hepsi.filter(d => d.ad.startsWith(prefix))
+        ozetiGuncelle()
+        tabloGoster(mevcutFiltre)
+      } catch(e) {
+        document.getElementById("icerik").innerHTML = `
+          <div class="bos-durum">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <p>Dosyalar yüklenemedi.</p>
+          </div>`
+      }
+    }
+
+    function ozetiGuncelle() {
+      const pdf   = tumDosyalar.filter(d => d.tip === "pdf").length
+      const excel = tumDosyalar.filter(d => d.tip === "excel").length
+      document.getElementById("pdfSayi").innerText    = pdf
+      document.getElementById("excelSayi").innerText  = excel
+      document.getElementById("toplamSayi").innerText = tumDosyalar.length
+    }
+
+    function tabloGoster(filtre) {
+      const liste = filtre === "tumu" ? tumDosyalar : tumDosyalar.filter(d => d.tip === filtre)
+
+      if (liste.length === 0) {
+        document.getElementById("icerik").innerHTML = `
+          <div class="bos-durum">
+            <i class="fa-solid fa-folder-open"></i>
+            <p>Bu modüle ait rapor bulunamadı.</p>
+          </div>`
+        return
+      }
+
+      let html = `
+        <table class="dosya-tablo">
+          <thead>
+            <tr>
+              <th>Tür</th>
+              <th>Dosya Adı</th>
+              <th>Boyut</th>
+              <th>Tarih</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>`
+
+      liste.forEach((d, i) => {
+        const rozet = d.tip === "pdf"
+          ? `<span class="tip-rozet pdf"><i class="fa-regular fa-file-pdf"></i> PDF</span>`
+          : `<span class="tip-rozet excel"><i class="fa-solid fa-file-excel"></i> Excel</span>`
+
+        html += `
+          <tr>
+            <td>${rozet}</td>
+            <td>${d.ad}</td>
+            <td>${boyutFormat(d.boyut)}</td>
+            <td>${d.tarih}</td>
+            <td>
+              <div class="islem-btns">
+                <button class="islem-btn ac" title="Aç" onclick='dosyaAc(${JSON.stringify(d.yol)})'>
+                  <i class="fa-solid fa-up-right-from-square"></i>
+                </button>
+                <button class="islem-btn sil" title="Sil" onclick='dosyaSil(${JSON.stringify(d.yol)})'>
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>`
+      })
+
+      html += `</tbody></table>`
+      document.getElementById("icerik").innerHTML = html
+    }
+
+    function boyutFormat(byte) {
+      if (byte < 1024) return byte + " B"
+      if (byte < 1024 * 1024) return (byte / 1024).toFixed(1) + " KB"
+      return (byte / (1024 * 1024)).toFixed(1) + " MB"
+    }
+
+    function filtrele(tip, btn) {
+      mevcutFiltre = tip
+      document.querySelectorAll(".filtre-btn").forEach(b => b.classList.remove("aktif"))
+      btn.classList.add("aktif")
+      tabloGoster(tip)
+    }
+
+    async function dosyaAc(yol) {
+      await fetch("/api/dosya-ac", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ yol })
+      })
+    }
+
+    async function dosyaSil(yol) {
+      const s = await onayla("Bu dosyayı silmek istediğinize emin misiniz?", "Dosya Sil", {onayText:"Sil", tehlike:true})
+      if (!s) return
+      const res  = await fetch("/api/dosya-sil", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ yol })
+      })
+      const json = await res.json()
+      if (json.durum === "ok") {
+        await dosyalariYukle()
+      } else {
+        bildirim(json.mesaj,"Silinemedi","hata")
+      }
+    }
+
+    async function klasorAc(tip) {
+      await fetch("/api/klasor-ac", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ tip })
+      })
+    }
+
+  </script>
+
+</body>
+</html>

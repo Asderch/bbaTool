@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>İşlem Geçmişi</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/popup.js" defer></script>
+  <style>
+    .filtre-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:end}
+    .filtre-grup{display:flex;flex-direction:column;gap:3px}
+    .filtre-grup label{font-size:11px;font-weight:600;color:var(--text3)}
+    .filtre-grup input,.filtre-grup select{margin-bottom:0;padding:7px 10px;font-size:12px;min-width:140px}
+
+    .log-tablo{width:100%;border-collapse:collapse;font-size:12px}
+    .log-tablo th{background:var(--bg-hover);color:var(--text3);padding:10px 12px;font-size:10px;font-weight:600;text-align:left;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+    .log-tablo td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text2)}
+    .log-tablo tr:hover td{background:var(--bg-hover)}
+
+    .modul-rozet{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+    .modul-rozet.sevkiyat{background:var(--blue-dim);color:var(--blue)}
+    .modul-rozet.personel{background:var(--purple-dim);color:var(--purple)}
+    .modul-rozet.sistem{background:var(--bg-hover);color:var(--text3)}
+
+    .islem-rozet{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}
+    .islem-rozet.ekleme{background:var(--green-dim);color:var(--green)}
+    .islem-rozet.silme{background:var(--red-dim);color:var(--red)}
+    .islem-rozet.guncelleme,.islem-rozet.duzenleme{background:var(--blue-dim);color:var(--blue)}
+    .islem-rozet.gonderim{background:var(--green-dim);color:var(--green)}
+    .islem-rozet.devir{background:var(--amber-dim);color:var(--amber)}
+    .islem-rozet.sifirlama{background:var(--bg-hover);color:var(--text3)}
+    .islem-rozet.iptal{background:var(--pink-dim);color:var(--pink)}
+    .islem-rozet.izin{background:var(--amber-dim);color:var(--amber)}
+
+    .detay-text{font-size:11px;color:var(--text3);max-width:400px;word-break:break-word}
+    .tarih-text{font-size:11px;color:var(--text3);white-space:nowrap}
+    .kisi-text{font-size:11px;font-weight:700;color:var(--blue)}
+    .sayfa-logo{width:120px;height:auto;display:block;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.10))}
+    .daha-btn{display:block;margin:16px auto;padding:8px 24px;font-size:12px;border-radius:20px;background:#f4f6f8;color:#666;border:1.5px solid #ddd;cursor:pointer;font-weight:700}
+    .daha-btn:hover{background:var(--primary);color:white;border-color:var(--primary)}
+  </style>
+</head>
+<body>
+<div class="shell">
+<nav class="sidebar">
+  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>V4.0</span></div>
+  <div class="nav-section">Main Data</div>
+  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+  <div class="nav-section">Sevkiyat</div>
+  <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+  <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+  <div class="nav-section">Araçlar</div>
+  <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+  <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+  <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+  <a href="/islem-gecmisi" class="nav-item active"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+  <div class="nav-section">Raporlama</div>
+  <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+  <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+  <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+  <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+  <div class="sidebar-footer">
+        <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+  <i class="fa-solid fa-sun"></i> Açık Tema
+    <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>
+
+</button>
+  </div>
+</nav>
+<div class="main-area">
+<div class="topbar">
+  <div><div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span>Araçlar<span class="bc-sep">›</span><span class="bc-current">İşlem Geçmişi</span></div><div class="topbar-title">İşlem Geçmişi</div><div class="topbar-sub">Tüm sistem işlemleri ve loglar</div></div>
+  <div class="topbar-actions">
+    <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
+    <div class="topbar-avatar" title="Profil">BA</div>
+  </div>
+</div>
+<div class="content">
+
+
+    <div class="ozet-strip">
+      <div class="ozet-mini toplam"><div class="sayi" id="oToplam">0</div><div class="et">Toplam Kayıt</div></div>
+      <div class="ozet-mini sevk"><div class="sayi" id="oSevk">0</div><div class="et">Sevkiyat</div></div>
+      <div class="ozet-mini pers"><div class="sayi" id="oPers">0</div><div class="et">Personel</div></div>
+      <div class="ozet-mini bugun"><div class="sayi" id="oBugun">0</div><div class="et">Bugün</div></div>
+    </div>
+
+    <div class="filtre-bar">
+      <div class="filtre-grup">
+        <label>Modül</label>
+        <select id="fModul" onchange="yukle()">
+          <option value="">Tümü</option>
+          <option value="Sevkiyat">Sevkiyat</option>
+          <option value="Personel">Personel</option>
+        </select>
+      </div>
+      <div class="filtre-grup">
+        <label>Kullanıcı</label>
+        <input type="text" id="fKullanici" placeholder="İsim ara..." oninput="yukleDebounce()">
+      </div>
+      <div class="filtre-grup">
+        <label>Başlangıç</label>
+        <input type="date" id="fBaslangic" onchange="yukle()">
+      </div>
+      <div class="filtre-grup">
+        <label>Bitiş</label>
+        <input type="date" id="fBitis" onchange="yukle()">
+      </div>
+      <div class="filtre-grup">
+        <label>&nbsp;</label>
+        <button class="btn temizle" onclick="filtreTemizle()" style="padding:7px 14px;font-size:12px"><i class="fa-solid fa-xmark"></i> Temizle</button>
+      </div>
+    </div>
+
+    <div id="icerik"><div class="bos"><i class="fa-solid fa-spinner fa-spin"></i><p>Yükleniyor...</p></div></div>
+  </div>
+
+</div><!-- /content -->
+</div><!-- /main-area -->
+</div><!-- /shell -->
+
+<script>
+let loglar = []
+let debounceTimer = null
+
+window.addEventListener("load", () => yukle())
+
+function yukleDebounce(){
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(yukle, 400)
+}
+
+async function yukle(){
+  try {
+    let params = []
+    const modul = document.getElementById("fModul").value
+    const kullanici = document.getElementById("fKullanici").value.trim()
+    const bas = document.getElementById("fBaslangic").value
+    const bit = document.getElementById("fBitis").value
+
+    if(modul) params.push("modul=" + encodeURIComponent(modul))
+    if(kullanici) params.push("kullanici=" + encodeURIComponent(kullanici))
+    if(bas) params.push("start_date=" + encodeURIComponent(bas))
+    if(bit) params.push("end_date=" + encodeURIComponent(bit))
+
+    const url = "/api/islem-log/liste" + (params.length ? "?" + params.join("&") : "")
+    const r = await fetch(url)
+    loglar = await r.json()
+    ozetGuncelle()
+    tabloGoster()
+  } catch(e){
+    document.getElementById("icerik").innerHTML = '<div class="bos"><i class="fa-solid fa-circle-exclamation"></i><p>Yüklenemedi</p></div>'
+  }
+}
+
+function ozetGuncelle(){
+  const bugun = new Date().toISOString().slice(0,10)
+  document.getElementById("oToplam").innerText = loglar.length
+  document.getElementById("oSevk").innerText = loglar.filter(l => l.modul === "Sevkiyat").length
+  document.getElementById("oPers").innerText = loglar.filter(l => l.modul === "Personel").length
+  document.getElementById("oBugun").innerText = loglar.filter(l => l.tarih && l.tarih.startsWith(bugun)).length
+}
+
+function modulClass(modul){
+  if(modul === "Sevkiyat") return "sevkiyat"
+  if(modul === "Personel") return "personel"
+  return "sistem"
+}
+
+function modulIkon(modul){
+  if(modul === "Sevkiyat") return "fa-solid fa-truck"
+  if(modul === "Personel") return "fa-solid fa-users"
+  return "fa-solid fa-gear"
+}
+
+function islemClass(islem){
+  const i = islem.toLowerCase()
+  if(i.includes("ekle") || i.includes("oluştur")) return "ekleme"
+  if(i.includes("sil")) return "silme"
+  if(i.includes("güncelle") || i.includes("düzenle")) return "duzenleme"
+  if(i.includes("gönder")) return "gonderim"
+  if(i.includes("devir") || i.includes("devret")) return "devir"
+  if(i.includes("sıfır")) return "sifirlama"
+  if(i.includes("iptal")) return "iptal"
+  if(i.includes("izin")) return "izin"
+  return ""
+}
+
+function tabloGoster(){
+  if(!loglar.length){
+    document.getElementById("icerik").innerHTML = '<div class="bos"><i class="fa-solid fa-clock-rotate-left"></i><p>İşlem kaydı bulunamadı.</p></div>'
+    return
+  }
+
+  let h = `<table class="log-tablo"><thead><tr>
+    <th>#</th><th>Tarih</th><th>Modül</th><th>İşlem</th><th>Detay</th><th>İlgili</th><th>Yapan</th>
+  </tr></thead><tbody>`
+
+  loglar.forEach((l, i) => {
+    h += `<tr>
+      <td style="color:#ccc;font-size:10px">${l.id}</td>
+      <td><span class="tarih-text">${l.tarih || "-"}</span></td>
+      <td><span class="modul-rozet ${modulClass(l.modul)}"><i class="${modulIkon(l.modul)}" style="font-size:9px"></i> ${l.modul}</span></td>
+      <td><span class="islem-rozet ${islemClass(l.islem)}">${l.islem}</span></td>
+      <td><span class="detay-text">${l.detay || "-"}</span></td>
+      <td style="font-size:11px">${l.ilgili_ad || "-"}</td>
+      <td><span class="kisi-text">${l.yapan_ad || "-"}</span></td>
+    </tr>`
+  })
+
+  h += `</tbody></table>`
+  document.getElementById("icerik").innerHTML = h
+}
+
+function filtreTemizle(){
+  document.getElementById("fModul").value = ""
+  document.getElementById("fKullanici").value = ""
+  document.getElementById("fBaslangic").value = ""
+  document.getElementById("fBitis").value = ""
+  yukle()
+}
+</script>
+
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="fa-solid fa-chevron-up"></i>
+</button>
+<script>
+window.addEventListener('scroll',function(){
+  var b=document.getElementById('scrollTopBtn');
+  if(b)b.classList.toggle('visible',window.scrollY>300);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Malzeme Mükerrer Kontrol</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/popup.js" defer></script>
+  <style>
+    /* ────────────────────────────────────────────────────────────
+       Malzeme Mükerrer Kontrol — Sayfa özel stilleri (minimal)
+       Global stil: style.css üzerinden. Light/Dark tema otomatik.
+    ──────────────────────────────────────────────────────────── */
+
+    /* ─── Katalog çubuğu ─── */
+    .katalog-bar {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 12px 16px; margin-bottom: 16px;
+      background: var(--bg-white);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .katalog-bar-info {
+      flex: 1; min-width: 200px;
+      font-size: 12px; color: var(--text2);
+    }
+    .katalog-bar-info strong { color: var(--text); font-weight: 700; }
+    .katalog-bar-info .yok { color: var(--amber); font-style: italic; }
+    .katalog-bar-info > i { color: var(--blue); margin-right: 6px; }
+
+    /* ─── Sorgu bölümü ─── */
+    .sorgu-bolum {
+      background: var(--bg-white);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .sorgu-bolum h3 {
+      margin: 0 0 14px 0; font-size: 14px; font-weight: 700;
+      color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sorgu-bolum h3 i { color: var(--primary); font-size: 13px; }
+
+    .sorgu-aciklama {
+      font-size: 12px; color: var(--text2);
+      margin-bottom: 10px;
+      line-height: 1.55;
+    }
+    .sorgu-aciklama code {
+      background: var(--bg-hover);
+      padding: 1px 6px; border-radius: 3px;
+      color: var(--primary);
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 11px;
+      border: 0.5px solid var(--border);
+    }
+
+    .sorgu-textarea {
+      width: 100%;
+      min-height: 80px; max-height: 280px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: 0.5px solid var(--border);
+      background: var(--bg-hover);
+      color: var(--text);
+      font-family: inherit; font-size: 13px;
+      resize: vertical;
+      box-sizing: border-box;
+      transition: border-color .15s;
+      margin: 0;
+    }
+    .sorgu-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(62,207,142,.10);
+    }
+
+    .sorgu-buton-grup {
+      display: flex; gap: 8px; justify-content: space-between; align-items: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .satir-sayisi {
+      font-size: 11px; color: var(--text3);
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+    }
+    .sorgu-btn-grp { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Tam Boylar butonu — teal renk */
+    .btn.tamboy {
+      background: var(--teal-dim);
+      color: var(--teal);
+      border-color: rgba(45,212,191,.25);
+    }
+    .btn.tamboy:hover {
+      background: var(--teal);
+      color: #fff;
+      border-color: var(--teal);
+    }
+
+    /* Kontrol Et butonu — primary */
+    .btn.kontrol {
+      background: var(--primary);
+      color: #111;
+      border-color: var(--primary);
+      font-weight: 700;
+    }
+    .btn.kontrol:hover {
+      background: var(--primary-light);
+      color: #111;
+      border-color: var(--primary-light);
+    }
+
+    /* Katalog Yükle — blue */
+    .btn.yukle {
+      background: var(--blue-dim);
+      color: var(--blue);
+      border-color: rgba(99,102,241,.25);
+    }
+    .btn.yukle:hover {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+
+    /* ─── Sonuç banner ─── */
+    .sonuc-banner {
+      padding: 14px 18px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 13px;
+      border: 0.5px solid;
+      box-shadow: var(--shadow-sm);
+    }
+    .sonuc-banner .b-ikon { font-size: 22px; flex-shrink: 0; }
+    .sonuc-banner .b-icerik { flex: 1; min-width: 0; }
+    .sonuc-banner .b-baslik { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+    .sonuc-banner .b-alt    { font-size: 11.5px; opacity: 0.85; }
+    .sonuc-banner a { color: inherit; text-decoration: underline; }
+
+    .sonuc-banner.tam   { background: var(--green-dim);  border-color: rgba(62,207,142,.30); color: var(--green); }
+    .sonuc-banner.yakin { background: var(--amber-dim);  border-color: rgba(234,179,8,.30);  color: var(--amber); }
+    .sonuc-banner.yok   { background: var(--blue-dim);   border-color: rgba(99,102,241,.30); color: var(--blue); }
+    .sonuc-banner.hata  { background: var(--red-dim);    border-color: rgba(239,68,68,.30);  color: var(--red); }
+
+    .sure-rozet {
+      font-size: 10px;
+      color: var(--text3);
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      background: var(--bg);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 0.5px solid var(--border);
+      white-space: nowrap;
+    }
+
+    /* ─── Kategori başlığı ─── */
+    .kategori-baslik {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 18px 0 8px 0;
+      padding-bottom: 6px;
+      border-bottom: 0.5px solid var(--border);
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .kategori-baslik i { font-size: 11px; }
+    .kategori-baslik.tam   i { color: var(--green); }
+    .kategori-baslik.yakin i { color: var(--amber); }
+    .kategori-baslik.olasi i { color: var(--blue); }
+
+    /* ─── Eşleşme kartı ─── */
+    .eslesme-kart {
+      background: var(--bg-white);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      margin-bottom: 6px;
+      border-left: 3px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      transition: all .15s;
+    }
+    .eslesme-kart.tam    { border-left-color: var(--green); }
+    .eslesme-kart.yakin  { border-left-color: var(--amber); }
+    .eslesme-kart.olasi  { border-left-color: var(--blue); opacity: .80; }
+    .eslesme-kart.olasi:hover { opacity: 1; }
+    .eslesme-kart.tamboy { border-left-color: var(--teal); }
+
+    .eslesme-baslik {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .eslesme-malz-no {
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-weight: 700;
+      font-size: 13.5px;
+      color: var(--primary);
+      letter-spacing: 0.3px;
+    }
+    .eslesme-kart.tamboy .eslesme-malz-no { color: var(--teal); }
+
+    .eslesme-puan {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      white-space: nowrap;
+    }
+    .eslesme-puan.yuksek { background: var(--green-dim); color: var(--green); }
+    .eslesme-puan.orta   { background: var(--amber-dim); color: var(--amber); }
+    .eslesme-puan.dusuk  { background: var(--bg);        color: var(--text3); }
+
+    .eslesme-metin {
+      font-size: 12.5px;
+      color: var(--text);
+      margin: 3px 0;
+      line-height: 1.45;
+    }
+    .eslesme-metin.uzun {
+      padding: 7px 10px;
+      background: var(--bg);
+      border-left: 2px solid var(--border);
+      border-radius: var(--radius);
+      margin: 6px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .eslesme-metin .lbl {
+      font-size: 9.5px;
+      color: var(--text3);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      margin-right: 6px;
+    }
+
+    .eslesme-meta {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 0.5px solid var(--border-light);
+      font-size: 11px;
+      color: var(--text2);
+    }
+    .eslesme-meta span {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 7px;
+      background: var(--bg);
+      border: 0.5px solid var(--border-light);
+      border-radius: 3px;
+    }
+    .eslesme-meta strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .eslesme-kopyala {
+      padding: 2px 8px !important;
+      font-size: 10px !important;
+      border-radius: 3px !important;
+    }
+
+    /* ─── Toplu tablo (global table stili + minor) ─── */
+    .toplu-malz-no {
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 11.5px;
+    }
+    .kategori-rozet {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .kategori-rozet.tam   { background: var(--green-dim); color: var(--green); }
+    .kategori-rozet.yakin { background: var(--amber-dim); color: var(--amber); }
+    .kategori-rozet.yok   { background: var(--blue-dim);  color: var(--blue); }
+    .kategori-rozet.hata  { background: var(--red-dim);   color: var(--red); }
+
+    /* ─── Tam Boy bölümü ─── */
+    .tam-boy-bolum {
+      margin-top: 12px;
+      background: var(--bg-white);
+      border: 0.5px solid var(--border);
+      border-left: 3px solid var(--teal);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .tam-boy-baslik {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; padding-bottom: 10px;
+      border-bottom: 0.5px solid var(--border-light);
+    }
+    .tam-boy-baslik h4 {
+      margin: 0; font-size: 13px; color: var(--teal);
+      display: flex; align-items: center; gap: 7px;
+      font-weight: 700;
+    }
+    .tam-boy-temiz-info {
+      font-size: 11px; color: var(--text2);
+      margin-bottom: 12px;
+      padding: 9px 12px;
+      background: var(--bg);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius);
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      line-height: 1.6;
+    }
+    .tam-boy-temiz-info .lbl-mini {
+      color: var(--text3); font-size: 9.5px;
+      text-transform: uppercase; letter-spacing: 0.3px;
+      font-weight: 700;
+    }
+    .tam-boy-temiz-info .added { color: var(--teal); font-weight: 700; }
+    .tam-boy-grup { margin-bottom: 10px; }
+    .tam-boy-grup:last-child { margin-bottom: 0; }
+    .tam-boy-grup-baslik {
+      font-size: 11.5px; font-weight: 700; color: var(--teal);
+      margin-bottom: 6px;
+      padding: 6px 10px;
+      background: var(--teal-dim);
+      border-left: 2px solid var(--teal);
+      border-radius: var(--radius);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .tam-boy-grup-bos {
+      padding: 12px;
+      text-align: center;
+      color: var(--text3);
+      font-style: italic;
+      font-size: 11.5px;
+      background: var(--bg);
+      border: 0.5px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    /* ─── Eşleşme raporu (yükleme sonrası) ─── */
+    .rapor-kutu {
+      background: var(--bg-white);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin-top: 8px;
+      box-shadow: var(--shadow-sm);
+      font-size: 12px;
+    }
+    .rapor-kutu-baslik {
+      font-weight: 700; margin-bottom: 10px;
+      color: var(--text);
+      display: flex; align-items: center; gap: 7px;
+      font-size: 12.5px;
+    }
+    .rapor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 6px;
+    }
+    .rapor-grid-item {
+      background: var(--bg);
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      border: 0.5px solid var(--border-light);
+      border-left: 2px solid var(--green);
+    }
+    .rapor-grid-item .alan {
+      font-size: 9.5px; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.3px;
+      font-weight: 600;
+    }
+    .rapor-grid-item .sutun {
+      font-size: 11.5px; color: var(--green);
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      margin-top: 3px;
+      font-weight: 600;
+    }
+    .rapor-uyari {
+      background: var(--amber-dim);
+      border: 0.5px solid rgba(234,179,8,.30);
+      border-left: 3px solid var(--amber);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      margin-top: 8px;
+      font-size: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .rapor-uyari-baslik {
+      font-weight: 700; color: var(--amber);
+      margin-bottom: 5px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ─── Yükleme modalı (global .modal-bg / .modal-ic kullanır) ─── */
+    .yukle-drop {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px 16px;
+      text-align: center; cursor: pointer;
+      transition: all .15s;
+      margin-bottom: 10px;
+      background: var(--bg);
+    }
+    .yukle-drop:hover, .yukle-drop.dragover {
+      border-color: var(--blue);
+      background: var(--blue-dim);
+    }
+    .yukle-drop i { font-size: 32px; color: var(--blue); margin-bottom: 8px; display: block; }
+    .yukle-drop .ana { font-size: 13px; font-weight: 600; color: var(--text); }
+    .yukle-drop .alt { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+    /* ─── Debug paneli ─── */
+    .debug-kutu {
+      background: var(--bg-white);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      font-size: 12px;
+      margin-top: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .debug-baslik {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; padding-bottom: 10px;
+      border-bottom: 0.5px solid var(--border-light);
+    }
+    .debug-baslik h4 {
+      margin: 0; font-size: 13.5px; font-weight: 700;
+      color: var(--text);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .debug-baslik h4 i { color: var(--amber); }
+    .debug-ozet {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .debug-ozet-kart {
+      background: var(--bg);
+      border: 0.5px solid var(--border-light);
+      padding: 9px 11px;
+      border-radius: var(--radius);
+    }
+    .debug-ozet-kart .lbl {
+      font-size: 9.5px; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.3px;
+      font-weight: 600;
+    }
+    .debug-ozet-kart .val {
+      font-size: 17px; font-weight: 700;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      margin-top: 3px;
+    }
+    .token-rozet {
+      display: inline-block;
+      background: var(--primary-dim);
+      color: var(--primary);
+      padding: 2px 7px; border-radius: 4px;
+      margin-right: 4px; margin-bottom: 3px;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 11px;
+      border: 0.5px solid rgba(62,207,142,.20);
+    }
+    .ham-sql-kart {
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius);
+    }
+    .ham-sql-kart.bulundu { border-left: 2px solid var(--green); }
+    .ham-sql-kart.bos     { border-left: 2px solid var(--red); }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
+    <h2>Warehouse Data</h2>
+    <span>v4.0</span>
+  </div>
+  <div class="nav-section">Main Data</div>
+  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+  <div class="nav-section">Sevkiyat</div>
+  <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+  <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+  <div class="nav-section">Araçlar</div>
+  <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+  <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+  <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+  <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+  <div class="nav-section">Raporlama</div>
+  <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+  <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+  <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+  <a href="/malzeme-kontrol" class="nav-item active"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+  <div class="sidebar-footer">
+    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i> Açık Tema</button>
+    <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>
+  </div>
+</nav>
+
+<div class="main-area">
+
+<div class="topbar">
+  <div>
+    <div class="topbar-breadcrumb">
+      <a href="/">Ana Sayfa</a><span class="bc-sep">›</span>
+      Raporlama<span class="bc-sep">›</span>
+      <span class="bc-current">Malzeme Mükerrer Kontrol</span>
+    </div>
+    <div class="topbar-title">Malzeme Mükerrer Kontrol</div>
+    <div class="topbar-sub">Yeni malzeme açmadan önce katalogda var mı kontrol et</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
+    <div class="topbar-avatar" title="Profil">BA</div>
+  </div>
+</div>
+
+<div class="content">
+<div class="container">
+
+  <!-- KATALOG ÇUBUĞU -->
+  <div class="katalog-bar">
+    <div class="katalog-bar-info" id="katalogBilgi">
+      <i class="fa-solid fa-book"></i>
+      <span>Katalog bilgisi yükleniyor...</span>
+    </div>
+    <button class="btn temizle" onclick="katalogTemizleSor()" title="Katalogu tamamen sil">
+      <i class="fa-solid fa-trash"></i> Temizle
+    </button>
+    <button class="btn yukle" onclick="yukleModalAc()">
+      <i class="fa-solid fa-file-import"></i> MM60 Yükle / Güncelle
+    </button>
+  </div>
+
+  <!-- SORGU KUTUSU -->
+  <div class="sorgu-bolum">
+    <h3><i class="fa-solid fa-magnifying-glass"></i> Malzeme Tanımı</h3>
+    <div class="sorgu-aciklama">
+      Tek malzeme için tek satır yaz, <strong>toplu kontrol için her satıra bir tane</strong> (Excel'den kopyala-yapıştır).
+      Boyut yazımı serbest: <code>M16x50</code> · <code>M16*50</code> · <code>M16 X 50</code> — hepsi aynı kabul edilir.
+    </div>
+    <textarea id="sorguTextarea" class="sorgu-textarea"
+              placeholder="Örnek:&#10;Civata M16x50 8.8 Galvaniz&#10;Somun M20 8.8&#10;Pul M16 paslanmaz"
+              oninput="satirSayisiGuncelle()"></textarea>
+    <div class="sorgu-buton-grup">
+      <span class="satir-sayisi" id="satirSayisi">0 satır</span>
+      <div class="sorgu-btn-grp">
+        <button class="btn temizle" onclick="formTemizle()"><i class="fa-solid fa-eraser"></i> Temizle</button>
+        <button class="btn tamboy" id="tamBoyBtn" onclick="tamBoylariBul()" title="Fire malzemesinin tam boy (L=6000/12000) versiyonlarını bul">
+          <i class="fa-solid fa-ruler-horizontal"></i> Tam Boylar
+        </button>
+        <button class="btn kontrol" id="kontrolEtBtn" onclick="kontrolEt()">
+          <i class="fa-solid fa-magnifying-glass-plus"></i> Kontrol Et
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SONUÇLAR -->
+  <div id="sonucAlan"></div>
+
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- KATALOG YÜKLEME MODALI -->
+<div class="modal-bg" id="yukleModalBack" onclick="if(event.target===this)yukleModalKapat()">
+  <div class="modal-ic">
+    <h3 style="margin:0 0 16px 0;font-size:15px;color:var(--text);display:flex;align-items:center;gap:7px;">
+      <i class="fa-solid fa-book" style="color:var(--blue)"></i> MM60 Katalog Yükle
+    </h3>
+    <div class="yukle-drop" id="yukleDrop" onclick="document.getElementById('yukleFileInput').click()">
+      <i class="fa-solid fa-cloud-arrow-up"></i>
+      <div class="ana">Excel dosyasını seç veya buraya sürükle</div>
+      <div class="alt">.xlsx, .xls — MM60 raporu (Malzeme, Kısa Metin TR, Mal Grubu sütunları gereklidir)</div>
+    </div>
+    <input type="file" id="yukleFileInput" accept=".xlsx,.xls" style="display:none" onchange="yukleDosyaSec(this)">
+    <div id="yukleSecilenDosya" style="font-size:12px;color:var(--text2);margin-bottom:10px;display:none;">
+      Seçilen: <strong id="yukleDosyaAdi" style="color:var(--text)"></strong>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+      <button class="btn" onclick="yukleModalKapat()">İptal</button>
+      <button class="btn yukle" id="yukleBtn" disabled onclick="yukleDosyayiGonder()">
+        <i class="fa-solid fa-upload"></i> Yükle
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var secilenDosya = null
+var sonSorgu = ""
+var sonResponse = null
+var sonTopluSonuc = null
+
+/* ───── Yardımcılar ───── */
+function escHtml(s) {
+  if (s === null || s === undefined) return ""
+  var d = document.createElement("div")
+  d.textContent = String(s)
+  return d.innerHTML
+}
+function puanSinif(p) {
+  if (p >= 90) return "yuksek"
+  if (p >= 60) return "orta"
+  return "dusuk"
+}
+function ozelEsc(s) {
+  return String(s || "").replace(/'/g, "\\'").replace(/"/g, "&quot;")
+}
+function kopyala(metin) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(metin)
+    if (typeof toast === "function") toast("Kopyalandı: " + metin, "basari")
+  }
+}
+function sonucGoster(html) {
+  document.getElementById("sonucAlan").innerHTML = html
+  document.getElementById("sonucAlan").scrollIntoView({behavior: "smooth", block: "start"})
+}
+
+/* ───── Katalog bilgisi ───── */
+async function katalogBilgiYukle() {
+  try {
+    var r = await fetch("/api/malzeme/katalog-bilgi")
+    var d = await r.json()
+    var bilgi = document.getElementById("katalogBilgi")
+    if (d.toplam_kayit > 0) {
+      var sonStr = ""
+      if (d.son_guncelleme) {
+        var dt = new Date(d.son_guncelleme)
+        sonStr = ' <span style="color:var(--text3)">· Son güncelleme:</span> <strong>' + dt.toLocaleString("tr-TR") + '</strong>'
+      }
+      bilgi.innerHTML = '<i class="fa-solid fa-book"></i>' +
+                       'Katalog: <strong>' + d.toplam_kayit.toLocaleString("tr-TR") + '</strong> malzeme aktif' + sonStr
+    } else {
+      bilgi.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--amber)"></i>' +
+                       '<span class="yok">Katalog boş — önce MM60 dosyasını yükleyin</span>'
+    }
+  } catch(e) {
+    document.getElementById("katalogBilgi").innerHTML =
+      '<i class="fa-solid fa-circle-exclamation" style="color:var(--red)"></i> Katalog bilgisi alınamadı'
+  }
+}
+
+/* ───── Satır sayısı / Form ───── */
+function satirSayisiGuncelle() {
+  var txt = document.getElementById("sorguTextarea").value
+  var satirlar = txt.split("\n").map(function(s){ return s.trim() }).filter(function(s){ return s.length > 0 })
+  document.getElementById("satirSayisi").innerText = satirlar.length + " satır"
+}
+function formTemizle() {
+  document.getElementById("sorguTextarea").value = ""
+  document.getElementById("sonucAlan").innerHTML = ""
+  satirSayisiGuncelle()
+}
+
+/* ───── Sorgu işlemi ───── */
+async function kontrolEt() {
+  var txt = document.getElementById("sorguTextarea").value.trim()
+  if (!txt) {
+    if (typeof bildirim === "function") bildirim("Önce bir malzeme tanımı girin", "Uyarı", "uyari")
+    return
+  }
+  var satirlar = txt.split("\n").map(function(s){ return s.trim() }).filter(function(s){ return s.length > 0 })
+  var btn = document.getElementById("kontrolEtBtn")
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aranıyor...'
+  try {
+    if (satirlar.length === 1) {
+      await tekKontrol(satirlar[0])
+    } else {
+      await topluKontrol(satirlar)
+    }
+  } catch (e) {
+    sonucGoster('<div class="sonuc-banner hata"><div class="b-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>' +
+                '<div class="b-icerik"><div class="b-baslik">Hata</div><div class="b-alt">' + escHtml(e.message) + '</div></div></div>')
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i> Kontrol Et'
+  }
+}
+
+function sureRozet(d) {
+  if (!d.arama_sure_ms) return ''
+  return '<span class="sure-rozet">' + d.arama_sure_ms + 'ms · ' + (d.katalog_toplam || 0).toLocaleString('tr-TR') + ' kayıt</span>'
+}
+
+/* ───── Tek satır kontrol ───── */
+async function tekKontrol(metin) {
+  var r = await fetch("/api/malzeme/kontrol", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({metin: metin})
+  })
+  var d = await r.json()
+  if (d.durum !== "ok") {
+    sonucGoster('<div class="sonuc-banner hata"><div class="b-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>' +
+                '<div class="b-icerik"><div class="b-baslik">Hata</div><div class="b-alt">' + escHtml(d.mesaj || "Bilinmeyen hata") + '</div></div></div>')
+    return
+  }
+  if (d.katalog_bos) {
+    sonucGoster('<div class="bos-durum"><i class="fa-solid fa-book"></i>Katalog boş. Önce MM60 yükleyin.</div>')
+    return
+  }
+  var html = ""
+  var olasiSayisi = (d.olasi_eslesmeler || []).length
+
+  if (d.kategori === "tam") {
+    html += '<div class="sonuc-banner tam">' +
+            '<div class="b-ikon"><i class="fa-solid fa-circle-check"></i></div>' +
+            '<div class="b-icerik">' +
+              '<div class="b-baslik">Tam Eşleşme Bulundu</div>' +
+              '<div class="b-alt">Mevcut malzeme kodu kullanılabilir — yeni kod açmanıza gerek yok</div>' +
+            '</div>' + sureRozet(d) + '</div>'
+  } else if (d.kategori === "yakin") {
+    html += '<div class="sonuc-banner yakin">' +
+            '<div class="b-ikon"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
+            '<div class="b-icerik">' +
+              '<div class="b-baslik">Benzer Kayıtlar Var — Kontrol Edin</div>' +
+              '<div class="b-alt">' + d.yakin_eslesmeler.length + ' yakın eşleşme bulundu. Ölçü/kalite farkı olabilir.</div>' +
+            '</div>' + sureRozet(d) + '</div>'
+  } else {
+    if (olasiSayisi > 0) {
+      html += '<div class="sonuc-banner yok">' +
+              '<div class="b-ikon"><i class="fa-solid fa-magnifying-glass"></i></div>' +
+              '<div class="b-icerik">' +
+                '<div class="b-baslik">Yeterli Eşleşme Bulunamadı — Olası Adaylar Aşağıda</div>' +
+                '<div class="b-alt">Net eşleşme yok ama ' + olasiSayisi + ' düşük benzerlikli aday var.</div>' +
+              '</div>' + sureRozet(d) + '</div>'
+    } else {
+      html += '<div class="sonuc-banner yok">' +
+              '<div class="b-ikon"><i class="fa-solid fa-circle-xmark"></i></div>' +
+              '<div class="b-icerik">' +
+                '<div class="b-baslik">Eşleşme Bulunamadı</div>' +
+                '<div class="b-alt">Bu tanımla katalogda hiç benzer kayıt yok — yeni malzeme kodu açılabilir. ' +
+                '<a href="#" onclick="debugAc(); return false;">Neden bulunamadı?</a></div>' +
+              '</div>' + sureRozet(d) + '</div>'
+    }
+  }
+
+  if (d.tam_eslesmeler && d.tam_eslesmeler.length) {
+    html += '<div class="kategori-baslik tam"><i class="fa-solid fa-circle-check"></i> Tam Eşleşmeler (' + d.tam_eslesmeler.length + ')</div>'
+    d.tam_eslesmeler.forEach(function(s){ html += eslesmeKartHtml(s, "tam") })
+  }
+  if (d.yakin_eslesmeler && d.yakin_eslesmeler.length) {
+    html += '<div class="kategori-baslik yakin"><i class="fa-solid fa-triangle-exclamation"></i> Yakın Eşleşmeler (' + d.yakin_eslesmeler.length + ')</div>'
+    d.yakin_eslesmeler.forEach(function(s){ html += eslesmeKartHtml(s, "yakin") })
+  }
+  if (olasiSayisi > 0) {
+    html += '<div class="kategori-baslik olasi"><i class="fa-solid fa-circle-info"></i> Olası Adaylar — Düşük Benzerlik (' + olasiSayisi + ')</div>'
+    html += '<div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-style:italic">Bu adaylar yalnızca bir-iki ortak kelime taşıyor. Yine de kontrol için listeleniyor.</div>'
+    d.olasi_eslesmeler.forEach(function(s){ html += eslesmeKartHtml(s, "olasi") })
+  }
+
+  html += '<div id="debugAlan" style="display:none"></div>'
+  sonSorgu = metin
+  sonResponse = d
+  sonucGoster(html)
+}
+
+function eslesmeKartHtml(s, sinif) {
+  return '<div class="eslesme-kart ' + sinif + '">' +
+    '<div class="eslesme-baslik">' +
+      '<div>' +
+        '<span class="eslesme-malz-no">' + escHtml(s.malzeme_no) + '</span>' +
+        '<button class="ib eslesme-kopyala" style="margin-left:8px" onclick="kopyala(\'' + ozelEsc(s.malzeme_no) + '\')">' +
+          '<i class="fa-solid fa-copy"></i> Kopyala</button>' +
+      '</div>' +
+      '<span class="eslesme-puan ' + puanSinif(s.puan) + '">%' + s.puan + '</span>' +
+    '</div>' +
+    (s.uzun_metin ?
+      '<div class="eslesme-metin uzun"><span class="lbl">Uzun Tanım</span>' + escHtml(s.uzun_metin) + '</div>' :
+      '<div class="eslesme-metin"><span class="lbl">Kısa Metin</span>' + escHtml(s.kisa_metin || '(boş)') + '</div>') +
+    (s.uzun_metin && s.kisa_metin && s.kisa_metin !== s.uzun_metin ?
+      '<div class="eslesme-metin" style="font-size:11.5px;color:var(--text3);font-style:italic"><span class="lbl">Kısa</span>' + escHtml(s.kisa_metin) + '</div>' : '') +
+    '<div class="eslesme-meta">' +
+      (s.mal_grubu        ? '<span><i class="fa-solid fa-tag"></i> <strong>Mal Grubu:</strong> ' + escHtml(s.mal_grubu) + '</span>' : '') +
+      (s.degerleme_sinifi ? '<span><i class="fa-solid fa-coins"></i> <strong>Değerleme:</strong> ' + escHtml(s.degerleme_sinifi) + '</span>' : '') +
+      (s.olcu_birimi      ? '<span><i class="fa-solid fa-ruler"></i> <strong>Birim:</strong> ' + escHtml(s.olcu_birimi) + '</span>' : '') +
+      (s.malzeme_turu     ? '<span><i class="fa-solid fa-cube"></i> <strong>Tür:</strong> ' + escHtml(s.malzeme_turu) + '</span>' : '') +
+    '</div>' +
+  '</div>'
+}
+
+/* ───── Toplu kontrol ───── */
+async function topluKontrol(satirlar) {
+  var r = await fetch("/api/malzeme/kontrol-toplu", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({metinler: satirlar})
+  })
+  var d = await r.json()
+  if (d.durum !== "ok") {
+    sonucGoster('<div class="sonuc-banner hata"><div class="b-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>' +
+                '<div class="b-icerik"><div class="b-baslik">Hata</div><div class="b-alt">' + escHtml(d.mesaj || "") + '</div></div></div>')
+    return
+  }
+  var html = ""
+
+  // Özet stripe — global .ozet-mini kullan
+  html += '<div class="ozet-strip">' +
+    '<div class="ozet-mini toplam"><div class="sayi">' + d.ozet.toplam + '</div><div class="et">Toplam Satır</div></div>' +
+    '<div class="ozet-mini gond"><div class="sayi" style="color:var(--green)">' + d.ozet.tam + '</div><div class="et">Tam Eşleşme</div></div>' +
+    '<div class="ozet-mini kalan"><div class="sayi" style="color:var(--amber)">' + d.ozet.yakin + '</div><div class="et">Yakın Eşleşme</div></div>' +
+    '<div class="ozet-mini sevk"><div class="sayi" style="color:var(--blue)">' + d.ozet.yok + '</div><div class="et">Eşleşme Yok</div></div>' +
+  '</div>'
+
+  // Tablo — global table stilini kullan
+  html += '<div style="background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm)">'
+  html += '<table>' +
+    '<thead><tr>' +
+      '<th style="width:30px">#</th>' +
+      '<th style="width:150px">Girdiğin Malzeme</th>' +
+      '<th style="width:90px">Sonuç</th>' +
+      '<th style="width:110px">SAP Kodu</th>' +
+      '<th>Malzeme Uzun Tanımı</th>' +
+      '<th style="width:55px">Birim</th>' +
+      '<th style="width:80px">Mal Grubu</th>' +
+      '<th style="width:75px">Değ. Sın.</th>' +
+      '<th style="width:50px">%</th>' +
+    '</tr></thead><tbody>'
+
+  d.sonuclar.forEach(function(r, i) {
+    var rozetSinif = r.kategori
+    var rozetLabel = { tam: "Tam", yakin: "Yakın", yok: "Yok", hata: "Hata" }[r.kategori] || r.kategori
+    var ei = r.en_iyi || {}
+    var bos = '<span style="color:var(--text3);font-style:italic">—</span>'
+
+    html += '<tr>' +
+      '<td style="color:var(--text3);font-family:JetBrains Mono,monospace">' + (i+1) + '</td>' +
+      '<td style="font-size:11.5px">' + escHtml(r.sorgu) + '</td>' +
+      '<td><span class="kategori-rozet ' + rozetSinif + '">' + rozetLabel + '</span></td>' +
+      '<td>' + (ei.malzeme_no ? '<span class="toplu-malz-no">' + escHtml(ei.malzeme_no) + '</span> <button class="ib" style="padding:1px 5px;font-size:9px;margin-left:3px" onclick="kopyala(\'' + ozelEsc(ei.malzeme_no) + '\')"><i class="fa-solid fa-copy"></i></button>' : bos) + '</td>' +
+      '<td style="font-size:11.5px">' +
+        (ei.uzun_metin ?
+          '<div style="line-height:1.4">' + escHtml(ei.uzun_metin) + '</div>' +
+          (ei.kisa_metin && ei.kisa_metin !== ei.uzun_metin ?
+            '<div style="font-size:10px;color:var(--text3);margin-top:3px;font-style:italic">↳ ' + escHtml(ei.kisa_metin) + '</div>' : '') :
+          (ei.kisa_metin ? '<div>' + escHtml(ei.kisa_metin) + '</div>' : bos)) +
+        (r.ilk_3 && r.ilk_3.length > 1 ?
+          '<div style="margin-top:5px;font-size:10px;color:var(--text3)">Diğer: ' +
+            r.ilk_3.slice(1).map(function(s){ return '<code style="background:var(--bg);padding:1px 5px;border-radius:3px;color:var(--text3);border:0.5px solid var(--border-light)">' + escHtml(s.malzeme_no) + ' (%' + s.puan + ')</code>' }).join(' ') +
+          '</div>' : '') +
+      '</td>' +
+      '<td style="font-family:JetBrains Mono,monospace;font-size:11px;text-align:center">' + (ei.olcu_birimi ? escHtml(ei.olcu_birimi) : bos) + '</td>' +
+      '<td style="font-family:JetBrains Mono,monospace;font-size:11px">' + (ei.mal_grubu ? escHtml(ei.mal_grubu) : bos) + '</td>' +
+      '<td style="font-family:JetBrains Mono,monospace;font-size:11px;text-align:center">' + (ei.degerleme_sinifi ? escHtml(ei.degerleme_sinifi) : bos) + '</td>' +
+      '<td style="text-align:center">' + (ei.puan ? '<span class="eslesme-puan ' + puanSinif(ei.puan) + '">' + ei.puan + '</span>' : bos) + '</td>' +
+    '</tr>'
+  })
+  html += '</tbody></table></div>'
+
+  html += '<div style="margin-top:14px;text-align:right">' +
+    '<button class="btn excel" onclick="csvIndir()"><i class="fa-solid fa-file-csv"></i> CSV İndir</button>' +
+  '</div>'
+
+  sonucGoster(html)
+  sonTopluSonuc = d.sonuclar
+}
+
+function csvIndir() {
+  if (!sonTopluSonuc) return
+  var basliklar = ["No","Girdiğin","Sonuç","SAP Kodu","Malzeme Uzun Tanımı","Birim","Mal Grubu","Değerleme Sınıfı","Puan"]
+  var satirlar = [basliklar]
+  sonTopluSonuc.forEach(function(r, i) {
+    var ei = r.en_iyi || {}
+    satirlar.push([
+      i+1, r.sorgu, r.kategori,
+      ei.malzeme_no || "",
+      ei.uzun_metin || ei.kisa_metin || "",
+      ei.olcu_birimi || "",
+      ei.mal_grubu || "",
+      ei.degerleme_sinifi || "",
+      ei.puan || ""
+    ])
+  })
+  var csv = satirlar.map(function(s){
+    return s.map(function(c){
+      var t = String(c == null ? "" : c).replace(/"/g, '""')
+      return '"' + t + '"'
+    }).join(",")
+  }).join("\n")
+  var blob = new Blob(["\ufeff" + csv], {type: "text/csv;charset=utf-8;"})
+  var a = document.createElement("a")
+  a.href = URL.createObjectURL(blob)
+  a.download = "malzeme-kontrol-" + new Date().toISOString().slice(0,10) + ".csv"
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
+/* ───── Tam Boy arama ───── */
+async function tamBoylariBul() {
+  var txt = document.getElementById("sorguTextarea").value.trim()
+  if (!txt) {
+    if (typeof bildirim === "function") bildirim("Önce bir malzeme tanımı girin", "Uyarı", "uyari")
+    else alert("Önce bir malzeme tanımı girin")
+    return
+  }
+  var satirlar = txt.split("\n").map(function(s){ return s.trim() }).filter(function(s){ return s.length > 0 })
+  if (satirlar.length > 1) {
+    if (typeof bildirim === "function") bildirim("Tam boy araması sadece TEK satır için çalışır", "Uyarı", "uyari")
+    else alert("Tam boy araması sadece TEK satır için çalışır")
+    return
+  }
+  var btn = document.getElementById("tamBoyBtn")
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aranıyor...'
+  try {
+    var r = await fetch("/api/malzeme/tam-boylar", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({metin: satirlar[0], tam_boylar: [6000, 12000]})
+    })
+    var d = await r.json()
+    if (d.durum !== "ok") {
+      sonucGoster('<div class="sonuc-banner hata"><div class="b-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>' +
+                  '<div class="b-icerik"><div class="b-baslik">Hata</div><div class="b-alt">' + escHtml(d.mesaj || "") + '</div></div></div>')
+      return
+    }
+    tamBoyGoster(d)
+  } catch(e) {
+    sonucGoster('<div class="sonuc-banner hata"><div class="b-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>' +
+                '<div class="b-icerik"><div class="b-baslik">Bağlantı Hatası</div><div class="b-alt">' + escHtml(e.message) + '</div></div></div>')
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = '<i class="fa-solid fa-ruler-horizontal"></i> Tam Boylar'
+  }
+}
+
+function tamBoyGoster(d) {
+  var html = '<div class="tam-boy-bolum">'
+  html += '<div class="tam-boy-baslik">'
+  html += '<h4><i class="fa-solid fa-ruler-horizontal"></i> Tam Boy Sonuçları</h4>'
+  html += '<span class="sure-rozet">' + d.arama_sure_ms + 'ms · ' + d.toplam_bulunan + ' sonuç</span>'
+  html += '</div>'
+
+  html += '<div class="tam-boy-temiz-info">'
+  html += '<div style="margin-bottom:4px"><span class="lbl-mini">Girdiğin:</span> "' + escHtml(d.sorgu_orijinal) + '"</div>'
+  html += '<div><span class="lbl-mini">Temizlendi:</span> "' + escHtml(d.sorgu_temiz) + '" <span class="added">+ L=BOY</span></div>'
+  html += '<div style="font-size:10px;color:var(--text3);margin-top:6px;font-style:italic;font-family:inherit">Sorgudan "fire", "L=XXXX" gibi pattern\'ler atıldı. Her tam boy için ayrı aranıyor.</div>'
+  html += '</div>'
+
+  d.tam_boylar.forEach(function(boy) {
+    var sonuclar = d.gruplar[String(boy)] || []
+    html += '<div class="tam-boy-grup">'
+    html += '<div class="tam-boy-grup-baslik">'
+    html += '<i class="fa-solid fa-arrow-right"></i> L=' + boy + ' mm'
+    html += '<span style="margin-left:auto;font-size:10.5px;color:var(--text3);font-family:JetBrains Mono,monospace">' + sonuclar.length + ' sonuç</span>'
+    html += '</div>'
+    if (sonuclar.length === 0) {
+      html += '<div class="tam-boy-grup-bos">Bu boyda eşleşme bulunamadı</div>'
+    } else {
+      sonuclar.forEach(function(s) { html += eslesmeKartHtml(s, "tamboy") })
+    }
+    html += '</div>'
+  })
+  html += '</div>'
+
+  var alan = document.getElementById("sonucAlan")
+  alan.innerHTML = html
+  alan.scrollIntoView({behavior: "smooth", block: "start"})
+}
+
+/* ───── Debug paneli ───── */
+async function debugAc() {
+  if (!sonSorgu) return
+  var alan = document.getElementById('debugAlan')
+  alan.style.display = 'block'
+  alan.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i> Debug yükleniyor...</div>'
+  try {
+    var r = await fetch('/api/malzeme/debug?sorgu=' + encodeURIComponent(sonSorgu))
+    var dbg = await r.json()
+    alan.innerHTML = debugHtml(dbg)
+    alan.scrollIntoView({behavior: "smooth"})
+  } catch(e) {
+    alan.innerHTML = '<div style="color:var(--red)">Debug hatası: ' + escHtml(e.message) + '</div>'
+  }
+}
+
+function debugHtml(d) {
+  var h = '<div class="debug-kutu">'
+  h += '<div class="debug-baslik">'
+  h += '<h4><i class="fa-solid fa-bug"></i> Debug Bilgisi</h4>'
+  h += '<button class="btn temizle" onclick="document.getElementById(\'debugAlan\').style.display=\'none\'">Kapat</button>'
+  h += '</div>'
+
+  h += '<div class="debug-ozet">'
+  h += '<div class="debug-ozet-kart"><div class="lbl">Toplam Kayıt</div><div class="val" style="color:var(--primary)">' + (d.katalog_toplam || 0).toLocaleString('tr-TR') + '</div></div>'
+  h += '<div class="debug-ozet-kart"><div class="lbl">Boş Kısa Metin</div><div class="val" style="color:' + (d.kisa_bos_yuzde > 50 ? 'var(--red)' : 'var(--amber)') + '">%' + d.kisa_bos_yuzde + '</div></div>'
+  h += '<div class="debug-ozet-kart"><div class="lbl">Boş Uzun Metin</div><div class="val" style="color:' + (d.uzun_bos_yuzde > 50 ? 'var(--red)' : 'var(--amber)') + '">%' + d.uzun_bos_yuzde + '</div></div>'
+  h += '<div class="debug-ozet-kart"><div class="lbl">Cache</div><div class="val" style="font-size:12px;color:' + (d.cache_yuklu ? 'var(--green)' : 'var(--red)') + '">' + (d.cache_yuklu ? '✓ Aktif (' + d.cache_yuklenme_s + 's)' : '✗ Yok') + '</div></div>'
+  h += '</div>'
+
+  if (d.sorgu) {
+    h += '<div style="margin-bottom:12px">'
+    h += '<div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;font-weight:600">Sorgu Analizi</div>'
+    h += '<div style="font-family:JetBrains Mono,monospace;font-size:12.5px;color:var(--primary)">"' + escHtml(d.sorgu) + '"</div>'
+    h += '<div style="font-size:11px;color:var(--text3);margin-top:3px">→ Normalize: <code style="color:var(--text);font-family:JetBrains Mono,monospace;background:var(--bg);padding:1px 6px;border-radius:3px">' + escHtml(d.sorgu_normalize) + '</code></div>'
+    h += '<div style="font-size:11px;color:var(--text3);margin-top:4px">→ Tokens: '
+    ;(d.sorgu_tokens || []).forEach(function(t) {
+      h += '<span class="token-rozet">' + escHtml(t) + '</span>'
+    })
+    h += '</div></div>'
+
+    if (d.token_arama && d.token_arama.length) {
+      h += '<div style="margin-bottom:12px"><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px;font-weight:600">Her Token İçin Ham SQL Sonucu</div>'
+      d.token_arama.forEach(function(t) {
+        var bulduMu = t.ham_sql_eslesme_sayisi > 0
+        h += '<div class="ham-sql-kart ' + (bulduMu ? 'bulundu' : 'bos') + '">'
+        h += '<div style="font-size:11.5px"><strong style="color:' + (bulduMu ? 'var(--green)' : 'var(--red)') + '">' + (bulduMu ? '✓' : '✗') + ' "' + escHtml(t.token) + '"</strong> token\'ı için <strong>' + t.ham_sql_eslesme_sayisi.toLocaleString('tr-TR') + '</strong> kayıt</div>'
+        if (t.ornekler && t.ornekler.length) {
+          h += '<div style="font-size:10.5px;color:var(--text3);margin-top:5px">'
+          t.ornekler.forEach(function(o) {
+            h += '<div style="margin-top:2px;padding-left:6px">• <code style="color:var(--primary);font-family:JetBrains Mono,monospace">' + escHtml(o.malzeme_no) + '</code> — ' + escHtml((o.kisa_metin_tr || o.uzun_metin_tr || '').substring(0, 70)) + '</div>'
+          })
+          h += '</div>'
+        }
+        h += '</div>'
+      })
+      h += '</div>'
+    }
+
+    if (d.en_yakin_30 && d.en_yakin_30.length) {
+      h += '<div><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px;font-weight:600">En Yakın 30 (Eşik Dikkate Alınmadan)</div>'
+      h += '<div style="background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden">'
+      h += '<table><thead><tr><th>Malzeme No</th><th>Metin</th><th style="text-align:center">Puan</th></tr></thead><tbody>'
+      d.en_yakin_30.forEach(function(s) {
+        h += '<tr>'
+        h += '<td style="font-family:JetBrains Mono,monospace;color:var(--primary)">' + escHtml(s.malzeme_no) + '</td>'
+        h += '<td>' + escHtml((s.kisa_metin || s.uzun_metin || '').substring(0, 70)) + '</td>'
+        h += '<td style="text-align:center"><span class="eslesme-puan ' + puanSinif(s.puan) + '">' + s.puan + '</span></td>'
+        h += '</tr>'
+      })
+      h += '</tbody></table></div></div>'
+    }
+  }
+
+  if (d.ornek_kayit_5 && d.ornek_kayit_5.length) {
+    h += '<div style="margin-top:12px"><div style="font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px;font-weight:600">İlk 5 Örnek Kayıt</div>'
+    d.ornek_kayit_5.forEach(function(o) {
+      h += '<div style="margin-bottom:5px;padding:7px 9px;background:var(--bg);border:0.5px solid var(--border-light);border-radius:var(--radius);font-size:11px">'
+      h += '<code style="color:var(--primary);font-family:JetBrains Mono,monospace">' + escHtml(o.malzeme_no) + '</code> — ' + escHtml(o.kisa_metin_tr || '(boş)')
+      if (o.uzun_metin_tr) h += '<div style="font-size:10px;color:var(--text3);margin-top:3px;padding-left:10px">↳ ' + escHtml(o.uzun_metin_tr.substring(0, 100)) + '</div>'
+      h += '</div>'
+    })
+    h += '</div>'
+  }
+  h += '</div>'
+  return h
+}
+
+/* ───── Katalog yükleme ───── */
+function yukleModalAc() {
+  document.getElementById("yukleModalBack").classList.add("goster")
+}
+function yukleModalKapat() {
+  document.getElementById("yukleModalBack").classList.remove("goster")
+  secilenDosya = null
+  document.getElementById("yukleSecilenDosya").style.display = "none"
+  document.getElementById("yukleBtn").disabled = true
+  document.getElementById("yukleFileInput").value = ""
+}
+function yukleDosyaSec(input) {
+  if (!input.files || !input.files[0]) return
+  secilenDosya = input.files[0]
+  document.getElementById("yukleDosyaAdi").innerText = secilenDosya.name
+  document.getElementById("yukleSecilenDosya").style.display = "block"
+  document.getElementById("yukleBtn").disabled = false
+}
+
+async function yukleDosyayiGonder() {
+  if (!secilenDosya) return
+  var btn = document.getElementById("yukleBtn")
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor... (1-2 dk sürebilir)'
+  var fd = new FormData()
+  fd.append("dosya", secilenDosya)
+  try {
+    var r = await fetch("/api/malzeme/katalog-import", {method: "POST", body: fd})
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      yukleModalKapat()
+      katalogBilgiYukle()
+      eslesmeRaporuGoster(d)
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+      else alert(d.mesaj)
+      if (d.bulunan_kolonlar) {
+        var alan = document.getElementById("sonucAlan")
+        alan.innerHTML =
+          '<div class="sonuc-banner hata"><div class="b-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>' +
+          '<div class="b-icerik"><div class="b-baslik">Excel Okunamadı</div>' +
+          '<div class="b-alt">' + escHtml(d.mesaj) + '</div></div></div>' +
+          '<div class="rapor-kutu">' +
+          '<div class="rapor-kutu-baslik">Excel\'de Bulunan Sütunlar:</div>' +
+          d.bulunan_kolonlar.map(function(c){ return '<code class="token-rozet">' + escHtml(c) + '</code>' }).join('') +
+          '</div>'
+      }
+    }
+  } catch (e) {
+    alert("Bağlantı hatası: " + e.message)
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = '<i class="fa-solid fa-upload"></i> Yükle'
+  }
+}
+
+function eslesmeRaporuGoster(d) {
+  var eslenen = d.eslenen_kolonlar || {}
+  var eslenmeyen = d.eslenmeyen_excel_kolonlari || []
+  var eksik = d.eksik_alan_uyarisi || []
+  var alanIsim = {
+    malzeme_no: "Malzeme No (SAP)", kisa_metin_tr: "Kısa Metin TR",
+    kisa_metin_en: "Kısa Metin EN", kisa_metin_ru: "Kısa Metin RU",
+    uzun_metin_tr: "Uzun Metin TR", uzun_metin_en: "Uzun Metin EN",
+    uzun_metin_ru: "Uzun Metin RU", mal_grubu: "Mal Grubu",
+    degerleme_sinifi: "Değerleme Sınıfı", olcu_birimi: "Ölçü Birimi",
+    malzeme_turu: "Malzeme Türü", siparis_no: "Sipariş No"
+  }
+
+  var html = '<div class="sonuc-banner tam">' +
+    '<div class="b-ikon"><i class="fa-solid fa-circle-check"></i></div>' +
+    '<div class="b-icerik">' +
+      '<div class="b-baslik">' + d.ictekayit_sayisi.toLocaleString("tr-TR") + ' kayıt aktarıldı/güncellendi</div>' +
+      '<div class="b-alt">Toplam katalog: ' + d.katalog_toplam.toLocaleString("tr-TR") + ' malzeme</div>' +
+    '</div></div>'
+
+  html += '<div class="rapor-kutu">'
+  html += '<div class="rapor-kutu-baslik"><i class="fa-solid fa-circle-check" style="color:var(--green)"></i> Eşleşen Sütunlar (' + Object.keys(eslenen).length + ')</div>'
+  html += '<div class="rapor-grid">'
+  Object.keys(eslenen).forEach(function(k) {
+    html += '<div class="rapor-grid-item">' +
+      '<div class="alan">' + (alanIsim[k] || k) + '</div>' +
+      '<div class="sutun">' + escHtml(eslenen[k]) + '</div></div>'
+  })
+  html += '</div></div>'
+
+  if (eksik.length) {
+    html += '<div class="rapor-uyari">'
+    html += '<div class="rapor-uyari-baslik"><i class="fa-solid fa-triangle-exclamation"></i> Bulunamayan Önemli Alanlar</div>'
+    html += '<div style="color:var(--text);font-size:11.5px">Bu alanlar Excel\'de yoktu veya başka bir adla yazılmıştı:</div>'
+    eksik.forEach(function(k) {
+      html += '<div style="margin-top:4px;color:var(--amber);font-size:11.5px">• <strong>' + (alanIsim[k] || k) + '</strong> — eşlenmedi, arama düzgün çalışmayabilir</div>'
+    })
+    html += '</div>'
+  }
+
+  if (eslenmeyen.length) {
+    html += '<div class="rapor-kutu">'
+    html += '<div class="rapor-kutu-baslik" style="color:var(--text3)"><i class="fa-solid fa-circle-info"></i> Eşlenmeyen Excel Sütunları (kullanılmadı)</div>'
+    html += '<div style="display:flex;flex-wrap:wrap;gap:4px">'
+    eslenmeyen.forEach(function(c) {
+      html += '<code class="token-rozet" style="background:var(--bg);color:var(--text3);border-color:var(--border-light)">' + escHtml(c) + '</code>'
+    })
+    html += '</div></div>'
+  }
+
+  var alan = document.getElementById("sonucAlan")
+  alan.innerHTML = html
+  alan.scrollIntoView({behavior: "smooth"})
+}
+
+async function katalogTemizleSor() {
+  // popup.js'in onayla fonksiyonu varsa kullan
+  var devam = false
+  if (typeof onayla === "function") {
+    devam = await onayla(
+      "TÜM katalogu silmek üzeresin. Bu işlem geri alınamaz.\n\n426 binin üzerinde kayıt silinebilir.",
+      "Katalog Tamamen Silinsin mi?",
+      {onayText: "Evet, Sil", iptalText: "İptal", tip: "uyari", tehlike: true}
+    )
+  } else {
+    devam = confirm("TÜM katalogu silmek istediğinden emin misin? Bu işlem geri alınamaz.")
+  }
+  if (!devam) return
+
+  try {
+    var r = await fetch("/api/malzeme/katalog-temizle", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({onay: "SIL"})
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      else alert(d.mesaj)
+      katalogBilgiYukle()
+      document.getElementById("sonucAlan").innerHTML = ""
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+      else alert("Hata: " + d.mesaj)
+    }
+  } catch (e) {
+    alert("Bağlantı hatası: " + e.message)
+  }
+}
+
+/* ───── Init ───── */
+document.addEventListener("DOMContentLoaded", function() {
+  var dz = document.getElementById("yukleDrop")
+  if (dz) {
+    dz.addEventListener("dragover", function(e){ e.preventDefault(); dz.classList.add("dragover") })
+    dz.addEventListener("dragleave", function(){ dz.classList.remove("dragover") })
+    dz.addEventListener("drop", function(e){
+      e.preventDefault(); dz.classList.remove("dragover")
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        document.getElementById("yukleFileInput").files = e.dataTransfer.files
+        yukleDosyaSec(document.getElementById("yukleFileInput"))
+      }
+    })
+  }
+  katalogBilgiYukle()
+  satirSayisiGuncelle()
+
+  document.getElementById("sorguTextarea").addEventListener("keydown", function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault()
+      kontrolEt()
+    }
+  })
+})
+</script>
+
+</body>
+</html>

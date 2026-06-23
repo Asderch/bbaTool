@@ -1,0 +1,67 @@
+# ─── Python ───
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+
+# ─── PyInstaller build çıktıları (GB seviyesinde dosyalar) ───
+build/
+dist/
+*.spec
+
+# ─── BBA hassas veriler — ASLA YÜKLENMEZ ───
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+agirlik_hesaplama.db
+sevkiyat.db
+
+# ─── Çıktılar (kullanıcı dosyaları) ───
+outputs/
+output/
+assets/uploads/
+exports/
+geçici/
+temp/
+tmp/
+
+# ─── Gizli ayarlar ───
+.env
+.env.local
+config_local.py
+secrets.py
+
+# ─── IDE / Editor ───
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─── Excel/PDF geçici dosyaları ───
+~$*.xlsx
+~$*.xls
+~$*.docx
+
+# ─── Loglar ───
+*.log
+logs/
+
+# ─── Yedek dosyalar (script'lerin oluşturduğu) ───
+*.yedek
+*.backup
+*.bak
+
+# DB araçları (SQLite Browser vs.) — proje parçası değil
+dbdb/
+
+# Font arşivleri (zip gerek yok, açılmış klasör yeterli)
+fonts/*.zip

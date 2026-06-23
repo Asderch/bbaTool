@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saha Doluluk Yönetimi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --surface2: #1e293b;
+    --border: #334155;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #3b82f6;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --orange: #f97316;
+  }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header h1 .icon {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .stat-chip {
+    background: var(--surface2);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-chip .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .main-container {
+    display: flex;
+    height: calc(100vh - 65px);
+  }
+
+  .map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #0d1117;
+  }
+
+  .map-wrapper {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    position: relative;
+  }
+
+  .map-inner {
+    position: relative;
+    display: inline-block;
+    min-width: 100%;
+    min-height: 100%;
+  }
+
+  .map-inner img {
+    display: block;
+    width: 1400px;
+    height: auto;
+    opacity: 0.7;
+  }
+
+  .location-overlay {
+    position: absolute;
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    backdrop-filter: blur(2px);
+  }
+
+  .location-overlay:hover {
+    transform: scale(1.05);
+    border-color: #fff;
+    z-index: 50;
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+  }
+
+  .location-overlay.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(59,130,246,0.5);
+    z-index: 51;
+  }
+
+  .sidebar {
+    width: 360px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .sidebar-tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sidebar-tab.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .location-card {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .location-card:hover {
+    border-color: var(--border);
+  }
+
+  .location-card.selected {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.1);
+  }
+
+  .loc-indicator {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .loc-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .loc-name {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .loc-date {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .loc-percentage {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Edit Panel */
+  .edit-panel {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 16px 20px;
+  }
+
+  .edit-panel h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .slider-container {
+    margin-bottom: 12px;
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: var(--text-dim);
+  }
+
+  .slider-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 24px;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid #fff;
+  }
+
+  .btn-save {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .btn-save:hover {
+    background: #2563eb;
+  }
+
+  .btn-reset {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 6px;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease, background 0.3s ease;
+  }
+
+  .field-group-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 8px 4px 4px;
+    margin-top: 4px;
+  }
+
+  .zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 60;
+  }
+
+  .zoom-btn {
+    width: 36px;
+    height: 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .zoom-btn:hover { background: var(--surface2); }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--green);
+    color: #000;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    z-index: 200;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 900px) {
+    .main-container { flex-direction: column; }
+    .sidebar { width: 100%; height: 50vh; border-left: none; border-top: 1px solid var(--border); }
+    .map-inner img { width: 800px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>
+    <span class="icon">📦</span>
+    Saha Doluluk Yönetimi
+  </h1>
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-chip"><span class="dot" style="background:var(--green)"></span> Boş: <span id="statEmpty">0</span></div>
+    <div class="stat-chip"><span class="dot" style="background:var(--yellow)"></span> Kısmi: <span id="statPartial">0</span></div>
+    <div class="stat-chip"><span class="dot" style="background:var(--red)"></span> Dolu: <span id="statFull">0</span></div>
+    <div class="stat-chip">Ortalama: <span id="statAvg" style="font-family:'JetBrains Mono';font-weight:700">0%</span></div>
+  </div>
+</div>
+<div class="main-container">
+  <div class="map-container">
+    <div class="map-wrapper" id="mapWrapper">
+      <div class="map-inner" id="mapInner">
+        <img id="ortofoto" alt="Ortofoto" />
+        <!-- Location overlays will be injected here -->
+      </div>
+    </div>
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomIn()">+</button>
+      <button class="zoom-btn" onclick="zoomOut()">−</button>
+      <button class="zoom-btn" onclick="zoomReset()" style="font-size:12px">⟲</button>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Lokasyonlar</h2>
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" onclick="filterField('all',this)">Tümü</button>
+        <button class="sidebar-tab" onclick="filterField('YSL 1',this)">YSL-1</button>
+        <button class="sidebar-tab" onclick="filterField('YSL 2',this)">YSL-2</button>
+        <button class="sidebar-tab" onclick="filterField('YSL 3',this)">YSL-3</button>
+        <button class="sidebar-tab" onclick="filterField('YSL 4',this)">YSL-4</button>
+      </div>
+    </div>
+    <div class="sidebar-content" id="sidebarContent"></div>
+    <div class="edit-panel" id="editPanel" style="display:none">
+      <h3>✏️ <span id="editTitle"></span></h3>
+      <div class="slider-container">
+        <div class="slider-label">
+          <span>Doluluk Oranı</span>
+          <span class="slider-value" id="sliderValue">0%</span>
+        </div>
+        <input type="range" id="occupancySlider" min="0" max="100" value="0" oninput="onSliderChange(this.value)" />
+      </div>
+      <button class="btn-save" onclick="saveOccupancy()">💾 Kaydet</button>
+      <button class="btn-reset" onclick="resetSelection()">İptal</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Kaydedildi!</div>
+
+<script>
+// Location data with positions (percentage-based on the image)
+const LOCATIONS = {
+  // YSL-1 - ilk saha
+  "YSL 1-A": { x: 5,  y: 32, w: 4.5, h: 7, field: "YSL 1" },
+  "YSL 1-B": { x: 5,  y: 40, w: 4.5, h: 7, field: "YSL 1" },
+  "YSL 1-C": { x: 5,  y: 48, w: 4.5, h: 7, field: "YSL 1" },
+  "YSL 1-D": { x: 10, y: 32, w: 4.5, h: 7, field: "YSL 1" },
+  "YSL 1-E": { x: 10, y: 40, w: 4.5, h: 7, field: "YSL 1" },
+  "YSL 1-X": { x: 10, y: 48, w: 4.5, h: 7, field: "YSL 1" },
+  "YSL 1-F": { x: 5,  y: 56, w: 9.5, h: 6, field: "YSL 1" },
+
+  // YSL-2 - ana saha
+  "YSL 2-A": { x: 43,   y: 32, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-B": { x: 39.5, y: 32, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-C": { x: 36,   y: 32, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-D": { x: 32.5, y: 32, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-E": { x: 29,   y: 32, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-F": { x: 25.5, y: 32, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-G": { x: 32.5, y: 25, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-H": { x: 29,   y: 25, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-I": { x: 25.5, y: 25, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-J": { x: 47,   y: 32, w: 3.5, h: 6, field: "YSL 2" },
+  "YSL 2-K": { x: 47,   y: 25, w: 3.5, h: 6, field: "YSL 2" },
+
+  // YSL-3 - demir&boru saha
+  "YSL 3-A": { x: 25.5, y: 58, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-B": { x: 29,   y: 58, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-C": { x: 32.5, y: 58, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-D": { x: 36,   y: 58, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-E": { x: 39.5, y: 58, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-G": { x: 36,   y: 65, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-H": { x: 39.5, y: 65, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-N": { x: 47,   y: 58, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-I": { x: 43,   y: 65, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-J": { x: 46.5, y: 65, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-K": { x: 50,   y: 65, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-L": { x: 32.5, y: 72, w: 3.5, h: 6, field: "YSL 3" },
+  "YSL 3-M": { x: 36,   y: 72, w: 3.5, h: 6, field: "YSL 3" },
+
+  // YSL-4 - gömülü
+  "YSL 4-A": { x: 80, y: 48, w: 5, h: 2, field: "YSL 4" },
+  "YSL 4-B": { x: 91, y: 41, w: 2, h: 5, field: "YSL 4" },
+  "YSL 4-C": { x: 80, y: 37, w: 5, h: 2, field: "YSL 4" },
+  "YSL 4-D": { x: 69, y: 41, w: 2, h: 5, field: "YSL 4" },
+};
+
+// State
+let occupancyData = {};
+let selectedLocation = null;
+let currentFilter = 'all';
+let zoomLevel = 1;
+
+// Colors
+function getColor(pct) {
+  if (pct <= 0) return 'rgba(100,116,139,0.5)';
+  if (pct <= 30) return 'rgba(34,197,94,0.6)';
+  if (pct <= 60) return 'rgba(234,179,8,0.6)';
+  if (pct <= 85) return 'rgba(249,115,22,0.6)';
+  return 'rgba(239,68,68,0.7)';
+}
+
+function getTextColor(pct) {
+  if (pct <= 0) return '#94a3b8';
+  if (pct <= 30) return '#22c55e';
+  if (pct <= 60) return '#eab308';
+  if (pct <= 85) return '#f97316';
+  return '#ef4444';
+}
+
+// Load/Save from localStorage
+function loadData() {
+  try {
+    const saved = localStorage.getItem('saha_doluluk_data');
+    if (saved) {
+      occupancyData = JSON.parse(saved);
+    } else {
+      Object.keys(LOCATIONS).forEach(key => {
+        occupancyData[key] = { percentage: 0, updatedAt: null };
+      });
+    }
+  } catch(e) {
+    Object.keys(LOCATIONS).forEach(key => {
+      occupancyData[key] = { percentage: 0, updatedAt: null };
+    });
+  }
+  // Ensure all locations exist
+  Object.keys(LOCATIONS).forEach(key => {
+    if (!occupancyData[key]) {
+      occupancyData[key] = { percentage: 0, updatedAt: null };
+    }
+  });
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('saha_doluluk_data', JSON.stringify(occupancyData));
+  } catch(e) {}
+}
+
+// Render overlays on map
+function renderOverlays() {
+  const container = document.getElementById('mapInner');
+  // Remove old overlays
+  container.querySelectorAll('.location-overlay').forEach(el => el.remove());
+
+  Object.entries(LOCATIONS).forEach(([name, loc]) => {
+    const pct = occupancyData[name]?.percentage || 0;
+    const div = document.createElement('div');
+    div.className = 'location-overlay' + (selectedLocation === name ? ' selected' : '');
+    div.style.left = loc.x + '%';
+    div.style.top = loc.y + '%';
+    div.style.width = loc.w + '%';
+    div.style.height = loc.h + '%';
+    div.style.background = getColor(pct);
+    div.textContent = name.replace('YSL ','').replace('YSL ','');
+    div.title = name + ' — ' + pct + '%';
+    div.onclick = () => selectLocation(name);
+    container.appendChild(div);
+  });
+}
+
+// Render sidebar list
+function renderSidebar() {
+  const content = document.getElementById('sidebarContent');
+  content.innerHTML = '';
+
+  const fields = ['YSL 1', 'YSL 2', 'YSL 3', 'YSL 4'];
+  
+  fields.forEach(field => {
+    if (currentFilter !== 'all' && currentFilter !== field) return;
+
+    const title = document.createElement('div');
+    title.className = 'field-group-title';
+    title.textContent = field + ' (' + Object.keys(LOCATIONS).filter(k => LOCATIONS[k].field === field).length + ' lokasyon)';
+    content.appendChild(title);
+
+    Object.entries(LOCATIONS)
+      .filter(([_, loc]) => loc.field === field)
+      .forEach(([name, _]) => {
+        const pct = occupancyData[name]?.percentage || 0;
+        const updatedAt = occupancyData[name]?.updatedAt;
+
+        const card = document.createElement('div');
+        card.className = 'location-card' + (selectedLocation === name ? ' selected' : '');
+        card.onclick = () => selectLocation(name);
+
+        card.innerHTML = `
+          <div class="loc-indicator" style="background:${getColor(pct)}">${pct}%</div>
+          <div class="loc-info">
+            <div class="loc-name">${name}</div>
+            <div class="loc-date">${updatedAt ? formatDate(updatedAt) : 'Henüz güncellenmedi'}</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${getTextColor(pct)}"></div></div>
+          </div>
+        `;
+        content.appendChild(card);
+      });
+  });
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+}
+
+// Stats
+function updateStats() {
+  const values = Object.values(occupancyData).map(d => d.percentage || 0);
+  const empty = values.filter(v => v === 0).length;
+  const partial = values.filter(v => v > 0 && v < 80).length;
+  const full = values.filter(v => v >= 80).length;
+  const avg = values.length ? Math.round(values.reduce((a,b) => a+b, 0) / values.length) : 0;
+
+  document.getElementById('statEmpty').textContent = empty;
+  document.getElementById('statPartial').textContent = partial;
+  document.getElementById('statFull').textContent = full;
+  document.getElementById('statAvg').textContent = avg + '%';
+}
+
+// Selection
+function selectLocation(name) {
+  selectedLocation = name;
+  const pct = occupancyData[name]?.percentage || 0;
+
+  document.getElementById('editPanel').style.display = 'block';
+  document.getElementById('editTitle').textContent = name;
+  document.getElementById('occupancySlider').value = pct;
+  document.getElementById('sliderValue').textContent = pct + '%';
+  document.getElementById('sliderValue').style.color = getTextColor(pct);
+
+  renderOverlays();
+  renderSidebar();
+
+  // Scroll card into view
+  const cards = document.querySelectorAll('.location-card.selected');
+  if (cards.length) cards[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function resetSelection() {
+  selectedLocation = null;
+  document.getElementById('editPanel').style.display = 'none';
+  renderOverlays();
+  renderSidebar();
+}
+
+function onSliderChange(val) {
+  const pct = parseInt(val);
+  document.getElementById('sliderValue').textContent = pct + '%';
+  document.getElementById('sliderValue').style.color = getTextColor(pct);
+}
+
+function saveOccupancy() {
+  if (!selectedLocation) return;
+  const pct = parseInt(document.getElementById('occupancySlider').value);
+  occupancyData[selectedLocation] = {
+    percentage: pct,
+    updatedAt: new Date().toISOString()
+  };
+  saveData();
+  renderOverlays();
+  renderSidebar();
+  updateStats();
+  showToast('✅ ' + selectedLocation + ' — %' + pct + ' kaydedildi');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// Filter
+function filterField(field, btn) {
+  currentFilter = field;
+  document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderSidebar();
+}
+
+// Zoom
+function zoomIn() {
+  zoomLevel = Math.min(zoomLevel + 0.2, 3);
+  applyZoom();
+}
+
+function zoomOut() {
+  zoomLevel = Math.max(zoomLevel - 0.2, 0.5);
+  applyZoom();
+}
+
+function zoomReset() {
+  zoomLevel = 1;
+  applyZoom();
+}
+
+function applyZoom() {
+  const img = document.getElementById('ortofoto');
+  img.style.width = (1400 * zoomLevel) + 'px';
+}
+
+function init() {
+  const img = document.getElementById('ortofoto');
+
+  img.onerror = function() {
+    console.error("Ortofoto yüklenemedi:", img.src);
+    img.style.display = 'none';
+
+    const mapInner = document.getElementById('mapInner');
+    mapInner.style.width = '1400px';
+    mapInner.style.height = '990px';
+    mapInner.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)';
+  };
+
+  img.src = '/assets/images/ortofoto_web.jpg';
+
+  loadData();
+  renderOverlays();
+  renderSidebar();
+  updateStats();
+}
+
+init();
+</script>
+</body>
+</html>

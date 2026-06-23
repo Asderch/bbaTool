@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Sevkiyat Dashboard</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/popup.js" defer></script>
+  <style>
+    .ke{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}
+    .ke.po{background:var(--green-dim);color:var(--green)}.ke.ne{background:var(--red-dim);color:var(--red)}.ke.no{background:var(--bg);color:var(--text3)}
+  </style></head><body>
+
+  <div class="shell">
+  <nav class="sidebar">
+    <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>V4.0</span></div>
+    <div class="nav-section">Main Data</div>
+    <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+    <div class="nav-section">Sevkiyat</div>
+    <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i>Planlar</a>
+    <a href="/sevkiyat-dashboard" class="nav-item active"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+    <div class="nav-section">Araçlar</div>
+    <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+    <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+    <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+    <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+  <div class="nav-section">Raporlama</div>
+  <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+  <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+  <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+  <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+    <div class="sidebar-footer">
+        <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+  <i class="fa-solid fa-sun"></i> Açık Tema
+</button>
+      <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>
+    </div>
+  </nav>
+  <div class="main-area">
+    <div class="topbar">
+      <div><div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span>Sevkiyat<span class="bc-sep">›</span><span class="bc-current">Dashboard</span></div><div class="topbar-title">Sevkiyat Dashboard</div><div class="topbar-sub">Genel sevkiyat durumu ve istatistikler</div></div>
+      <div class="topbar-actions">
+        <div class="tarih-filtre" style="margin:0;gap:4px">
+          <button onclick="setFilter('today')" style="padding:4px 10px;font-size:10px">Bugün</button>
+          <button onclick="setFilter('week')" style="padding:4px 10px;font-size:10px">Bu Hafta</button>
+          <button onclick="setFilter('lastweek')" style="padding:4px 10px;font-size:10px">Geçen Hafta</button>
+          <button onclick="setFilter('month')" style="padding:4px 10px;font-size:10px">Bu Ay</button>
+          <button onclick="setFilter('lastmonth')" style="padding:4px 10px;font-size:10px">Geçen Ay</button>
+          <button onclick="setFilter('year')" style="padding:4px 10px;font-size:10px">Bu Yıl</button>
+          <button onclick="tarihAralikToggle()" style="padding:4px 10px;font-size:10px" id="tarihAralikBtn"><i class="fa-solid fa-calendar-days"></i> Aralık</button>
+        </div>
+        <button class="btn excel" onclick="dashboardExcel()" style="padding:5px 12px;font-size:11px"><i class="fa-solid fa-file-excel"></i> Excel</button>
+        <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()">
+  <i class="fa-solid fa-sun"></i>
+</button>
+    <div class="topbar-avatar" title="Profil">BA</div>
+      </div>
+    </div>
+    <div class="content">
+
+    <!-- Tarih aralığı mini panel - gizli, tıklayınca açılır -->
+    <div id="tarihAralikPanel" style="display:none;background:var(--bg-white);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:none">
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:10px;color:var(--text3);font-weight:600">Başlangıç:</span>
+        <input type="date" id="tarihBaslangic" style="width:130px;padding:4px 8px;font-size:11px;margin:0">
+        <span style="font-size:10px;color:var(--text3);font-weight:600">Bitiş:</span>
+        <input type="date" id="tarihBitis" style="width:130px;padding:4px 8px;font-size:11px;margin:0">
+        <button onclick="setFilter('range')" style="padding:4px 10px;font-size:10px"><i class="fa-solid fa-search"></i> Filtrele</button>
+        <button onclick="tarihAralikKapat()" style="padding:4px 8px;font-size:10px;background:transparent;border:none;color:var(--text3);cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+      <span style="font-size:10px;font-weight:600;color:var(--text3)">Tip:</span>
+      <button class="tip-filtre-btn aktif" onclick="tipFiltreSec(null, this)">Tümü</button>
+      <button class="tip-filtre-btn" onclick="tipFiltreSec('Yan Sanayi', this)">Yan Sanayi</button>
+      <button class="tip-filtre-btn" onclick="tipFiltreSec('90 VFA', this)">90 VFA</button>
+      <button class="tip-filtre-btn" onclick="tipFiltreSec('Satış', this)">Satış</button>
+      <span style="margin-left:12px;font-size:10px;font-weight:600;color:var(--text3)"><i class="fa-solid fa-boxes-stacked"></i> Mal Grubu:</span>
+      <button class="mg-filtre-btn aktif" onclick="mgKategoriSec(null, this)">Tümü</button>
+      <div id="mgKategoriBtnler" style="display:inline-flex;gap:4px;flex-wrap:wrap"></div>
+      <button class="mg-ayar-btn" onclick="mgAyarModalAc()" title="Kategori Ayarları"><i class="fa-solid fa-gear"></i></button>
+    </div>
+
+    <div class="do">
+      <div class="dk t"><div class="s" id="gP">0</div><div class="e">Toplam Planlanan</div><div class="a" id="gPK">0 kalem</div><div class="kpi-trend neutral" id="gPTrend"></div></div>
+      <div class="dk g"><div class="s" id="gG">0</div><div class="e">Gönderilen</div><div class="a" id="gGY">%0</div><div class="kpi-trend neutral" id="gGTrend"></div></div>
+      <div class="dk f" id="gFKart" style="display:none"><div class="s" id="gF">0</div><div class="e">Fazla Gönderim</div><div class="a" id="gFA">&nbsp;</div></div>
+      <div class="dk b"><div class="s" id="gB">0</div><div class="e">Bekleyen/Kalan</div><div class="a" id="gBA">0 kalem</div><div class="kpi-trend neutral" id="gBTrend"></div></div>
+      <div class="dk d"><div class="s" id="gD">0</div><div class="e">Devreden</div><div class="a" id="gDA">0 kalem</div></div>
+    </div>
+
+    <div class="sb"><i class="fa-solid fa-chart-line"></i> Plan Bazlı İlerleme</div>
+    <div class="pi" id="planIlerleme"></div>
+    <div class="sb"><i class="fa-solid fa-triangle-exclamation"></i> Geciken Kalemler</div>
+    <div id="gecikenAlani"></div>
+    <div class="sb"><i class="fa-solid fa-ranking-star"></i> En Çok Sevk Edilen Mal Grupları</div>
+    <div id="topMG"></div>
+
+    </div><!-- /content -->
+  </div><!-- /main-area -->
+  </div><!-- /shell -->
+
+  <!-- MAL GRUBU AYAR MODALI -->
+  <div class="mg-modal-bg" id="mgAyarModal" onclick="if(event.target===this)mgAyarModalKapat()">
+    <div class="mg-modal">
+      <div class="mg-modal-header">
+        <h3><i class="fa-solid fa-gear"></i> Mal Grubu Kategori Ayarları</h3>
+      </div>
+      <div class="mg-modal-body">
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:8px">Ana Kategoriler</div>
+          <div id="mgKatListe"></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input type="text" id="mgYeniKatAd" placeholder="Yeni kategori adı..." style="flex:1;padding:6px 10px;font-size:12px;margin:0">
+            <input type="color" id="mgYeniKatRenk" value="#1565c0" style="width:36px;height:32px;padding:2px;margin:0;border:1px solid #ddd;border-radius:6px">
+            <button class="btn" onclick="mgKategoriEkle()" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-plus"></i></button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:8px">Mal Grubu → Kategori Eşlemeleri</div>
+          <div id="mgEslemeListe" style="max-height:300px;overflow-y:auto"></div>
+        </div>
+      </div>
+      <div class="mg-modal-footer">
+        <button class="btn" onclick="mgEslemeleriKaydet()" style="font-size:12px;background:#217346"><i class="fa-solid fa-check"></i> Kaydet</button>
+        <button class="btn temizle" onclick="mgAyarModalKapat()" style="font-size:12px"><i class="fa-solid fa-xmark"></i> Kapat</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+window.addEventListener("load", () => {
+    filtreleriYukle()
+})
+
+function $(id){
+    return document.getElementById(id)
+}
+
+// Filtre hafızası - sessionStorage
+function filtreleriKaydet(){
+    const state = {
+        tarihFiltre: aktifTarihFiltre,
+        startDate: aktifStartDate,
+        endDate: aktifEndDate,
+        planTipi: aktifPlanTipi,
+        kategoriler: seciliKategoriler,
+        malGruplari: seciliMalGruplari
+    }
+    sessionStorage.setItem("dashboardFiltre", JSON.stringify(state))
+}
+
+function filtreleriYukle(){
+    try {
+        const saved = sessionStorage.getItem("dashboardFiltre")
+        if(saved){
+            const state = JSON.parse(saved)
+            aktifTarihFiltre = state.tarihFiltre || "week"
+            aktifStartDate = state.startDate || null
+            aktifEndDate = state.endDate || null
+            aktifPlanTipi = state.planTipi || null
+            seciliKategoriler = state.kategoriler || []
+            seciliMalGruplari = state.malGruplari || []
+
+            // Tip filtre butonlarını güncelle
+            if(aktifPlanTipi){
+                document.querySelectorAll(".tip-filtre-btn").forEach(b => {
+                    b.classList.remove("aktif")
+                    if(b.textContent.trim() === aktifPlanTipi) b.classList.add("aktif")
+                })
+            }
+        } else {
+            // İlk açılışta default: Bu Hafta
+            aktifTarihFiltre = "week"
+        }
+    } catch(e){
+        aktifTarihFiltre = "week"
+    }
+
+    // Tarih butonlarında aktif olanı işaretle
+    setTimeout(() => {
+        document.querySelectorAll(".tarih-filtre button").forEach(b => {
+            b.classList.remove("tarih-aktif")
+            if(aktifTarihFiltre === "week" && b.textContent.trim() === "Bu Hafta") b.classList.add("tarih-aktif")
+            if(aktifTarihFiltre === "today" && b.textContent.trim() === "Bugün") b.classList.add("tarih-aktif")
+            if(aktifTarihFiltre === "lastweek" && b.textContent.trim() === "Geçen Hafta") b.classList.add("tarih-aktif")
+            if(aktifTarihFiltre === "month" && b.textContent.trim() === "Bu Ay") b.classList.add("tarih-aktif")
+            if(aktifTarihFiltre === "lastmonth" && b.textContent.trim() === "Geçen Ay") b.classList.add("tarih-aktif")
+            if(aktifTarihFiltre === "year" && b.textContent.trim() === "Bu Yıl") b.classList.add("tarih-aktif")
+        })
+    }, 50)
+
+    loadDashboard(aktifTarihFiltre, aktifStartDate, aktifEndDate)
+}
+
+let aktifPlanTipi = null
+let aktifTarihFiltre = null
+let aktifStartDate = null
+let aktifEndDate = null
+let seciliMalGruplari = []  // çoklu seçim
+let seciliKategoriler = []  // kategori bazlı çoklu seçim
+let dashKategoriler = []
+let dashEslesmeler = {}
+let dashMalGruplari = []
+
+function tipFiltreSec(tip, btn){
+    aktifPlanTipi = tip
+    document.querySelectorAll(".tip-filtre-btn").forEach(b => b.classList.remove("aktif"))
+    btn.classList.add("aktif")
+    filtreleriKaydet()
+    loadDashboard(aktifTarihFiltre, aktifStartDate, aktifEndDate)
+}
+
+function mgKategoriSec(katId, btn){
+    if(katId === null){
+        seciliKategoriler = []
+        seciliMalGruplari = []
+        document.querySelectorAll(".mg-filtre-btn").forEach(b => {b.classList.remove("secili");b.classList.remove("aktif")})
+        btn.classList.add("aktif")
+    } else {
+        document.querySelector(".mg-filtre-btn.aktif")?.classList.remove("aktif")
+        const idx = seciliKategoriler.indexOf(katId)
+        if(idx >= 0){
+            seciliKategoriler.splice(idx, 1)
+            btn.classList.remove("secili")
+        } else {
+            seciliKategoriler.push(katId)
+            btn.classList.add("secili")
+        }
+
+        // Seçili kategorilere ait mal gruplarını hesapla
+        seciliMalGruplari = []
+        for(const mg in dashEslesmeler){
+            if(seciliKategoriler.includes(dashEslesmeler[mg])){
+                seciliMalGruplari.push(mg)
+            }
+        }
+
+        if(seciliKategoriler.length === 0){
+            document.querySelector(".mg-filtre-btn")?.classList.add("aktif")
+        }
+    }
+    filtreleriKaydet()
+    loadDashboard(aktifTarihFiltre, aktifStartDate, aktifEndDate)
+}
+
+function mgKategoriBtnleriOlustur(){
+    const container = document.getElementById("mgKategoriBtnler")
+    if(!container) return
+    container.innerHTML = ""
+
+    dashKategoriler.forEach(k => {
+        const btn = document.createElement("button")
+        btn.className = "mg-filtre-btn" + (seciliKategoriler.includes(k.id) ? " secili" : "")
+        btn.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${k.renk};margin-right:4px"></span>${k.kategori_adi}`
+        btn.onclick = function(){ mgKategoriSec(k.id, this) }
+        container.appendChild(btn)
+    })
+}
+
+// ---- MAL GRUBU AYAR MODALI ----
+async function mgAyarModalAc(){
+    try {
+        const r = await fetch("/api/mal-grubu/kategoriler")
+        const d = await r.json()
+        dashKategoriler = d.kategoriler
+        dashEslesmeler = d.eslesmeler
+        dashMalGruplari = d.mal_gruplari
+
+        // Kategori listesi
+        let kh = ""
+        dashKategoriler.forEach(k => {
+            kh += `<div class="mg-kat-satir">
+                <div class="mg-kat-renk" style="background:${k.renk}"></div>
+                <span class="mg-kat-ad">${k.kategori_adi}</span>
+                <button class="ib sil" onclick="mgKategoriSilModal(${k.id})" style="font-size:9px;padding:2px 6px"><i class="fa-solid fa-trash"></i></button>
+            </div>`
+        })
+        document.getElementById("mgKatListe").innerHTML = kh || '<div style="color:#ccc;font-size:12px">Kategori yok</div>'
+
+        // Eşleme listesi
+        let eh = ""
+        dashMalGruplari.forEach(mg => {
+            const secili = dashEslesmeler[mg] || ""
+            let opts = '<option value="">— Atanmamış —</option>'
+            dashKategoriler.forEach(k => {
+                opts += `<option value="${k.id}" ${secili == k.id ? "selected" : ""}>${k.kategori_adi}</option>`
+            })
+            eh += `<div class="mg-esleme-satir">
+                <span class="mg-esleme-ad">${mg}</span>
+                <select class="mg-esleme-select" data-mg="${mg}">${opts}</select>
+            </div>`
+        })
+        document.getElementById("mgEslemeListe").innerHTML = eh || '<div style="color:#ccc;font-size:12px">Mal grubu yok</div>'
+
+        document.getElementById("mgAyarModal").classList.add("goster")
+    } catch(e){
+        console.error("Ayar modal hata:", e)
+    }
+}
+
+function mgAyarModalKapat(){
+    document.getElementById("mgAyarModal").classList.remove("goster")
+}
+
+async function mgKategoriEkle(){
+    const ad = document.getElementById("mgYeniKatAd").value.trim()
+    if(!ad) return
+    const renk = document.getElementById("mgYeniKatRenk").value
+    try {
+        const r = await fetch("/api/mal-grubu/kategori-ekle", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kategori_adi:ad,renk:renk})})
+        const j = await r.json()
+        if(j.durum === "ok"){
+            document.getElementById("mgYeniKatAd").value = ""
+            mgAyarModalAc()
+        }
+    } catch(e){}
+}
+
+async function mgKategoriSilModal(id){
+    if(!confirm("Bu kategoriyi silmek istediğinize emin misiniz?")) return
+    try {
+        const r = await fetch("/api/mal-grubu/kategori-sil", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})})
+        const j = await r.json()
+        if(j.durum === "ok") mgAyarModalAc()
+    } catch(e){}
+}
+
+async function mgEslemeleriKaydet(){
+    const selectler = document.querySelectorAll(".mg-esleme-select")
+    const eslesmeler = {}
+    selectler.forEach(s => {
+        eslesmeler[s.dataset.mg] = s.value || null
+    })
+    try {
+        const r = await fetch("/api/mal-grubu/esle", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eslesmeler})})
+        const j = await r.json()
+        if(j.durum === "ok"){
+            mgAyarModalKapat()
+            loadDashboard(aktifTarihFiltre, aktifStartDate, aktifEndDate)
+        }
+    } catch(e){}
+}
+
+async function dashboardExcel(){
+    // Aktif filtreleri topla
+    let filtreAdi = "Dashboard Export"
+    const parcalar = []
+
+    if(aktifPlanTipi) parcalar.push(aktifPlanTipi)
+
+    if(seciliKategoriler.length > 0){
+        const katAdlari = seciliKategoriler.map(kid => {
+            const k = dashKategoriler.find(x => x.id === kid)
+            return k ? k.kategori_adi : ""
+        }).filter(Boolean)
+        if(katAdlari.length) parcalar.push(katAdlari.join(" + "))
+    }
+
+    if(aktifTarihFiltre){
+        const tarihAdlari = {today:"Bugün",week:"Bu Hafta",lastweek:"Geçen Hafta",month:"Bu Ay",lastmonth:"Geçen Ay",year:"Bu Yıl",range:"Tarih Aralığı"}
+        parcalar.push(tarihAdlari[aktifTarihFiltre] || aktifTarihFiltre)
+    }
+
+    if(parcalar.length) filtreAdi = parcalar.join(" — ") + " Raporu"
+
+    try {
+        const r = await fetch("/api/sevkiyat/dashboard-excel", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                plan_tipi: aktifPlanTipi,
+                mal_gruplari: seciliMalGruplari,
+                filtre_adi: filtreAdi,
+                tarih_filtre: aktifTarihFiltre,
+                start_date: aktifStartDate,
+                end_date: aktifEndDate
+            })
+        })
+        const j = await r.json()
+        if(j.durum === "ok"){
+            toast(j.kalem_sayisi + " kalem Excel'e aktarıldı", "basari")
+        } else {
+            bildirim(j.mesaj, "Hata", "hata")
+        }
+    } catch(e){
+        bildirim("Bağlantı hatası", "Hata", "hata")
+    }
+}
+
+function fKg(v){
+    if(!v) return "0 KG"
+    if(v >= 1000) return (v / 1000).toFixed(1) + " Ton"
+    return Math.round(v) + " KG"
+}
+
+function fN(v){
+    return new Intl.NumberFormat("tr-TR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    }).format(v)
+}
+
+function tarihAralikToggle(){
+    const p = document.getElementById("tarihAralikPanel")
+    p.style.display = p.style.display === "none" ? "block" : "none"
+}
+function tarihAralikKapat(){
+    document.getElementById("tarihAralikPanel").style.display = "none"
+}
+
+function setFilter(f){
+    // Tarih butonlarını aktif/pasif yap
+    document.querySelectorAll(".tarih-filtre button").forEach(b => b.classList.remove("tarih-aktif"))
+    if(event && event.target && event.target.tagName === "BUTTON"){
+        event.target.classList.add("tarih-aktif")
+    }
+
+    if(f === "range"){
+        const baslangic = $("tarihBaslangic").value
+        const bitis = $("tarihBitis").value
+
+        if(!baslangic || !bitis){
+            alert("Başlangıç ve bitiş tarihi seç")
+            return
+        }
+
+        if(baslangic > bitis){
+            alert("Başlangıç tarihi bitiş tarihinden büyük olamaz")
+            return
+        }
+
+        aktifTarihFiltre = "range"
+        aktifStartDate = baslangic
+        aktifEndDate = bitis
+        filtreleriKaydet()
+        loadDashboard("range", baslangic, bitis)
+        return
+    }
+
+    aktifTarihFiltre = f
+    aktifStartDate = null
+    aktifEndDate = null
+    filtreleriKaydet()
+    loadDashboard(f)
+}
+
+async function loadDashboard(filter = null, startDate = null, endDate = null){
+    let url = "/api/sevkiyat/dashboard"
+    let params = []
+
+    if(filter){
+        params.push("filter=" + encodeURIComponent(filter))
+
+        if(filter === "range" && startDate && endDate){
+            params.push("start_date=" + encodeURIComponent(startDate))
+            params.push("end_date=" + encodeURIComponent(endDate))
+        }
+    }
+
+    if(aktifPlanTipi){
+        params.push("plan_tipi=" + encodeURIComponent(aktifPlanTipi))
+    }
+
+    if(seciliMalGruplari.length > 0){
+        params.push("mal_gruplari=" + encodeURIComponent(seciliMalGruplari.join(",")))
+    }
+
+    if(params.length > 0){
+        url += "?" + params.join("&")
+    }
+
+    try{
+        const r = await fetch(url)
+        const d = await r.json()
+
+        console.log("dashboard data", d)
+
+        const g = d.genel
+        const gy = g.planlanan_kg > 0
+            ? Math.round(g.gonderilen_kg / g.planlanan_kg * 100)
+            : 0
+
+        $("gP").innerText = fKg(g.planlanan_kg)
+        $("gPK").innerText = g.toplam_kalem + " kalem"
+
+        $("gG").innerText = fKg(g.gonderilen_kg)
+        $("gGY").innerText = "%" + gy
+
+        $("gB").innerText = fKg(g.bekleyen_kg)
+        $("gBA").innerText = g.bekleyen_adet + " kalem"
+
+        $("gD").innerText = fKg(g.devreden_kg)
+        $("gDA").innerText = g.devreden_adet + " kalem"
+
+        // Fazla gönderim toplamı (planlardan hesapla)
+        const toplamFazla = d.planlar.reduce((t, p) => t + (p.fazla_gonderim_kg || 0), 0)
+        if(toplamFazla > 0){
+            $("gFKart").style.display = ""
+            $("gF").innerText = fKg(toplamFazla)
+        }else{
+            $("gFKart").style.display = "none"
+        }
+
+        renderPlans(d.planlar)
+        renderGeciken(d.geciken)
+        renderTopMG(d.top_mal_grubu)
+
+        // Geçen haftayla karşılaştırma — sadece haftalık filtrelerde göster
+        if(filter === "week" || filter === "lastweek" || filter === "month" || !filter){
+            loadComparison(g, filter)
+        } else {
+            // Trend göstergelerini temizle
+            ["gPTrend","gGTrend","gBTrend"].forEach(id => { if($(id)) $(id).innerHTML = "" })
+        }
+
+        // Mal grubu kategori butonlarını oluştur
+        if(d.kategoriler){
+            dashKategoriler = d.kategoriler
+            dashEslesmeler = d.eslesmeler || {}
+            dashMalGruplari = d.mal_gruplari || []
+            mgKategoriBtnleriOlustur()
+        }
+
+    }catch(e){
+        console.error("Dashboard hata:", e)
+    }
+}
+
+// ---- GEÇEN DÖNEMLE KARŞILAŞTIRMA ----
+async function loadComparison(currentGenel, currentFilter){
+    try {
+        // Karşılaştırma filtresini belirle
+        let compareFilter = null
+        let compareLabel = ""
+
+        if(currentFilter === "week"){
+            compareFilter = "lastweek"
+            compareLabel = "geçen haftaya göre"
+        } else if(currentFilter === "month"){
+            compareFilter = "lastmonth"
+            compareLabel = "geçen aya göre"
+        } else {
+            // Diğer filtreler için karşılaştırma yok
+            ["gPTrend","gGTrend","gBTrend"].forEach(id => { if($(id)) $(id).innerHTML = "" })
+            return
+        }
+
+        let url = "/api/sevkiyat/dashboard?filter=" + encodeURIComponent(compareFilter)
+        if(aktifPlanTipi) url += "&plan_tipi=" + encodeURIComponent(aktifPlanTipi)
+        if(seciliMalGruplari.length > 0) url += "&mal_gruplari=" + encodeURIComponent(seciliMalGruplari.join(","))
+
+        const r = await fetch(url)
+        const d = await r.json()
+        const prev = d.genel
+
+        // Planlanan karşılaştırma
+        renderTrend("gPTrend", currentGenel.planlanan_kg, prev.planlanan_kg, compareLabel, true)
+
+        // Gönderilen karşılaştırma
+        renderTrend("gGTrend", currentGenel.gonderilen_kg, prev.gonderilen_kg, compareLabel, true)
+
+        // Bekleyen karşılaştırma (az olması iyi)
+        renderTrend("gBTrend", currentGenel.bekleyen_kg, prev.bekleyen_kg, compareLabel, false)
+
+    } catch(e){
+        console.error("Karşılaştırma hatası:", e)
+    }
+}
+
+function renderTrend(elementId, current, previous, label, moreIsBetter){
+    const el = $(elementId)
+    if(!el) return
+
+    if(!previous || previous === 0){
+        if(current > 0){
+            el.className = "kpi-trend up"
+            el.innerHTML = '<i class="fa-solid fa-arrow-up"></i> Yeni veri'
+        } else {
+            el.className = "kpi-trend neutral"
+            el.innerHTML = ''
+        }
+        return
+    }
+
+    const diff = current - previous
+    const pct = Math.round((diff / previous) * 100)
+
+    if(diff === 0){
+        el.className = "kpi-trend neutral"
+        el.innerHTML = '<i class="fa-solid fa-minus"></i> Değişim yok — ' + label
+    } else if(diff > 0){
+        const isGood = moreIsBetter
+        el.className = "kpi-trend " + (isGood ? "up" : "down")
+        el.innerHTML = '<i class="fa-solid fa-arrow-up"></i> %' + Math.abs(pct) + ' ' + (isGood ? 'artış' : 'artış') + ' — ' + label
+    } else {
+        const isGood = !moreIsBetter
+        el.className = "kpi-trend " + (isGood ? "up" : "down")
+        el.innerHTML = '<i class="fa-solid fa-arrow-down"></i> %' + Math.abs(pct) + ' ' + (isGood ? 'azalma' : 'düşüş') + ' — ' + label
+    }
+}
+
+function renderPlans(planlar){
+    if(!planlar.length){
+        $("planIlerleme").innerHTML = "<p>Plan yok</p>"
+        return
+    }
+
+    let html = ""
+
+    planlar.forEach(p => {
+        let y = Math.min(Math.round(p.yuzde), 100)
+
+        let ozet = p.ozet || {}
+        let bek = ozet["Bekliyor"]?.adet || 0
+        let kismi = ozet["Kısmi"]?.adet || 0
+        let tamam = ozet["Gönderildi"]?.adet || ozet["Gönderilen"]?.adet || 0
+        let dev = ozet["Devreden"]?.adet || p.devreden || 0
+
+        let renk = "du"
+
+        if(dev > 0){
+            renk = "du"
+        }else if(kismi > 0){
+            renk = "or"
+        }else if(tamam > 0 && bek === 0){
+            renk = "iy2"
+        }
+
+        html += `
+<div class="ik" onclick="goPlan(${p.id})" style="cursor:pointer">
+    <div class="iu">
+        <span class="ia">${p.plan_adi}</span>
+        <span class="iy ${renk}">%${y}</span>
+    </div>
+
+    <div class="pb">
+        <div class="pf ${renk}" style="width:${y}%; min-width:4px"></div>
+    </div>
+
+    <div class="id">
+        <span>Planlanan: <strong>${fKg(p.planlanan_kg)}</strong></span>
+        <span>Gönderilen: <strong>${fKg(p.gonderilen_kg)}</strong></span>
+        ${(p.fazla_gonderim_kg || 0) > 0 ? `<span>Fazla: <strong style="color:#1976d2">${fKg(p.fazla_gonderim_kg)}</strong></span>` : ""}
+        <span>Kalan: <strong>${fKg(p.kalan_kg)}</strong></span>
+        <span>Bekliyor: <strong>${bek}</strong></span>
+        <span>Gönderildi: <strong>${tamam}</strong></span>
+        <span>Devreden: <strong>${dev}</strong></span>
+        ${kismi > 0 ? `<span>Kısmi: <strong>${kismi}</strong></span>` : ""}
+    </div>
+</div>`
+    })
+
+    $("planIlerleme").innerHTML = html
+}
+
+function renderGeciken(list){
+    if(!list.length){
+        $("gecikenAlani").innerHTML = "Geciken yok"
+        return
+    }
+
+    let html = `<table class="gt">
+    <thead>
+    <tr>
+    <th>Plan</th>
+    <th>Malzeme</th>
+    <th>Kalan</th>
+    </tr>
+    </thead><tbody>`
+
+    list.forEach(x => {
+        html += `
+        <tr>
+        <td>${x.plan_adi}</td>
+        <td>${x.malzeme_tanimi}</td>
+        <td>${fN(x.kalan)}</td>
+        </tr>`
+    })
+
+    html += "</tbody></table>"
+    $("gecikenAlani").innerHTML = html
+}
+
+function goPlan(id){
+    window.location.href = "/sevkiyat-detay/" + id
+}
+
+function renderTopMG(list){
+    console.log("renderTopMG:", list)
+
+    if(!list || !Array.isArray(list) || list.length === 0){
+        $("topMG").innerHTML = "<div style='color:#aaa;font-size:13px;padding:12px'>Filtreye uygun veri yok</div>"
+        return
+    }
+
+    // Kategoriye göre grupla
+    const katGruplar = {}
+    const atamasizlar = []
+
+    list.forEach(m => {
+        const katAdi = m.kategori_adi || ""
+        if(katAdi){
+            if(!katGruplar[katAdi]) katGruplar[katAdi] = {renk: m.kategori_renk || "#666", items: [], toplam: 0}
+            katGruplar[katAdi].items.push(m)
+            katGruplar[katAdi].toplam += (m.toplam || 0)
+        } else {
+            atamasizlar.push(m)
+        }
+    })
+
+    let html = ""
+    const katKeys = Object.keys(katGruplar)
+
+    // Kategorili gruplar
+    katKeys.forEach(kat => {
+        const g = katGruplar[kat]
+        html += `<div style="margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${g.renk}"></span>
+                <span style="font-size:13px;font-weight:800;color:${g.renk}">${kat}</span>
+                <span style="font-size:11px;color:#888;font-weight:600">— ${fKg(g.toplam)}</span>
+            </div>`
+        g.items.forEach((m, i) => {
+            html += `<div class="ti" style="margin-left:18px">
+                <span class="sr" style="background:${g.renk}">${i+1}</span>
+                <span class="ad">${m.mal_grubu}</span>
+                <span class="dg">${fN(m.toplam)} ${m.birim}</span>
+            </div>`
+        })
+        html += `</div>`
+    })
+
+    // Atanmamışlar (kategorisi olmayan)
+    if(atamasizlar.length > 0){
+        if(katKeys.length > 0){
+            html += `<div style="margin-bottom:14px">
+                <div style="font-size:13px;font-weight:800;color:#888;margin-bottom:6px">Atanmamış</div>`
+        }
+        atamasizlar.forEach((m, i) => {
+            html += `<div class="ti">
+                <span class="sr">${i+1}</span>
+                <span class="ad">${m.mal_grubu}</span>
+                <span class="dg">${fN(m.toplam)} ${m.birim}</span>
+            </div>`
+        })
+        if(katKeys.length > 0) html += `</div>`
+    }
+
+    $("topMG").innerHTML = html
+}
+
+</script>
+
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="fa-solid fa-chevron-up"></i>
+</button>
+<script>
+window.addEventListener('scroll',function(){
+  var b=document.getElementById('scrollTopBtn');
+  if(b)b.classList.toggle('visible',window.scrollY>300);
+});
+</script>
+
+</body>
+</html>

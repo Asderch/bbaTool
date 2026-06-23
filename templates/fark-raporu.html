@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fark Raporu — MB52 vs Sayım</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/popup.js" defer></script>
+  <style>
+    /* ──────────── Özet kartları (6'lı) ──────────── */
+    .ozet-grid {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
+      margin-bottom: 20px;
+    }
+    .ozet-kart {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px;
+      cursor: pointer; transition: all .15s;
+    }
+    .ozet-kart:hover { transform: translateY(-2px); border-color: var(--primary); }
+    .ozet-kart.aktif { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(62,207,142,0.2); }
+    .ozet-label {
+      font-size: 10.5px; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.4px;
+      margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
+    }
+    .ozet-value {
+      font-size: 24px; font-weight: 800; line-height: 1;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ozet-kart.toplam .ozet-value, .ozet-kart.toplam .ozet-label i { color: var(--text2); }
+    .ozet-kart.tamam .ozet-value, .ozet-kart.tamam .ozet-label i { color: var(--green); }
+    .ozet-kart.eksik .ozet-value, .ozet-kart.eksik .ozet-label i { color: var(--red); }
+    .ozet-kart.fazla .ozet-value, .ozet-kart.fazla .ozet-label i { color: var(--amber); }
+    .ozet-kart.sayilmadi .ozet-value, .ozet-kart.sayilmadi .ozet-label i { color: var(--text3); }
+    .ozet-kart.sapsiz .ozet-value, .ozet-kart.sapsiz .ozet-label i { color: var(--purple); }
+    .ozet-kart.sapsiz { border-color: rgba(168,85,247,0.4); }
+
+    /* ──────────── Mal grubu paneli ──────────── */
+    .mg-bolum {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px; margin-bottom: 20px;
+    }
+    .mg-bolum-baslik {
+      font-size: 14px; font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .mg-bolum-baslik i { color: var(--purple); }
+    .mg-bolum-aciklama {
+      font-size: 11px; color: var(--text3);
+      margin-bottom: 14px;
+    }
+    .mg-bolum-filtre {
+      margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--text3);
+    }
+    .mg-bolum-filtre input {
+      padding: 4px 8px; border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 11px; width: 140px;
+    }
+    .mg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .mg-kart {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px;
+      transition: all .15s; cursor: pointer;
+    }
+    .mg-kart:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .mg-kart-baslik {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 10px; gap: 8px;
+    }
+    .mg-kart-isim-wrap { flex: 1; min-width: 0; }
+    .mg-kart-isim {
+      font-size: 14px; font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+      word-wrap: break-word;
+    }
+    .mg-kart-kod {
+      font-size: 10px;
+      color: var(--text3);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 3px;
+      letter-spacing: 0.3px;
+    }
+    .mg-kart-rozet {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .mg-kart-rozet.tamam { background: rgba(34,197,94,0.15); color: var(--green); }
+    .mg-kart-rozet.eksik { background: rgba(220,38,38,0.15); color: var(--red); }
+    .mg-kart-rozet.fazla { background: rgba(245,158,11,0.15); color: var(--amber); }
+
+    /* Sayım durumu rozeti (MZ kodun yanı + sağ üst) */
+    .mg-sayim-durumu {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-left: 6px;
+      padding: 1px 7px;
+      border-radius: 3px;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: filter .12s, transform .12s;
+      position: relative;
+      user-select: none;
+    }
+    .mg-sayim-durumu:hover { filter: brightness(1.25); transform: scale(1.05); }
+    .mg-sayim-durumu.sayilmadi    { background: rgba(100,116,139,0.18); color: var(--text2); }
+    .mg-sayim-durumu.devam_ediyor { background: rgba(245,158,11,0.18);  color: var(--amber); }
+    .mg-sayim-durumu.tamamlandi   { background: rgba(34,197,94,0.18);   color: var(--green); }
+    .mg-sayim-durumu .pin-ikon {
+      margin-right: 2px;
+      font-size: 8.5px;
+      opacity: 0.85;
+    }
+
+    /* Durum seçim popup menüsü */
+    .durum-popup-back {
+      display: none; position: fixed; top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.5); z-index: 9990;
+      align-items: center; justify-content: center;
+    }
+    .durum-popup-back.acik { display: flex; }
+    .durum-popup {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      min-width: 280px; max-width: 380px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    }
+    .durum-popup h4 {
+      margin: 0 0 6px 0; font-size: 14px;
+      color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .durum-popup .alt-bilgi {
+      font-size: 11px; color: var(--text3);
+      margin-bottom: 12px;
+    }
+    .durum-secenek {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%;
+      padding: 9px 12px;
+      margin-bottom: 4px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      text-align: left;
+      transition: all .12s;
+    }
+    .durum-secenek:hover { border-color: var(--primary); background: rgba(62,207,142,0.05); }
+    .durum-secenek.aktif {
+      border-color: var(--primary);
+      background: rgba(62,207,142,0.1);
+      font-weight: 700;
+    }
+    .durum-secenek .ikon {
+      width: 22px; text-align: center; font-size: 14px;
+    }
+    .durum-secenek .ad { flex: 1; }
+    .durum-secenek .aciklama {
+      font-size: 10.5px; color: var(--text3);
+      font-weight: 400;
+    }
+    .durum-popup-kapat {
+      margin-top: 10px; width: 100%;
+      padding: 7px; border-radius: 5px;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--text);
+      cursor: pointer; font-family: inherit; font-size: 12px;
+    }
+    .durum-popup-kapat:hover { background: var(--bg-hover); }
+
+    /* Sağ üstteki dual rozet için wrapper */
+    .mg-kart-rozet-grup {
+      display: flex; flex-direction: column;
+      align-items: flex-end; gap: 4px;
+      flex-shrink: 0;
+    }
+    .mg-kg-satir {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 6px 0; font-size: 12px;
+      border-bottom: 1px solid rgba(148,163,184,0.1);
+    }
+    .mg-kg-satir:last-of-type { border-bottom: none; }
+    .mg-kg-label { color: var(--text3); font-size: 11px; }
+    .mg-kg-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .mg-kg-value.sap { color: var(--blue); }
+    .mg-kg-value.sayim { color: var(--green); }
+    .mg-kg-value.fark.eksik { color: var(--red); }
+    .mg-kg-value.fark.fazla { color: var(--amber); }
+    .mg-kg-value.fark.tamam { color: var(--green); }
+    .mg-kart-alt {
+      display: flex; justify-content: space-between;
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid rgba(148,163,184,0.15);
+      font-size: 10.5px; color: var(--text3);
+    }
+    .mg-mini-rozet {
+      display: inline-block;
+      padding: 1px 5px; border-radius: 3px;
+      font-size: 9.5px;
+      margin-right: 4px;
+    }
+    .mg-mini-rozet.tamam { background: rgba(34,197,94,0.15); color: var(--green); }
+    .mg-mini-rozet.eksik { background: rgba(220,38,38,0.15); color: var(--red); }
+    .mg-mini-rozet.fazla { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .mg-mini-rozet.sayilmadi { background: rgba(100,116,139,0.15); color: var(--text3); }
+
+    /* ──────────── Filtre barı ──────────── */
+    .filtre-bar {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      padding: 12px 14px; margin-bottom: 16px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .filtre-bar input, .filtre-bar select {
+      padding: 7px 10px; border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px; font-family: inherit;
+    }
+    .filtre-bar input { flex: 1; min-width: 200px; }
+    .filtre-bar select { min-width: 180px; }
+    .sapsiz-btn {
+      padding: 7px 14px; border-radius: 6px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      background: rgba(168,85,247,0.15); color: var(--purple);
+      border: 1px solid rgba(168,85,247,0.4);
+      font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
+      transition: all .15s;
+    }
+    .sapsiz-btn:hover { background: var(--purple); color: #fff; }
+
+    /* ──────────── Tablo ──────────── */
+    .fark-tablo { font-size: 12px; width: 100%; border-collapse: separate; border-spacing: 0; }
+    .fark-tablo thead th {
+      font-size: 11px; padding: 8px 10px;
+      background: var(--bg-white);
+      color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.4px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap; text-align: left;
+      position: sticky; top: 0; z-index: 5;
+    }
+    .fark-tablo tbody td {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .fark-tablo tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    .fark-tablo tbody tr.mukerrer td { background: rgba(168,85,247,0.04); }
+    .fark-tablo tbody tr.mukerrer:hover td { background: rgba(168,85,247,0.08); }
+    .fark-tablo tbody tr.sayilmadi td { opacity: 0.6; }
+    .fark-tablo td.num { font-family: 'JetBrains Mono', monospace; text-align: right; }
+    .fark-tablo td.bos { color: var(--text3); text-align: right; font-style: italic; }
+
+    .mg-hucre { line-height: 1.2; }
+    .mg-hucre-adi { font-size: 11.5px; color: var(--text); }
+    .mg-hucre-kod {
+      font-size: 9.5px; color: var(--text3);
+      font-family: 'JetBrains Mono', monospace; margin-top: 2px;
+    }
+
+    .durum-rozet {
+      font-size: 10.5px; font-weight: 700;
+      padding: 3px 8px; border-radius: 4px;
+      display: inline-block; min-width: 70px; text-align: center;
+      white-space: nowrap;
+    }
+    .durum-rozet.tamam     { background: rgba(34,197,94,0.15);  color: var(--green); }
+    .durum-rozet.eksik     { background: rgba(220,38,38,0.15);  color: var(--red); }
+    .durum-rozet.fazla     { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .durum-rozet.sayilmadi { background: rgba(100,116,139,0.15); color: var(--text3); }
+    .durum-rozet.sapsiz    { background: rgba(168,85,247,0.15); color: var(--purple); }
+
+    .mukerrer-rozet {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px;
+      background: rgba(168,85,247,0.15); color: var(--purple);
+      margin-left: 6px;
+    }
+    .lokasyon-tag {
+      font-size: 10px;
+      padding: 1px 6px; border-radius: 3px;
+      background: rgba(59,130,246,0.15); color: var(--blue);
+      margin-right: 3px; display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .bos-veri { text-align: center; padding: 60px 20px; color: var(--text3); }
+    .bos-veri i { font-size: 48px; opacity: 0.4; display: block; margin-bottom: 12px; }
+
+    .export-btn-grup { display: flex; gap: 8px; }
+    .export-btn {
+      padding: 7px 14px; border-radius: 6px; border: none;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: inherit; transition: all .15s;
+    }
+    .export-btn.excel { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.4); }
+    .export-btn.excel:hover { background: var(--green); color: #fff; }
+
+    /* Modal */
+    .detay-modal-back {
+      display: none; position: fixed; top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.7); z-index: 9998;
+      align-items: center; justify-content: center;
+    }
+    .detay-modal-back.acik { display: flex; }
+    .detay-modal {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+      max-width: 900px; width: 92%;
+      max-height: 85vh; overflow: auto;
+    }
+    .detay-modal h3 {
+      margin: 0 0 12px 0; font-size: 15px;
+      color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .detay-modal h3 i { color: var(--purple); }
+    .detay-modal .kapat-btn {
+      margin-top: 14px; padding: 8px 16px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer;
+      font-family: inherit; font-size: 12px;
+    }
+    .detay-modal .ozet-satir {
+      font-size: 12px; color: var(--text3);
+      padding: 10px; margin-bottom: 12px;
+      background: var(--bg);
+      border-radius: 6px;
+      display: flex; gap: 16px; flex-wrap: wrap;
+    }
+    .detay-modal .ozet-satir strong { color: var(--text); font-family: 'JetBrains Mono', monospace; }
+    .detay-modal .modal-aciklama {
+      font-size: 12px; color: var(--text3);
+      padding: 8px 12px; margin-bottom: 12px;
+      background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.25);
+      border-radius: 6px;
+    }
+
+    .clickable { cursor: pointer; }
+    .clickable:hover { color: var(--primary); }
+
+    /* ──────────── Aktarma sistemi ──────────── */
+    .detay-secim-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(168,85,247,0.08);
+      border: 1px solid rgba(168,85,247,0.35);
+      border-radius: 8px;
+      margin: 12px 0;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .detay-secim-bar.aktif { display: flex; }
+    .detay-secim-bar strong { color: var(--purple); font-family: 'JetBrains Mono', monospace; }
+    .detay-secim-bar .btn-aktar {
+      margin-left: auto;
+      padding: 6px 14px; border-radius: 6px; border: none;
+      background: var(--purple); color: #fff; font-weight: 700;
+      font-size: 12px; cursor: pointer; font-family: inherit;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: all .15s;
+    }
+    .detay-secim-bar .btn-aktar:hover { background: var(--purple); }
+    .detay-secim-bar .btn-temizle {
+      padding: 6px 12px; border-radius: 6px;
+      background: transparent; color: var(--text3);
+      border: 1px solid var(--border);
+      font-size: 11px; cursor: pointer; font-family: inherit;
+    }
+
+    .detay-secim-checkbox {
+      width: 16px; height: 16px;
+      accent-color: var(--purple); cursor: pointer;
+    }
+
+    .sayfa-tag {
+      font-size: 10px;
+      padding: 2px 7px; border-radius: 3px;
+      background: rgba(99,102,241,0.15); color: var(--blue);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    /* Aktarma modalı — öneriler listesi */
+    .oneri-listesi {
+      margin-top: 12px;
+      max-height: 300px; overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .oneri-row {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .oneri-row:last-child { border-bottom: none; }
+    .oneri-row:hover { background: rgba(168,85,247,0.08); }
+    .oneri-row.secili {
+      background: rgba(168,85,247,0.15);
+      border-left: 3px solid var(--purple);
+    }
+    .oneri-baslik {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 4px;
+    }
+    .oneri-sap {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--text);
+      font-size: 13px;
+    }
+    .oneri-benzerlik {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 4px;
+      background: rgba(34,197,94,0.15); color: var(--green);
+    }
+    .oneri-benzerlik.orta  { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .oneri-benzerlik.dusuk { background: rgba(100,116,139,0.15); color: var(--text3); }
+    .oneri-adi {
+      font-size: 11px; color: var(--text3);
+      font-style: italic;
+    }
+    .oneri-mb52kg {
+      font-size: 10px; color: var(--text3);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px;
+    }
+
+    .aktarma-input {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .aktarma-input:focus { border-color: var(--purple); outline: none; }
+    .aktarma-onayla-btn {
+      padding: 10px 20px;
+      background: var(--green); color: #fff;
+      border: none; border-radius: 6px;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .aktarma-onayla-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .aktarma-onayla-btn:not(:disabled):hover { background: var(--green); }
+
+    .aktarmalar-liste-baslik {
+      padding: 10px 14px;
+      background: var(--bg);
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 12px;
+      color: var(--text3);
+    }
+    .aktarmalar-liste-baslik strong { color: var(--purple); }
+    .aktarma-row {
+      padding: 12px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .aktarma-row-info { flex: 1; font-size: 12px; }
+    .aktarma-row-saplar {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .aktarma-row-detay {
+      font-size: 11px; color: var(--text3);
+    }
+    .aktarma-row-tarih {
+      font-size: 10px; color: var(--text3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .geri-al-btn {
+      padding: 6px 12px; border-radius: 6px;
+      background: rgba(220,38,38,0.15); color: var(--red);
+      border: 1px solid rgba(220,38,38,0.35);
+      font-size: 11px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      display: inline-flex; align-items: center; gap: 5px;
+      transition: all .15s;
+    }
+    .geri-al-btn:hover { background: var(--red); color: #fff; }
+
+    .aktarmalar-btn {
+      padding: 7px 14px; border-radius: 6px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      background: rgba(99,102,241,0.15); color: var(--blue);
+      border: 1px solid rgba(99,102,241,0.4);
+      font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
+      transition: all .15s;
+    }
+    .aktarmalar-btn:hover { background: var(--blue); color: #fff; }
+    .aktarmalar-btn .rozet {
+      background: var(--red); color: #fff;
+      padding: 1px 6px; border-radius: 10px;
+      font-size: 10px; font-weight: 700;
+      margin-left: 4px;
+    }
+
+    /* ──────────── Sıra numarası + Bölme ──────────── */
+    .sira-tag {
+      font-size: 11px;
+      padding: 2px 8px; border-radius: 4px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      display: inline-block;
+      cursor: pointer;
+      transition: all .12s;
+    }
+    .sira-tag:hover {
+      background: rgba(245, 158, 11, 0.3);
+      transform: scale(1.05);
+    }
+    .sira-tag.bos {
+      background: rgba(100, 116, 139, 0.15);
+      color: var(--text3);
+    }
+    .sira-input {
+      width: 50px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      background: var(--bg);
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      border-radius: 4px;
+      text-align: center;
+    }
+    .sira-input:focus { outline: 2px solid rgba(245,158,11,0.4); }
+
+    .bol-btn {
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--purple);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex; align-items: center; gap: 4px;
+      transition: all .12s;
+    }
+    .bol-btn:hover { background: var(--purple); color: white; }
+    .bol-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .bol-btn:disabled:hover { background: rgba(168, 85, 247, 0.15); color: var(--purple); }
+
+    /* Bölme modal'ında önizleme paneli */
+    .bolme-onizleme {
+      margin-top: 14px;
+      padding: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
+    }
+    .bolme-onizleme.aktif { display: block; }
+    .bolme-onizleme-baslik {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .bolme-onizleme-satir {
+      display: flex; justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(148,163,184,0.1);
+    }
+    .bolme-onizleme-satir:last-of-type { border-bottom: none; }
+    .bolme-onizleme-satir .lbl {
+      color: var(--text3);
+      font-size: 11px;
+    }
+    .bolme-onizleme-satir .val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+    }
+    .bolme-onizleme-satir .val.kaynak { color: var(--red); }
+    .bolme-onizleme-satir .val.hedef  { color: var(--green); }
+    .bolme-onizleme-not {
+      margin-top: 8px;
+      padding: 6px 8px;
+      background: rgba(245,158,11,0.08);
+      border-left: 3px solid var(--amber);
+      font-size: 11px;
+      color: var(--amber);
+    }
+
+    @media (max-width: 1200px) { .ozet-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 768px)  { .ozet-grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+<div class="shell">
+<nav class="sidebar">
+  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>v4.0</span></div>
+  <div class="nav-section">Main Data</div>
+  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+  <div class="nav-section">Sevkiyat</div>
+  <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+  <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+  <div class="nav-section">Araçlar</div>
+  <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+  <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+  <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+  <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+  <div class="nav-section">Raporlama</div>
+  <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+  <a href="/fark-raporu" class="nav-item active"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+  <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+  <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+  <div class="sidebar-footer">
+    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i> Açık Tema</button>
+    <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>
+  </div>
+</nav>
+<div class="main-area">
+<div class="topbar">
+  <div>
+    <div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span>Raporlama<span class="bc-sep">›</span><span class="bc-current">Fark Raporu</span></div>
+    <div class="topbar-title">MB52 vs Sayım Fark Raporu</div>
+    <div class="topbar-sub" id="mb52DurumTop">MB52 durumu kontrol ediliyor...</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
+    <div class="topbar-avatar" title="Profil">BA</div>
+  </div>
+</div>
+<div class="content">
+  <div class="container">
+
+    <!-- 6'lı özet kartlar -->
+    <div class="ozet-grid" id="ozetGrid">
+      <div class="ozet-kart toplam aktif" data-durum="tum" onclick="filtreDurum('tum')">
+        <div class="ozet-label"><i class="fa-solid fa-list"></i> Toplam SAP</div>
+        <div class="ozet-value" id="ozetToplam">—</div>
+      </div>
+      <div class="ozet-kart tamam" data-durum="tamam" onclick="filtreDurum('tamam')">
+        <div class="ozet-label"><i class="fa-solid fa-circle-check"></i> Sayım OK</div>
+        <div class="ozet-value" id="ozetTamam">—</div>
+      </div>
+      <div class="ozet-kart eksik" data-durum="eksik" onclick="filtreDurum('eksik')">
+        <div class="ozet-label"><i class="fa-solid fa-circle-minus"></i> Sayım Noksanı</div>
+        <div class="ozet-value" id="ozetEksik">—</div>
+      </div>
+      <div class="ozet-kart fazla" data-durum="fazla" onclick="filtreDurum('fazla')">
+        <div class="ozet-label"><i class="fa-solid fa-circle-plus"></i> Sayım Fazlası</div>
+        <div class="ozet-value" id="ozetFazla">—</div>
+      </div>
+      <div class="ozet-kart sayilmadi" data-durum="sayilmadi" onclick="filtreDurum('sayilmadi')">
+        <div class="ozet-label"><i class="fa-solid fa-clock"></i> Sayılmadı</div>
+        <div class="ozet-value" id="ozetSayilmadi">—</div>
+      </div>
+      <div class="ozet-kart sapsiz" onclick="sapsizModalAc()">
+        <div class="ozet-label"><i class="fa-solid fa-circle-question"></i> SAP'ta Yok</div>
+        <div class="ozet-value" id="ozetSapsiz">—</div>
+      </div>
+    </div>
+
+    <!-- Mal Grubu Kümülatif -->
+    <div class="mg-bolum" id="mgBolum">
+      <div class="mg-bolum-baslik" style="justify-content:space-between">
+        <span><i class="fa-solid fa-layer-group"></i> Mal Grubu Bazında Kümülatif (SAP Mal Grubu Kodları)</span>
+        <span class="mg-bolum-filtre">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" id="mgArama" placeholder="Mal grubu ara..." oninput="mgGuncelle()">
+        </span>
+      </div>
+      <div class="mg-bolum-aciklama">
+        Mal grupları MB52'deki MZ-XXXX kodlarından alınır. Karta tıklayınca tablo o grupla filtrelenir.
+      </div>
+      <div class="mg-grid" id="mgGrid">
+        <div class="bos-veri" style="grid-column:1/-1"><i class="fa-solid fa-spinner fa-spin"></i>Yükleniyor...</div>
+      </div>
+    </div>
+
+    <!-- Filtreler + Export -->
+    <div class="filtre-bar">
+      <input type="search" id="arama" placeholder="SAP kodu veya malzeme adı ara..." oninput="tabloyuRender()">
+      <select id="mgFiltreSelect" onchange="filtreMalGrubu(this.value)">
+        <option value="">Tüm Mal Grupları</option>
+      </select>
+      <select id="durumFiltre" onchange="filtreDurum(this.value)">
+        <option value="tum">Tüm Durumlar</option>
+        <option value="tamam">✅ Sayım OK</option>
+        <option value="eksik">🔴 Sayım Noksanı</option>
+        <option value="fazla">🟡 Sayım Fazlası</option>
+        <option value="sayilmadi">⏳ Sayılmadı</option>
+      </select>
+      <button class="sapsiz-btn" onclick="sapsizModalAc()">
+        <i class="fa-solid fa-circle-question"></i> SAP'ta Yok Listesi
+      </button>
+      <button class="aktarmalar-btn" onclick="aktarmalarModalAc()" id="aktarmalarBtn">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i> Aktarmalar
+        <span class="rozet" id="aktarmaSayisi" style="display:none">0</span>
+      </button>
+      <div class="export-btn-grup" style="margin-left:auto">
+        <button class="export-btn excel" onclick="excelDisaAktar()">
+          <i class="fa-solid fa-file-excel"></i> CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Ana tablo -->
+    <div style="background: var(--bg-white); border: 1px solid var(--border); border-radius: 10px; overflow: auto; max-height: 70vh;">
+      <table class="fark-tablo" id="farkTablo">
+        <thead>
+          <tr>
+            <th>SAP Kodu</th>
+            <th>Malzeme Adı (SAP)</th>
+            <th>Mal Grubu</th>
+            <th style="text-align:right">SAP kg</th>
+            <th style="text-align:right">Sayım kg</th>
+            <th style="text-align:right">Fark kg</th>
+            <th>Satır</th>
+            <th>Lokasyon</th>
+            <th>Durum</th>
+          </tr>
+        </thead>
+        <tbody id="farkTbody">
+          <tr><td colspan="9" class="bos-veri"><i class="fa-solid fa-spinner fa-spin"></i>Yükleniyor...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+</div>
+</div>
+
+<!-- Detay Modal -->
+<div class="detay-modal-back" id="detayModalBack" onclick="if(event.target===this)modalKapat()">
+  <div class="detay-modal">
+    <h3><i class="fa-solid fa-magnifying-glass-plus"></i> SAP Kodu Detayı: <span id="detayBaslik"></span></h3>
+    <div class="ozet-satir" id="detayOzet"></div>
+
+    <!-- Satır seçim barı -->
+    <div class="detay-secim-bar" id="detaySecimBar">
+      <i class="fa-solid fa-square-check" style="color:#a855f7"></i>
+      <span><strong id="detaySeciliSayi">0</strong> satır seçildi (<strong id="detaySeciliKg">0</strong> kg)</span>
+      <button class="btn-temizle" onclick="detaySecimTemizle()">Temizle</button>
+      <button class="btn-aktar" onclick="aktarmaModalAc()">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i> Seçili Satırları Taşı
+      </button>
+    </div>
+
+    <table class="fark-tablo">
+      <thead>
+        <tr>
+          <th style="width:30px">
+            <input type="checkbox" id="detayTumSec" class="detay-secim-checkbox" onchange="detayTumSec(this.checked)" title="Tümünü seç">
+          </th>
+          <th>#</th>
+          <th>Sayfa</th>
+          <th title="Sayım sırası — çift tıkla düzenle">Sıra</th>
+          <th>Lokasyon</th>
+          <th>Malzeme</th>
+          <th>Kalite</th>
+          <th>Ölçü</th>
+          <th style="text-align:right">Adet</th>
+          <th style="text-align:right">Birim kg</th>
+          <th style="text-align:right">Kg</th>
+          <th style="text-align:center;width:50px">İşlem</th>
+        </tr>
+      </thead>
+      <tbody id="detayTbody"></tbody>
+    </table>
+    <button class="kapat-btn" onclick="modalKapat()">Kapat</button>
+  </div>
+</div>
+
+<!-- SAP'ta Yok Modal -->
+<div class="detay-modal-back" id="sapsizModalBack" onclick="if(event.target===this)sapsizModalKapat()">
+  <div class="detay-modal">
+    <h3><i class="fa-solid fa-circle-question"></i> SAP'ta Olmayan Sayımlar (<span id="sapsizSayi">0</span> kalem)</h3>
+    <div class="modal-aciklama">
+      Bu listede sayımı yapılmış fakat MB52 stoğunda bulunmayan SAP kodları var. Hatalı kod veya SAP master verisi eksik olabilir.
+    </div>
+    <table class="fark-tablo">
+      <thead>
+        <tr>
+          <th>SAP Kodu</th><th style="text-align:right">Sayım kg</th><th>Satır</th><th>Lokasyon</th>
+        </tr>
+      </thead>
+      <tbody id="sapsizTbody"></tbody>
+    </table>
+    <button class="kapat-btn" onclick="sapsizModalKapat()">Kapat</button>
+  </div>
+</div>
+
+<!-- AKTARMA MODALI — Seçili satırları başka SAP'a taşı -->
+<div class="detay-modal-back" id="aktarmaModalBack" onclick="if(event.target===this)aktarmaModalKapat()">
+  <div class="detay-modal" style="max-width:680px">
+    <h3><i class="fa-solid fa-arrow-right-arrow-left"></i> Satır Aktarma</h3>
+
+    <div class="ozet-satir" id="aktarmaOzet">—</div>
+
+    <div style="font-size:13px;color:var(--text);margin-bottom:6px;font-weight:600">
+      <i class="fa-solid fa-bullseye" style="color:#a855f7"></i> Hedef SAP Kodu
+    </div>
+    <input type="text"
+           id="aktarmaHedefInput"
+           class="aktarma-input"
+           placeholder="Hedef SAP kodu yaz veya aşağıdan seç..."
+           oninput="aktarmaHedefDegisti()">
+    <div id="aktarmaHedefBilgi" style="font-size:11px;color:var(--text3);margin-top:6px;min-height:14px"></div>
+
+    <div style="font-size:11px;color:var(--text3);margin-top:14px;margin-bottom:6px">
+      <i class="fa-solid fa-lightbulb" style="color:#fbbf24"></i> Önerilen Hedefler (aynı mal grubu, benzer malzeme adı)
+    </div>
+    <div class="oneri-listesi" id="oneriListesi">
+      <div style="padding:30px;text-align:center;color:#64748b;font-size:12px"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="kapat-btn" onclick="aktarmaModalKapat()">İptal</button>
+      <button class="aktarma-onayla-btn" id="aktarmaOnaylaBtn" onclick="aktarmaOnayla()" disabled>
+        <i class="fa-solid fa-check"></i> Aktarmayı Onayla
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- AKTARMALAR LİSTESİ MODALI — Geçmiş aktarmalar, geri alma -->
+<div class="detay-modal-back" id="aktarmalarModalBack" onclick="if(event.target===this)aktarmalarModalKapat()">
+  <div class="detay-modal">
+    <h3><i class="fa-solid fa-arrow-right-arrow-left"></i> Yapılan Aktarmalar (<span id="aktarmalarSayi">0</span>)</h3>
+    <div class="modal-aciklama">
+      Her aktarma sayım kayıtlarındaki SAP kodlarını değiştirir. "Geri Al" ile aktarmayı iptal edebilirsin.
+    </div>
+    <div id="aktarmalarListesi">
+      <div style="padding:30px;text-align:center;color:#64748b"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>
+    </div>
+    <button class="kapat-btn" onclick="aktarmalarModalKapat()">Kapat</button>
+  </div>
+</div>
+
+<!-- BÖLME MODALI — Bir satırın belirli adetini başka SAP'a ayır -->
+<div class="detay-modal-back" id="bolmeModalBack" onclick="if(event.target===this)bolmeModalKapat()">
+  <div class="detay-modal" style="max-width:680px">
+    <h3><i class="fa-solid fa-scissors"></i> Satır Böl — Adet Bazlı</h3>
+
+    <div class="modal-aciklama">
+      Bu satırın belirli adedini başka bir SAP koduna aktarır. Sıra numarası korunur, eski satır kalan adetle devam eder.
+    </div>
+
+    <div class="ozet-satir" id="bolmeKaynakOzet">—</div>
+
+    <div style="display:flex;gap:10px;align-items:end;margin-bottom:10px;flex-wrap:wrap">
+      <div style="flex:1;min-width:180px">
+        <label style="font-size:12px;font-weight:600;color:var(--text);display:block;margin-bottom:4px">
+          Ayrılacak Adet
+          <span style="font-size:10px;color:#94a3b8">(mevcut: <strong id="bolmeMevcutAdet">0</strong>)</span>
+        </label>
+        <input type="number" id="bolmeAdetInput" class="aktarma-input" min="1" step="1"
+               placeholder="örn: 12" oninput="bolmeOnizleme()" style="margin-top:0">
+      </div>
+    </div>
+
+    <div style="font-size:13px;color:var(--text);margin-bottom:6px;font-weight:600;margin-top:10px">
+      <i class="fa-solid fa-bullseye" style="color:#a855f7"></i> Hedef SAP Kodu
+    </div>
+    <input type="text" id="bolmeHedefInput" class="aktarma-input"
+           placeholder="Hedef SAP kodu yaz veya aşağıdan seç..."
+           oninput="bolmeOnizleme()">
+    <div id="bolmeHedefBilgi" style="font-size:11px;color:var(--text3);margin-top:6px;min-height:14px"></div>
+
+    <div style="font-size:11px;color:var(--text3);margin-top:14px;margin-bottom:6px">
+      <i class="fa-solid fa-lightbulb" style="color:#fbbf24"></i> Önerilenler
+    </div>
+    <div class="oneri-listesi" id="bolmeOneriListesi" style="max-height:220px">
+      <div style="padding:20px;text-align:center;color:#64748b"><i class="fa-solid fa-spinner fa-spin"></i></div>
+    </div>
+
+    <!-- Önizleme paneli — sonuçları gösterir -->
+    <div class="bolme-onizleme" id="bolmeOnizlemePanel">
+      <div class="bolme-onizleme-baslik">
+        <i class="fa-solid fa-eye"></i> Sonuç Önizlemesi
+      </div>
+      <div class="bolme-onizleme-satir">
+        <span class="lbl">Mevcut Satır <span id="bolmeKalanSap"></span>:</span>
+        <span class="val kaynak"><span id="bolmeKalanAdet">0</span> adet · <span id="bolmeKalanKg">0</span> kg</span>
+      </div>
+      <div class="bolme-onizleme-satir">
+        <span class="lbl">Yeni Satır <span id="bolmeYeniSap"></span>:</span>
+        <span class="val hedef"><span id="bolmeYeniAdet">0</span> adet · <span id="bolmeYeniKg">0</span> kg</span>
+      </div>
+      <div class="bolme-onizleme-not" id="bolmeSiraNot" style="display:none">
+        <i class="fa-solid fa-circle-info"></i> Her iki satır da sıra <strong id="bolmeSiraNo">—</strong> olarak kalacak.
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="kapat-btn" onclick="bolmeModalKapat()">İptal</button>
+      <button class="aktarma-onayla-btn" id="bolmeOnaylaBtn" onclick="bolmeOnayla()" disabled>
+        <i class="fa-solid fa-scissors"></i> Böl
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var tumSonuclar     = []
+  var sapsizSonuclar  = []
+  var malGrubuOzet    = []
+  var aktifDurum      = "tum"
+  var aktifMalGrubuKodu = ""
+
+  function formatTR(s) {
+    if (s === null || s === undefined || isNaN(s)) return "—"
+    return new Intl.NumberFormat("tr-TR", {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(s)
+  }
+  function formatTon(kg) {
+    if (kg === null || kg === undefined || isNaN(kg)) return "—"
+    if (Math.abs(kg) >= 10000) return (kg/1000).toFixed(2).replace(".", ",") + " t"
+    return formatTR(kg) + " kg"
+  }
+  function escHtml(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML }
+
+  async function veriYukle() {
+    try {
+      var dr = await fetch("/api/mb52/durum")
+      var dd = await dr.json()
+      if (dd.son_yukleme) {
+        var t = new Date(dd.son_yukleme)
+        var ek = (dd.mg_kapsama_yuzde !== undefined) ? " · Mal grubu: " + dd.mg_kapsama_yuzde + "%" : ""
+        document.getElementById("mb52DurumTop").textContent =
+          "MB52: " + t.toLocaleDateString("tr-TR") + " · " + dd.kayit_sayisi + " malzeme" + ek
+      } else {
+        document.getElementById("mb52DurumTop").textContent = "MB52 yüklenmemiş"
+      }
+
+      var r = await fetch("/api/mb52/sayim-fark")
+      var d = await r.json()
+
+      if (d.durum === "hata") {
+        document.getElementById("farkTbody").innerHTML =
+          '<tr><td colspan="9" class="bos-veri"><i class="fa-solid fa-triangle-exclamation"></i>' + escHtml(d.mesaj) + '</td></tr>'
+        document.getElementById("mgGrid").innerHTML =
+          '<div class="bos-veri" style="grid-column:1/-1">DB hatası</div>'
+        return
+      }
+
+      tumSonuclar    = d.sonuclar || []
+      sapsizSonuclar = d.sapsiz_sonuclar || []
+      malGrubuOzet   = d.mal_grubu_ozet || []
+      ozetGuncelle(d.ozet || {})
+      mgGuncelle()
+      mgFiltreDoldur()
+      tabloyuRender()
+      sapsizDoldur()
+      aktarmaSayisiniGuncelle()
+    } catch (e) {
+      document.getElementById("farkTbody").innerHTML =
+        '<tr><td colspan="9" class="bos-veri"><i class="fa-solid fa-triangle-exclamation"></i>Veri yüklenemedi: ' + escHtml(e.message) + '</td></tr>'
+    }
+  }
+
+  function ozetGuncelle(ozet) {
+    document.getElementById("ozetToplam").textContent    = ozet.toplam    || 0
+    document.getElementById("ozetTamam").textContent     = ozet.tamam     || 0
+    document.getElementById("ozetEksik").textContent     = ozet.eksik     || 0
+    document.getElementById("ozetFazla").textContent     = ozet.fazla     || 0
+    document.getElementById("ozetSayilmadi").textContent = ozet.sayilmadi || 0
+    document.getElementById("ozetSapsiz").textContent    = ozet.sapsiz    || 0
+  }
+
+  // ──────── Mal grubu kartları (tanım üstte, kod altta) ────────
+  function mgGuncelle() {
+    var grid = document.getElementById("mgGrid")
+    var ara = (document.getElementById("mgArama").value || "").toLowerCase().trim()
+
+    var filtreli = malGrubuOzet.filter(function(mg) {
+      if (!ara) return true
+      return (mg.mal_grubu_kodu || "").toLowerCase().includes(ara) ||
+             (mg.mal_grubu_adi  || "").toLowerCase().includes(ara)
+    })
+
+    if (!filtreli.length) {
+      grid.innerHTML = '<div class="bos-veri" style="grid-column:1/-1"><i class="fa-solid fa-folder-open"></i>' +
+        (ara ? 'Aramanıza uygun mal grubu yok' : 'Henüz veri yok') + '</div>'
+      return
+    }
+
+    var html = ""
+    filtreli.forEach(function(mg) {
+      var farkSign = mg.fark_kg > 0 ? "+" : ""
+      var durumLabel = { tamam:"OK", eksik:"Noksan", fazla:"Fazla" }[mg.genel_durum] || mg.genel_durum
+      var kodEsc = escHtml(mg.mal_grubu_kodu).replace(/'/g, "\\'")
+
+      // Sayım durumu rozeti — tıklanınca popup açılır
+      var sayimDurum = mg.sayim_durumu || "sayilmadi"
+      var sayimYuzde = mg.sayim_yuzde || 0
+      var sayimManuel = mg.sayim_durumu_manuel || false
+      var sayimLabel = {
+        sayilmadi:    "⏳ Sayılmadı",
+        devam_ediyor: "⌛ Devam · %" + sayimYuzde,
+        tamamlandi:   "✓ Tamamlandı"
+      }[sayimDurum] || ""
+      var pinIkon = sayimManuel ? '<i class="fa-solid fa-thumbtack pin-ikon" title="Manuel ayarlandı"></i>' : ''
+      var sayimRozetHtml = '<span class="mg-sayim-durumu ' + sayimDurum +
+                          '" onclick="event.stopPropagation();durumPopupAc(\'' + kodEsc +
+                          '\', \'' + sayimDurum + '\', ' + (sayimManuel ? 'true' : 'false') + ')" ' +
+                          'title="Durumu değiştirmek için tıkla">' + pinIkon + sayimLabel + '</span>'
+
+      html +=
+        '<div class="mg-kart" onclick="filtreMalGrubu(\'' + kodEsc + '\')">' +
+          '<div class="mg-kart-baslik">' +
+            '<div class="mg-kart-isim-wrap">' +
+              '<div class="mg-kart-isim">' + escHtml(mg.mal_grubu_adi || mg.mal_grubu_kodu) + '</div>' +
+              '<div class="mg-kart-kod">' + escHtml(mg.mal_grubu_kodu) + sayimRozetHtml + '</div>' +
+            '</div>' +
+            '<div class="mg-kart-rozet-grup">' +
+              '<div class="mg-kart-rozet ' + mg.genel_durum + '">' + durumLabel + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mg-kg-satir">' +
+            '<span class="mg-kg-label"><i class="fa-solid fa-database"></i> SAP Stok</span>' +
+            '<span class="mg-kg-value sap">' + formatTon(mg.sap_kg) + '</span>' +
+          '</div>' +
+          '<div class="mg-kg-satir">' +
+            '<span class="mg-kg-label"><i class="fa-solid fa-clipboard-check"></i> Sayım</span>' +
+            '<span class="mg-kg-value sayim">' + formatTon(mg.sayim_kg) + '</span>' +
+          '</div>' +
+          '<div class="mg-kg-satir">' +
+            '<span class="mg-kg-label"><i class="fa-solid fa-equals"></i> Fark</span>' +
+            '<span class="mg-kg-value fark ' + mg.genel_durum + '">' + farkSign + formatTon(mg.fark_kg) + '</span>' +
+          '</div>' +
+          '<div class="mg-kart-alt">' +
+            '<span>' +
+              (mg.tamam     ? '<span class="mg-mini-rozet tamam">✓ ' + mg.tamam + '</span>' : '') +
+              (mg.eksik     ? '<span class="mg-mini-rozet eksik">− ' + mg.eksik + '</span>' : '') +
+              (mg.fazla     ? '<span class="mg-mini-rozet fazla">+ ' + mg.fazla + '</span>' : '') +
+              (mg.sayilmadi ? '<span class="mg-mini-rozet sayilmadi">⏳ ' + mg.sayilmadi + '</span>' : '') +
+            '</span>' +
+            '<span style="font-family:JetBrains Mono,monospace">' + mg.sap_kod_sayisi + ' kod</span>' +
+          '</div>' +
+        '</div>'
+    })
+    grid.innerHTML = html
+  }
+
+  function mgFiltreDoldur() {
+    var sel = document.getElementById("mgFiltreSelect")
+    var mgUnique = {}
+    tumSonuclar.forEach(function(s) {
+      var k = s.mal_grubu_kodu
+      if (k && !mgUnique[k]) mgUnique[k] = s.mal_grubu_adi || k
+    })
+    // Kod sırasına göre sırala
+    var keys = Object.keys(mgUnique).sort()
+    var html = '<option value="">Tüm Mal Grupları</option>'
+    keys.forEach(function(k) {
+      html += '<option value="' + escHtml(k) + '">' + escHtml(k) + ' — ' + escHtml(mgUnique[k]) + '</option>'
+    })
+    sel.innerHTML = html
+  }
+
+  function filtreDurum(d) {
+    aktifDurum = d
+    document.getElementById("durumFiltre").value = d
+    document.querySelectorAll(".ozet-kart").forEach(function(k) {
+      if (k.dataset.durum) k.classList.toggle("aktif", k.dataset.durum === d)
+    })
+    tabloyuRender()
+  }
+
+  function filtreMalGrubu(mg_kodu) {
+    aktifMalGrubuKodu = mg_kodu
+    document.getElementById("mgFiltreSelect").value = mg_kodu
+    tabloyuRender()
+    document.getElementById("farkTablo").scrollIntoView({behavior:"smooth", block:"start"})
+  }
+
+  function tabloyuRender() {
+    var q = (document.getElementById("arama").value || "").toLowerCase().trim()
+    var liste = tumSonuclar.filter(function(s) {
+      if (aktifDurum !== "tum" && s.durum !== aktifDurum) return false
+      if (aktifMalGrubuKodu && s.mal_grubu_kodu !== aktifMalGrubuKodu) return false
+      if (q && !(s.sap_kodu.toLowerCase().includes(q) || (s.malzeme_adi||"").toLowerCase().includes(q))) return false
+      return true
+    })
+
+    var tbody = document.getElementById("farkTbody")
+    if (!liste.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="bos-veri"><i class="fa-solid fa-folder-open"></i>Bu filtrede kayıt yok</td></tr>'
+      return
+    }
+
+    var html = ""
+    liste.forEach(function(s) {
+      var sayilmadi = s.durum === "sayilmadi"
+      var mukerrer = s.satir_sayisi > 1
+      var farkSign = (s.fark_kg && s.fark_kg > 0) ? "+" : ""
+      var durumLabel = {
+        tamam: "Sayım OK", eksik: "Sayım Noksanı", fazla: "Sayım Fazlası", sayilmadi: "Sayılmadı"
+      }[s.durum] || s.durum
+
+      var lokasyonHtml = ""
+      if (s.lokasyonlar) {
+        var lokLista = String(s.lokasyonlar).split(",").map(function(x){return x.trim()}).filter(Boolean)
+        lokasyonHtml = lokLista.slice(0, 4).map(function(l) { return '<span class="lokasyon-tag">' + escHtml(l) + '</span>' }).join("")
+        if (lokLista.length > 4) lokasyonHtml += ' <span style="color:#64748b;font-size:10px;">+' + (lokLista.length-4) + '</span>'
+      }
+      var mukerrerHtml = mukerrer ? '<span class="mukerrer-rozet" title="' + s.satir_sayisi + ' satırda toplandı">×' + s.satir_sayisi + '</span>' : ''
+
+      var classNames = []
+      if (mukerrer)  classNames.push("mukerrer")
+      if (sayilmadi) classNames.push("sayilmadi")
+      var cls = classNames.length ? ' class="' + classNames.join(" ") + '"' : ''
+
+      // Mal grubu hücresi: ad üstte, kod altta küçük
+      var mgHucre =
+        '<div class="mg-hucre">' +
+          '<div class="mg-hucre-adi">' + escHtml(s.mal_grubu_adi || "—") + '</div>' +
+          '<div class="mg-hucre-kod">' + escHtml(s.mal_grubu_kodu || "—") + '</div>' +
+        '</div>'
+
+      html +=
+        '<tr' + cls + '>' +
+          '<td class="clickable" onclick="detayAc(\'' + escHtml(s.sap_kodu).replace(/'/g, "\\'") + '\')"><strong>' + escHtml(s.sap_kodu) + '</strong>' + mukerrerHtml + '</td>' +
+          '<td>' + escHtml(s.malzeme_adi || "—") + '</td>' +
+          '<td>' + mgHucre + '</td>' +
+          '<td class="num">' + formatTR(s.sap_kg) + '</td>' +
+          '<td class="' + (sayilmadi ? "bos" : "num") + '">' + (sayilmadi ? "—" : formatTR(s.sayim_kg)) + '</td>' +
+          '<td class="' + (sayilmadi ? "bos" : "num") + '">' + (sayilmadi ? "—" : (farkSign + formatTR(s.fark_kg))) + '</td>' +
+          '<td>' + (s.satir_sayisi || "—") + '</td>' +
+          '<td>' + (lokasyonHtml || '<span style="color:#64748b;font-size:11px">—</span>') + '</td>' +
+          '<td><span class="durum-rozet ' + s.durum + '">' + durumLabel + '</span></td>' +
+        '</tr>'
+    })
+    tbody.innerHTML = html
+  }
+
+  // ──────── SAP'ta Yok modal ────────
+  function sapsizDoldur() {
+    document.getElementById("sapsizSayi").textContent = sapsizSonuclar.length
+    var tbody = document.getElementById("sapsizTbody")
+    if (!sapsizSonuclar.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="bos-veri"><i class="fa-solid fa-check-circle" style="color:#22c55e"></i>SAP\'ta olmayan sayım yok</td></tr>'
+      return
+    }
+    var html = ""
+    sapsizSonuclar.forEach(function(s) {
+      var lokasyonHtml = ""
+      if (s.lokasyonlar) {
+        var lokLista = String(s.lokasyonlar).split(",").map(function(x){return x.trim()}).filter(Boolean)
+        lokasyonHtml = lokLista.slice(0, 4).map(function(l) { return '<span class="lokasyon-tag">' + escHtml(l) + '</span>' }).join("")
+        if (lokLista.length > 4) lokasyonHtml += ' <span style="color:#64748b;font-size:10px;">+' + (lokLista.length-4) + '</span>'
+      }
+      html +=
+        '<tr>' +
+          '<td><strong>' + escHtml(s.sap_kodu) + '</strong></td>' +
+          '<td class="num">' + formatTR(s.sayim_kg) + '</td>' +
+          '<td>' + (s.satir_sayisi || 0) + '</td>' +
+          '<td>' + (lokasyonHtml || '<span style="color:#64748b">—</span>') + '</td>' +
+        '</tr>'
+    })
+    tbody.innerHTML = html
+  }
+  function sapsizModalAc()    { document.getElementById("sapsizModalBack").classList.add("acik") }
+  function sapsizModalKapat() { document.getElementById("sapsizModalBack").classList.remove("acik") }
+
+  // ──────── Detay modal ────────
+  var aktifDetaySap = ""        // Şu an açık olan detay modal'ındaki SAP kodu
+  var aktifDetaySatirlar = []   // Detay modal'da gösterilen satırların listesi
+  var seciliSatirIds = new Set()
+
+  async function detayAc(sap) {
+    aktifDetaySap = sap
+    aktifDetaySatirlar = []
+    seciliSatirIds = new Set()
+    detaySecimGuncelle()
+
+    document.getElementById("detayBaslik").textContent = sap
+    document.getElementById("detayOzet").innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...'
+    document.getElementById("detayTbody").innerHTML = ""
+    document.getElementById("detayTumSec").checked = false
+    document.getElementById("detayModalBack").classList.add("acik")
+
+    try {
+      var r = await fetch("/api/mb52/sayim-detay/" + encodeURIComponent(sap))
+      var d = await r.json()
+      if (d.durum === "hata") {
+        document.getElementById("detayOzet").innerHTML = '<span style="color:#dc2626">Hata: ' + escHtml(d.mesaj) + '</span>'
+        return
+      }
+      var farkSign = d.fark_kg > 0 ? "+" : ""
+      var farkRenk = d.fark_kg < 0 ? "#dc2626" : (d.fark_kg > 0 ? "#f59e0b" : "#22c55e")
+      var mgEtiket = d.mal_grubu_kodu ? ('<div style="width:100%;font-size:11px;color:#a855f7;margin-bottom:4px"><i class="fa-solid fa-layer-group"></i> ' + escHtml(d.mal_grubu_adi || d.mal_grubu_kodu) + ' (' + escHtml(d.mal_grubu_kodu) + ')</div>') : ''
+
+      document.getElementById("detayOzet").innerHTML =
+        mgEtiket +
+        (d.malzeme_adi ? '<div style="width:100%;font-style:italic;color:#94a3b8;margin-bottom:6px">' + escHtml(d.malzeme_adi) + '</div>' : '') +
+        '<div><span style="color:#64748b">SAP Stok:</span> <strong>' + formatTR(d.sap_kg) + ' kg</strong></div>' +
+        '<div><span style="color:#64748b">Toplam Sayım:</span> <strong>' + formatTR(d.toplam_sayim) + ' kg</strong></div>' +
+        '<div><span style="color:#64748b">Fark:</span> <strong style="color:' + farkRenk + '">' + farkSign + formatTR(d.fark_kg) + ' kg</strong></div>' +
+        '<div><span style="color:#64748b">Satır:</span> <strong>' + d.satir_sayisi + '</strong></div>'
+
+      aktifDetaySatirlar = d.satirlar || []
+
+      var html = ""
+      aktifDetaySatirlar.forEach(function(s, i) {
+        var sayfaHtml = s.sayfa_no ? ('<span class="sayfa-tag">' + escHtml(s.sayfa_no) + '</span>') : '<span style="color:#64748b">—</span>'
+        var siraVal = (s.sira_no !== null && s.sira_no !== undefined) ? s.sira_no : ""
+        var siraHtml = '<span class="sira-tag' + (siraVal === "" ? " bos" : "") + '" data-id="' + s.id +
+                       '" ondblclick="siraDuzenle(this, ' + s.id + ')" title="Çift tıkla düzenle">' +
+                       (siraVal === "" ? "—" : escHtml(String(siraVal))) + '</span>'
+        var bolButonHtml = (s.adet > 1)
+          ? '<button class="bol-btn" onclick="bolmeModalAc(' + s.id + ')" title="Adet bazlı böl"><i class="fa-solid fa-scissors"></i> Böl</button>'
+          : '<button class="bol-btn" disabled title="Adet > 1 olmalı"><i class="fa-solid fa-scissors"></i></button>'
+
+        html += '<tr data-id="' + s.id + '" data-kg="' + (s.kg || 0) + '">' +
+          '<td><input type="checkbox" class="detay-secim-checkbox detay-row-cb" data-id="' + s.id + '" onchange="detaySatirSec(' + s.id + ', this.checked)"></td>' +
+          '<td>' + (i+1) + '</td>' +
+          '<td>' + sayfaHtml + '</td>' +
+          '<td>' + siraHtml + '</td>' +
+          '<td>' + escHtml(s.lokasyon || "—") + '</td>' +
+          '<td>' + escHtml(s.malzeme || "—") + '</td>' +
+          '<td>' + escHtml(s.kalite || "—") + '</td>' +
+          '<td>' + escHtml(s.olcu || "—") + '</td>' +
+          '<td class="num">' + (s.adet || "—") + '</td>' +
+          '<td class="num">' + formatTR(s.birim_kg || 0) + '</td>' +
+          '<td class="num"><strong>' + formatTR(s.kg || 0) + '</strong></td>' +
+          '<td style="text-align:center">' + bolButonHtml + '</td>' +
+          '</tr>'
+      })
+      document.getElementById("detayTbody").innerHTML = html || '<tr><td colspan="12" style="text-align:center;color:#64748b;padding:20px">Sayım satırı yok</td></tr>'
+    } catch (e) {
+      document.getElementById("detayOzet").innerHTML = '<span style="color:#dc2626">Hata: ' + escHtml(e.message) + '</span>'
+    }
+  }
+  function modalKapat() {
+    document.getElementById("detayModalBack").classList.remove("acik")
+    seciliSatirIds = new Set()
+  }
+
+  // ──────── Detay tablosu checkbox işlemleri ────────
+  function detaySatirSec(id, checked) {
+    if (checked) seciliSatirIds.add(id)
+    else seciliSatirIds.delete(id)
+    detaySecimGuncelle()
+  }
+  function detayTumSec(checked) {
+    seciliSatirIds = new Set()
+    document.querySelectorAll(".detay-row-cb").forEach(function(cb) {
+      cb.checked = checked
+      if (checked) seciliSatirIds.add(parseInt(cb.dataset.id))
+    })
+    detaySecimGuncelle()
+  }
+  function detaySecimTemizle() {
+    seciliSatirIds = new Set()
+    document.querySelectorAll(".detay-row-cb").forEach(function(cb) { cb.checked = false })
+    document.getElementById("detayTumSec").checked = false
+    detaySecimGuncelle()
+  }
+  function detaySecimGuncelle() {
+    var bar = document.getElementById("detaySecimBar")
+    if (seciliSatirIds.size === 0) {
+      bar.classList.remove("aktif")
+      return
+    }
+    bar.classList.add("aktif")
+    var toplamKg = 0
+    aktifDetaySatirlar.forEach(function(s) {
+      if (seciliSatirIds.has(s.id)) toplamKg += (s.kg || 0)
+    })
+    document.getElementById("detaySeciliSayi").textContent = seciliSatirIds.size
+    document.getElementById("detaySeciliKg").textContent = formatTR(toplamKg)
+  }
+
+  // ──────── AKTARMA MODAL ────────
+  var aktarmaSecimHedef = ""
+
+  async function aktarmaModalAc() {
+    if (seciliSatirIds.size === 0) return
+    var ids = Array.from(seciliSatirIds)
+    var toplamKg = 0
+    aktifDetaySatirlar.forEach(function(s) { if (seciliSatirIds.has(s.id)) toplamKg += (s.kg || 0) })
+
+    document.getElementById("aktarmaOzet").innerHTML =
+      '<div><span style="color:#64748b">Kaynak SAP:</span> <strong>' + escHtml(aktifDetaySap) + '</strong></div>' +
+      '<div><span style="color:#64748b">Seçili:</span> <strong>' + seciliSatirIds.size + ' satır</strong></div>' +
+      '<div><span style="color:#64748b">Toplam:</span> <strong>' + formatTR(toplamKg) + ' kg</strong></div>'
+
+    document.getElementById("aktarmaHedefInput").value = ""
+    document.getElementById("aktarmaHedefBilgi").textContent = ""
+    document.getElementById("aktarmaOnaylaBtn").disabled = true
+    aktarmaSecimHedef = ""
+
+    document.getElementById("aktarmaModalBack").classList.add("acik")
+
+    // Önerileri yükle
+    document.getElementById("oneriListesi").innerHTML = '<div style="padding:30px;text-align:center;color:#64748b"><i class="fa-solid fa-spinner fa-spin"></i> Öneriler hesaplanıyor...</div>'
+    try {
+      var r = await fetch("/api/mb52/oneri/" + encodeURIComponent(aktifDetaySap))
+      var d = await r.json()
+      onerileriCiz(d.oneriler || [])
+    } catch (e) {
+      document.getElementById("oneriListesi").innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626">Hata: ' + escHtml(e.message) + '</div>'
+    }
+  }
+  function aktarmaModalKapat() {
+    document.getElementById("aktarmaModalBack").classList.remove("acik")
+  }
+
+  function onerileriCiz(oneriler) {
+    if (!oneriler.length) {
+      document.getElementById("oneriListesi").innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;font-size:12px">Bu mal grubunda başka SAP kodu yok. Hedefi manuel yaz.</div>'
+      return
+    }
+    var html = ""
+    oneriler.forEach(function(o) {
+      var sinif = o.yuzde >= 70 ? "" : (o.yuzde >= 40 ? "orta" : "dusuk")
+      html += '<div class="oneri-row" data-sap="' + escHtml(o.sap_kodu) + '" onclick="oneriSec(this, \'' + escHtml(o.sap_kodu).replace(/'/g,"\\'") + '\')">' +
+        '<div class="oneri-baslik">' +
+          '<span class="oneri-sap">' + escHtml(o.sap_kodu) + '</span>' +
+          '<span class="oneri-benzerlik ' + sinif + '">%' + o.yuzde + ' benzer</span>' +
+        '</div>' +
+        '<div class="oneri-adi">' + escHtml(o.malzeme_adi || "—") + '</div>' +
+        '<div class="oneri-mb52kg">MB52 stok: ' + formatTR(o.mb52_kg) + ' kg</div>' +
+      '</div>'
+    })
+    document.getElementById("oneriListesi").innerHTML = html
+  }
+
+  function oneriSec(el, sap) {
+    document.querySelectorAll(".oneri-row").forEach(function(r) { r.classList.remove("secili") })
+    el.classList.add("secili")
+    document.getElementById("aktarmaHedefInput").value = sap
+    aktarmaHedefDegisti()
+  }
+
+  async function aktarmaHedefDegisti() {
+    var v = (document.getElementById("aktarmaHedefInput").value || "").trim()
+    aktarmaSecimHedef = v
+    var btn = document.getElementById("aktarmaOnaylaBtn")
+    var bilgi = document.getElementById("aktarmaHedefBilgi")
+
+    if (!v) {
+      btn.disabled = true
+      bilgi.textContent = ""
+      return
+    }
+    if (v === aktifDetaySap) {
+      btn.disabled = true
+      bilgi.innerHTML = '<span style="color:#dc2626">Aynı SAP koduna aktarılamaz</span>'
+      return
+    }
+
+    btn.disabled = false
+    bilgi.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Hedef kontrol ediliyor...'
+
+    try {
+      var r = await fetch("/api/mb52/stok/" + encodeURIComponent(v))
+      var d = await r.json()
+      if (d.durum === "ok") {
+        bilgi.innerHTML = '<span style="color:#22c55e"><i class="fa-solid fa-check-circle"></i> MB52\'de var: ' + escHtml(d.malzeme_adi) + ' (' + formatTR(d.miktar_kg) + ' kg stok)</span>'
+      } else {
+        bilgi.innerHTML = '<span style="color:#f59e0b"><i class="fa-solid fa-triangle-exclamation"></i> MB52\'de yok — yine de aktarılabilir</span>'
+      }
+    } catch (e) {
+      bilgi.innerHTML = '<span style="color:#94a3b8">Kontrol edilemedi</span>'
+    }
+  }
+
+  async function aktarmaOnayla() {
+    if (!aktarmaSecimHedef || seciliSatirIds.size === 0) return
+    var btn = document.getElementById("aktarmaOnaylaBtn")
+    btn.disabled = true
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aktarılıyor...'
+    try {
+      var r = await fetch("/api/mb52/aktarma-yap", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          kaynak_sap: aktifDetaySap,
+          hedef_sap:  aktarmaSecimHedef,
+          satir_ids:  Array.from(seciliSatirIds)
+        })
+      })
+      var d = await r.json()
+      if (d.durum === "ok") {
+        if (typeof toast === "function") toast(d.mesaj, "basari")
+        aktarmaModalKapat()
+        modalKapat()
+        veriYukle()         // Tüm fark raporunu yenile
+        aktarmaSayisiniGuncelle()
+      } else {
+        if (typeof bildirim === "function") bildirim(d.mesaj || "Aktarma başarısız", "Hata", "hata")
+        else alert(d.mesaj)
+      }
+    } catch (e) {
+      alert("Bağlantı hatası: " + e.message)
+    } finally {
+      btn.disabled = false
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Aktarmayı Onayla'
+    }
+  }
+
+  // ──────── AKTARMALAR LİSTESİ ────────
+  async function aktarmalarModalAc() {
+    document.getElementById("aktarmalarModalBack").classList.add("acik")
+    document.getElementById("aktarmalarListesi").innerHTML = '<div style="padding:30px;text-align:center;color:#64748b"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>'
+    try {
+      var r = await fetch("/api/mb52/aktarmalar")
+      var d = await r.json()
+      var liste = d.aktarmalar || []
+      document.getElementById("aktarmalarSayi").textContent = liste.length
+
+      if (!liste.length) {
+        document.getElementById("aktarmalarListesi").innerHTML =
+          '<div class="bos-veri"><i class="fa-solid fa-folder-open"></i>Henüz aktarma yapılmamış</div>'
+        return
+      }
+
+      var html = ""
+      liste.forEach(function(a) {
+        var tarihGoster = new Date(a.tarih).toLocaleString("tr-TR")
+        var isBolme = (a.tur === "bolme")
+        var ikon = isBolme ? "fa-scissors" : "fa-arrow-right-arrow-left"
+        var turEtiket = isBolme
+          ? '<span style="font-size:9.5px;background:rgba(168,85,247,0.15);color:#a855f7;padding:1px 6px;border-radius:3px;margin-right:6px;font-weight:700">BÖLME</span>'
+          : '<span style="font-size:9.5px;background:rgba(99,102,241,0.15);color:#818cf8;padding:1px 6px;border-radius:3px;margin-right:6px;font-weight:700">AKTARMA</span>'
+
+        html += '<div class="aktarma-row">' +
+          '<div class="aktarma-row-info">' +
+            '<div class="aktarma-row-saplar">' +
+              turEtiket +
+              '<span style="color:#dc2626">' + escHtml(a.kaynak_sap) + '</span> ' +
+              '<i class="fa-solid ' + ikon + '" style="color:#64748b;margin:0 6px"></i> ' +
+              '<span style="color:#22c55e">' + escHtml(a.hedef_sap) + '</span>' +
+            '</div>' +
+            '<div class="aktarma-row-detay">' +
+              '<i class="fa-solid fa-list-ol"></i> ' + a.satir_sayisi + ' satır · ' +
+              '<i class="fa-solid fa-weight-scale"></i> ' + formatTR(a.toplam_kg) + ' kg' +
+              (a.hedef_malzeme ? ' · ' + escHtml(a.hedef_malzeme) : '') +
+            '</div>' +
+            '<div class="aktarma-row-tarih"><i class="fa-solid fa-clock"></i> ' + tarihGoster + '</div>' +
+          '</div>' +
+          '<button class="geri-al-btn" onclick="aktarmaGeriAl(' + a.id + ', \'' + escHtml(a.kaynak_sap).replace(/'/g,"\\'") + '\', \'' + escHtml(a.hedef_sap).replace(/'/g,"\\'") + '\')">' +
+            '<i class="fa-solid fa-rotate-left"></i> Geri Al' +
+          '</button>' +
+        '</div>'
+      })
+      document.getElementById("aktarmalarListesi").innerHTML = html
+    } catch (e) {
+      document.getElementById("aktarmalarListesi").innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626">Hata: ' + escHtml(e.message) + '</div>'
+    }
+  }
+  function aktarmalarModalKapat() {
+    document.getElementById("aktarmalarModalBack").classList.remove("acik")
+  }
+
+  async function aktarmaGeriAl(id, kaynak, hedef) {
+    var onayMesaj = "Bu aktarmayı geri almak istiyor musun?\n\n" + hedef + " → " + kaynak + "\nSatırlar eski SAP koduna döndürülecek."
+    var onay = false
+    if (typeof onayla === "function") {
+      onay = await onayla(onayMesaj, "Aktarmayı Geri Al")
+    } else {
+      onay = confirm(onayMesaj)
+    }
+    if (!onay) return
+
+    try {
+      var r = await fetch("/api/mb52/aktarma-geri-al/" + id, { method: "POST" })
+      var d = await r.json()
+      if (d.durum === "ok") {
+        if (typeof toast === "function") toast(d.mesaj, "basari")
+        aktarmalarModalAc()   // Listeyi yenile
+        veriYukle()
+        aktarmaSayisiniGuncelle()
+      } else {
+        if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+        else alert(d.mesaj)
+      }
+    } catch (e) {
+      alert("Bağlantı hatası: " + e.message)
+    }
+  }
+
+  // Aktif aktarma sayısını topbar'da göster
+  async function aktarmaSayisiniGuncelle() {
+    try {
+      var r = await fetch("/api/mb52/aktarmalar")
+      var d = await r.json()
+      var n = (d.aktarmalar || []).length
+      var rozet = document.getElementById("aktarmaSayisi")
+      if (n > 0) {
+        rozet.textContent = n
+        rozet.style.display = "inline-block"
+      } else {
+        rozet.style.display = "none"
+      }
+    } catch (e) {}
+  }
+
+  // ──────── SIRA NUMARASI — Inline edit (çift tıkla) ────────
+  function siraDuzenle(el, satirId) {
+    if (el.querySelector("input")) return  // Zaten edit modunda
+    var mevcut = el.textContent === "—" ? "" : el.textContent
+    el.dataset.oldValue = mevcut
+    el.innerHTML = '<input type="number" value="' + mevcut + '" class="sira-input" min="1" step="1" ' +
+                   'onblur="siraKaydet(this, ' + satirId + ')" ' +
+                   'onkeydown="if(event.key===\'Enter\')this.blur();if(event.key===\'Escape\')this.value=this.parentElement.dataset.oldValue,this.blur()">'
+    var inp = el.querySelector("input")
+    inp.focus()
+    inp.select()
+  }
+
+  async function siraKaydet(input, satirId) {
+    var el = input.parentElement
+    var eski = el.dataset.oldValue || ""
+    var yeniRaw = input.value.trim()
+    var yeni = yeniRaw === "" ? null : parseInt(yeniRaw)
+
+    if (yeniRaw !== "" && isNaN(yeni)) {
+      el.textContent = eski === "" ? "—" : eski
+      el.classList.toggle("bos", eski === "")
+      return
+    }
+    // Değişiklik yoksa sadece görsel restore
+    if (String(yeni || "") === String(eski || "")) {
+      el.textContent = eski === "" ? "—" : eski
+      el.classList.toggle("bos", eski === "")
+      return
+    }
+
+    try {
+      var r = await fetch("/api/mb52/satir-sira-guncelle/" + satirId, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({sira_no: yeni})
+      })
+      var d = await r.json()
+      if (d.durum === "ok") {
+        el.textContent = yeni === null ? "—" : String(yeni)
+        el.classList.toggle("bos", yeni === null)
+        // Local cache güncelle
+        var s = aktifDetaySatirlar.find(function(x) { return x.id === satirId })
+        if (s) s.sira_no = yeni
+        if (typeof toast === "function") toast("Sıra güncellendi", "basari")
+      } else {
+        el.textContent = eski === "" ? "—" : eski
+        el.classList.toggle("bos", eski === "")
+        if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+      }
+    } catch (e) {
+      el.textContent = eski === "" ? "—" : eski
+      el.classList.toggle("bos", eski === "")
+      alert("Bağlantı hatası: " + e.message)
+    }
+  }
+
+  // ──────── BÖLME MODALI ────────
+  var bolmeAktifSatir = null   // { id, sap, adet, kg, birim_kg, sira_no, malzeme }
+
+  async function bolmeModalAc(satirId) {
+    var s = aktifDetaySatirlar.find(function(x) { return x.id === satirId })
+    if (!s) return
+    if (s.adet <= 1) {
+      if (typeof bildirim === "function") bildirim("Bu satırda yalnız 1 adet var, bölünemez", "Uyarı", "uyari")
+      return
+    }
+
+    bolmeAktifSatir = {
+      id: satirId,
+      sap: aktifDetaySap,
+      adet: s.adet,
+      kg: s.kg,
+      birim_kg: s.birim_kg,
+      sira_no: s.sira_no,
+      malzeme: s.malzeme,
+      kalite: s.kalite
+    }
+
+    document.getElementById("bolmeKaynakOzet").innerHTML =
+      '<div><span style="color:#64748b">Kaynak SAP:</span> <strong>' + escHtml(aktifDetaySap) + '</strong></div>' +
+      '<div><span style="color:#64748b">Adet:</span> <strong>' + s.adet + '</strong></div>' +
+      '<div><span style="color:#64748b">Kg:</span> <strong>' + formatTR(s.kg) + '</strong></div>' +
+      '<div><span style="color:#64748b">Birim kg:</span> <strong>' + formatTR(s.birim_kg) + '</strong></div>' +
+      (s.sira_no !== null && s.sira_no !== undefined ? '<div><span style="color:#64748b">Sıra:</span> <strong>' + s.sira_no + '</strong></div>' : '') +
+      (s.kalite ? '<div><span style="color:#64748b">Kalite:</span> <strong>' + escHtml(s.kalite) + '</strong></div>' : '')
+
+    document.getElementById("bolmeMevcutAdet").textContent = s.adet
+    document.getElementById("bolmeAdetInput").max = s.adet - 1
+    document.getElementById("bolmeAdetInput").value = ""
+    document.getElementById("bolmeHedefInput").value = ""
+    document.getElementById("bolmeHedefBilgi").textContent = ""
+    document.getElementById("bolmeOnizlemePanel").classList.remove("aktif")
+    document.getElementById("bolmeOnaylaBtn").disabled = true
+
+    document.getElementById("bolmeModalBack").classList.add("acik")
+
+    // Önerileri yükle
+    document.getElementById("bolmeOneriListesi").innerHTML = '<div style="padding:20px;text-align:center;color:#64748b"><i class="fa-solid fa-spinner fa-spin"></i> Öneriler hesaplanıyor...</div>'
+    try {
+      var r = await fetch("/api/mb52/oneri/" + encodeURIComponent(aktifDetaySap))
+      var d = await r.json()
+      bolmeOnerileriCiz(d.oneriler || [])
+    } catch (e) {
+      document.getElementById("bolmeOneriListesi").innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626">Hata: ' + escHtml(e.message) + '</div>'
+    }
+  }
+
+  function bolmeModalKapat() {
+    document.getElementById("bolmeModalBack").classList.remove("acik")
+    bolmeAktifSatir = null
+  }
+
+  function bolmeOnerileriCiz(oneriler) {
+    if (!oneriler.length) {
+      document.getElementById("bolmeOneriListesi").innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;font-size:12px">Aynı mal grubunda başka SAP kodu yok. Hedefi manuel yaz.</div>'
+      return
+    }
+    var html = ""
+    oneriler.forEach(function(o) {
+      var sinif = o.yuzde >= 70 ? "" : (o.yuzde >= 40 ? "orta" : "dusuk")
+      html += '<div class="oneri-row" onclick="bolmeOneriSec(this, \'' + escHtml(o.sap_kodu).replace(/'/g,"\\'") + '\')">' +
+        '<div class="oneri-baslik">' +
+          '<span class="oneri-sap">' + escHtml(o.sap_kodu) + '</span>' +
+          '<span class="oneri-benzerlik ' + sinif + '">%' + o.yuzde + ' benzer</span>' +
+        '</div>' +
+        '<div class="oneri-adi">' + escHtml(o.malzeme_adi || "—") + '</div>' +
+        '<div class="oneri-mb52kg">MB52 stok: ' + formatTR(o.mb52_kg) + ' kg</div>' +
+      '</div>'
+    })
+    document.getElementById("bolmeOneriListesi").innerHTML = html
+  }
+
+  function bolmeOneriSec(el, sap) {
+    document.querySelectorAll("#bolmeOneriListesi .oneri-row").forEach(function(r) { r.classList.remove("secili") })
+    el.classList.add("secili")
+    document.getElementById("bolmeHedefInput").value = sap
+    bolmeOnizleme()
+  }
+
+  // Adet/hedef değiştikçe önizlemeyi güncelle
+  var bolmeHedefKontrolTimer = null
+  async function bolmeOnizleme() {
+    if (!bolmeAktifSatir) return
+    var adetRaw = document.getElementById("bolmeAdetInput").value
+    var hedef = (document.getElementById("bolmeHedefInput").value || "").trim()
+    var panel = document.getElementById("bolmeOnizlemePanel")
+    var btn = document.getElementById("bolmeOnaylaBtn")
+
+    var adet = parseInt(adetRaw)
+    var gecerli = !isNaN(adet) && adet >= 1 && adet < bolmeAktifSatir.adet && hedef && hedef !== bolmeAktifSatir.sap
+
+    if (!gecerli) {
+      btn.disabled = true
+      panel.classList.remove("aktif")
+      return
+    }
+
+    var kalanAdet = bolmeAktifSatir.adet - adet
+    var yeniKg = bolmeAktifSatir.birim_kg * adet
+    var kalanKg = bolmeAktifSatir.birim_kg * kalanAdet
+
+    document.getElementById("bolmeKalanSap").textContent = "(" + bolmeAktifSatir.sap + ")"
+    document.getElementById("bolmeKalanAdet").textContent = kalanAdet
+    document.getElementById("bolmeKalanKg").textContent = formatTR(kalanKg)
+    document.getElementById("bolmeYeniSap").textContent = "(" + hedef + ")"
+    document.getElementById("bolmeYeniAdet").textContent = adet
+    document.getElementById("bolmeYeniKg").textContent = formatTR(yeniKg)
+
+    if (bolmeAktifSatir.sira_no !== null && bolmeAktifSatir.sira_no !== undefined) {
+      document.getElementById("bolmeSiraNo").textContent = bolmeAktifSatir.sira_no
+      document.getElementById("bolmeSiraNot").style.display = "block"
+    } else {
+      document.getElementById("bolmeSiraNot").style.display = "none"
+    }
+    panel.classList.add("aktif")
+    btn.disabled = false
+
+    // Hedef MB52 kontrolü (debounced)
+    if (bolmeHedefKontrolTimer) clearTimeout(bolmeHedefKontrolTimer)
+    bolmeHedefKontrolTimer = setTimeout(async function() {
+      var bilgi = document.getElementById("bolmeHedefBilgi")
+      bilgi.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kontrol ediliyor...'
+      try {
+        var r = await fetch("/api/mb52/stok/" + encodeURIComponent(hedef))
+        var d = await r.json()
+        if (d.durum === "ok") {
+          bilgi.innerHTML = '<span style="color:#22c55e"><i class="fa-solid fa-check-circle"></i> MB52\'de var: ' + escHtml(d.malzeme_adi) + '</span>'
+        } else {
+          bilgi.innerHTML = '<span style="color:#f59e0b"><i class="fa-solid fa-triangle-exclamation"></i> MB52\'de yok — yine de bölünebilir</span>'
+        }
+      } catch (e) {
+        bilgi.innerHTML = ''
+      }
+    }, 300)
+  }
+
+  async function bolmeOnayla() {
+    if (!bolmeAktifSatir) return
+    var adet = parseInt(document.getElementById("bolmeAdetInput").value)
+    var hedef = (document.getElementById("bolmeHedefInput").value || "").trim()
+    if (isNaN(adet) || adet < 1 || adet >= bolmeAktifSatir.adet || !hedef) return
+
+    var btn = document.getElementById("bolmeOnaylaBtn")
+    btn.disabled = true
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Bölünüyor...'
+
+    try {
+      var r = await fetch("/api/mb52/satir-bol", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          satir_id: bolmeAktifSatir.id,
+          ayrilacak_adet: adet,
+          hedef_sap: hedef
+        })
+      })
+      var d = await r.json()
+      if (d.durum === "ok") {
+        if (typeof toast === "function") toast(d.mesaj, "basari")
+        bolmeModalKapat()
+        modalKapat()         // Detay modal'ı da kapat
+        veriYukle()           // Fark raporunu yenile
+        aktarmaSayisiniGuncelle()
+      } else {
+        if (typeof bildirim === "function") bildirim(d.mesaj || "Bölme başarısız", "Hata", "hata")
+        else alert(d.mesaj)
+      }
+    } catch (e) {
+      alert("Bağlantı hatası: " + e.message)
+    } finally {
+      btn.disabled = false
+      btn.innerHTML = '<i class="fa-solid fa-scissors"></i> Böl'
+    }
+  }
+
+  function excelDisaAktar() {
+    var q = (document.getElementById("arama").value || "").toLowerCase().trim()
+    var liste = tumSonuclar.filter(function(s) {
+      if (aktifDurum !== "tum" && s.durum !== aktifDurum) return false
+      if (aktifMalGrubuKodu && s.mal_grubu_kodu !== aktifMalGrubuKodu) return false
+      if (q && !(s.sap_kodu.toLowerCase().includes(q) || (s.malzeme_adi||"").toLowerCase().includes(q))) return false
+      return true
+    })
+    if (!liste.length) {
+      if (typeof bildirim === "function") bildirim("İhraç edilecek kayıt yok", "Uyarı", "uyari")
+      else alert("İhraç edilecek kayıt yok")
+      return
+    }
+    var csv = "SAP Kodu;Malzeme Adı;Mal Grubu Kodu;Mal Grubu Adı;SAP kg;Sayım kg;Fark kg;Satır;Lokasyon;Durum\n"
+    liste.forEach(function(s) {
+      csv += [
+        s.sap_kodu,
+        (s.malzeme_adi || "").replace(/;/g, ","),
+        s.mal_grubu_kodu || "",
+        (s.mal_grubu_adi || "").replace(/;/g, ","),
+        s.sap_kg,
+        s.sayim_kg !== null ? s.sayim_kg : "",
+        s.fark_kg  !== null ? s.fark_kg  : "",
+        s.satir_sayisi || 0,
+        (s.lokasyonlar || "").replace(/;/g, ","),
+        s.durum
+      ].join(";") + "\n"
+    })
+    var blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" })
+    var a = document.createElement("a")
+    a.href = URL.createObjectURL(blob)
+    a.download = "fark-raporu-" + new Date().toISOString().slice(0,10) + ".csv"
+    a.click()
+    URL.revokeObjectURL(a.href)
+    if (typeof toast === "function") toast("CSV indirildi", "basari")
+  }
+
+  document.addEventListener("DOMContentLoaded", veriYukle)
+</script>
+
+<!-- MAL GRUBU DURUMU MANUEL DÜZENLEME POPUP'I -->
+<div class="durum-popup-back" id="durumPopupBack" onclick="if(event.target===this)durumPopupKapat()">
+  <div class="durum-popup">
+    <h4><i class="fa-solid fa-flag" style="color:#a855f7"></i> Sayım Durumu</h4>
+    <div class="alt-bilgi" id="durumPopupBilgi">—</div>
+
+    <button class="durum-secenek" data-durum="auto" onclick="durumSec('auto')">
+      <span class="ikon">🤖</span>
+      <span class="ad">Otomatik
+        <div class="aciklama">Sayım kg'ına göre sistem hesaplasın</div>
+      </span>
+    </button>
+    <button class="durum-secenek" data-durum="sayilmadi" onclick="durumSec('sayilmadi')">
+      <span class="ikon">⏳</span>
+      <span class="ad">Sayılmadı
+        <div class="aciklama">Bu grupta henüz hiç sayım yapılmadı</div>
+      </span>
+    </button>
+    <button class="durum-secenek" data-durum="devam_ediyor" onclick="durumSec('devam_ediyor')">
+      <span class="ikon">⌛</span>
+      <span class="ad">Devam Ediyor
+        <div class="aciklama">Bir kısmı sayıldı, kalanı bekliyor</div>
+      </span>
+    </button>
+    <button class="durum-secenek" data-durum="tamamlandi" onclick="durumSec('tamamlandi')">
+      <span class="ikon">✓</span>
+      <span class="ad">Tamamlandı
+        <div class="aciklama">Bu grubun sayımı tamamen bitti</div>
+      </span>
+    </button>
+
+    <button class="durum-popup-kapat" onclick="durumPopupKapat()">İptal</button>
+  </div>
+</div>
+
+<script>
+  // Durum popup state
+  var aktifDurumMG = null   // hangi mal grubunun durumu düzenleniyor
+
+  function durumPopupAc(mgKodu, mevcutDurum, manuel) {
+    aktifDurumMG = mgKodu
+
+    // Mevcut seçimi vurgula
+    document.querySelectorAll(".durum-secenek").forEach(function(el) {
+      el.classList.remove("aktif")
+    })
+    var hedef = manuel ? mevcutDurum : "auto"
+    var btn = document.querySelector('.durum-secenek[data-durum="' + hedef + '"]')
+    if (btn) btn.classList.add("aktif")
+
+    // Bilgi metni
+    var bilgi = '<strong>' + mgKodu + '</strong> · '
+    bilgi += manuel ? 'Şu an manuel olarak "' + mevcutDurum + '"' : 'Şu an otomatik olarak "' + mevcutDurum + '"'
+    document.getElementById("durumPopupBilgi").innerHTML = bilgi
+
+    document.getElementById("durumPopupBack").classList.add("acik")
+  }
+
+  function durumPopupKapat() {
+    document.getElementById("durumPopupBack").classList.remove("acik")
+    aktifDurumMG = null
+  }
+
+  async function durumSec(yeniDurum) {
+    if (!aktifDurumMG) return
+    var mg = aktifDurumMG
+    durumPopupKapat()
+    try {
+      var r = await fetch("/api/mb52/mal-grubu-durum/" + encodeURIComponent(mg), {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({durum: yeniDurum})
+      })
+      var d = await r.json()
+      if (d.durum === "ok") {
+        if (typeof toast === "function") toast(d.mesaj, "basari")
+        veriYukle()  // Verileri tazele
+      } else {
+        if (typeof bildirim === "function") bildirim(d.mesaj || "Hata", "Hata", "hata")
+        else alert(d.mesaj)
+      }
+    } catch (e) {
+      alert("Bağlantı hatası: " + e.message)
+    }
+  }
+</script>
+
+</body>
+</html>
