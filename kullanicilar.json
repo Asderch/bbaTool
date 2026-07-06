@@ -1,0 +1,40 @@
+{
+  "kullanicilar": {
+    "admin": {
+      "sifre": "163131",
+      "ad": "Admin",
+      "rol": "admin"
+    },
+    "bakar": {
+      "sifre": "bb5528",
+      "ad": "Berkcan Burak Akar",
+      "rol": "admin"
+    },
+    "okaraca": {
+      "sifre": "ok1234",
+      "ad": "Özge Karaca",
+      "rol": "admin"
+    },
+    "bkonyar": {
+      "sifre": "bk1234",
+      "ad": "Bora Konyar",
+      "rol": "admin"
+    },
+    "pgur": {
+      "sifre": "pg1453",
+      "ad": "Pınar Ecem Gür",
+      "rol": "admin"
+    },
+    "hors": {
+      "sifre": "ho1793",
+      "ad": "Havva Örs",
+      "rol": "admin"
+    },
+    "sayim": {
+      "sifre": "sy1234",
+      "ad": "Sayım Ekibi",
+      "rol": "sayim"
+    }
+  },
+  "olusturulma": "2026-07-06 10:56:14"
+}

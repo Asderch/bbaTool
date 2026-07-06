@@ -2,6 +2,15 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from agirlik_db import agirlik_bp, init_agirlik_db
 from mb52_backend import mb52_bp, mb52_init_db
 from malzeme_kontrol import malzeme_bp, init_malzeme_db
+
+# ═══ KULLANICI YÖNETİMİ ═══
+from kullanici_db import (
+    kullanici_bp,
+    kullanici_dosyasini_hazirla,
+    sifre_dogrula,
+    kullanici_bilgi as kullanici_bilgi_al,
+    VARSAYILAN_ROLLER as ROLLER_YENI,
+)
 import threading
 import webview
 import time
@@ -45,6 +54,10 @@ app.secret_key = "ambar-data-gizli-anahtar-2026"
 app.register_blueprint(agirlik_bp)
 app.register_blueprint(mb52_bp)
 app.register_blueprint(malzeme_bp)
+app.register_blueprint(kullanici_bp)
+
+# ═══ Kullanıcı JSON dosyasını hazırla (yoksa oluşturur) ═══
+kullanici_dosyasini_hazirla()
 
 from functools import wraps
 
@@ -61,94 +74,16 @@ def inject_globals():
         "APP_PREP":    APP_PREP,
     }
 
-# -----------------------
-# ROLLER
-# -----------------------
-ROLLER = {
-    "admin": {
-        "panel_gor": True,
-        "plan_olustur": True,
-        "plan_gor": True,
-        "plan_sil": True,
-        "plan_kapat": True,
-        "kalem_ekle": True,
-        "kalem_toplu_ekle": True,
-        "kalem_guncelle": True,
-        "kalem_sil": True,
-        "kalem_gonder": True,
-        "kalem_sifirla": True,
-        "toplu_devret": True,
-        "export_pdf": True,
-        "export_excel": True,
-        "import_excel": True,
-        "rapor_gor": True,
-        "dosya_sil": True,
-    },
-    "hazirlayan": {
-        "panel_gor": False,
-        "plan_olustur": True,
-        "plan_gor": True,
-        "plan_sil": False,
-        "plan_kapat": False,
-        "kalem_ekle": True,
-        "kalem_toplu_ekle": True,
-        "kalem_guncelle": True,
-        "kalem_sil": False,
-        "kalem_gonder": True,
-        "kalem_sifirla": False,
-        "toplu_devret": False,
-        "export_pdf": True,
-        "export_excel": True,
-        "import_excel": True,
-        "rapor_gor": True,
-        "dosya_sil": False,
-    },
-    "goruntuleyici": {
-        "panel_gor": True,
-        "plan_olustur": False,
-        "plan_gor": True,
-        "plan_sil": False,
-        "plan_kapat": False,
-        "kalem_ekle": False,
-        "kalem_toplu_ekle": False,
-        "kalem_guncelle": False,
-        "kalem_sil": False,
-        "kalem_gonder": False,
-        "kalem_sifirla": False,
-        "toplu_devret": False,
-        "export_pdf": True,
-        "export_excel": True,
-        "import_excel": False,
-        "rapor_gor": True,
-        "dosya_sil": False,
-    },
-    "sayim": {
-        "panel_gor": False,
-        "plan_olustur": False,
-        "plan_gor": False,
-        "plan_sil": False,
-        "plan_kapat": False,
-        "kalem_ekle": False,
-        "kalem_toplu_ekle": False,
-        "kalem_guncelle": False,
-        "kalem_sil": False,
-        "kalem_gonder": False,
-        "kalem_sifirla": False,
-        "toplu_devret": False,
-        "export_pdf": False,
-        "export_excel": False,
-        "import_excel": False,
-        "rapor_gor": False,
-        "dosya_sil": False,
-        "personel_izin": False,
-}
-}
+# ═══════════════════════════════════════════════
+# ROLLER artık kullanici_db.py içinde (VARSAYILAN_ROLLER)
+# ═══════════════════════════════════════════════
 
 def kullanici_rol():
     return session.get("rol")
 
 def kullanici_yetkileri():
-    return ROLLER.get(kullanici_rol(), {})
+    # ← Değişti: ROLLER yerine ROLLER_YENI (kullanici_db.py'den)
+    return ROLLER_YENI.get(kullanici_rol(), {})
 
 def yetki_var_mi(yetki):
     return kullanici_yetkileri().get(yetki, False)
@@ -166,21 +101,10 @@ def yetki_gerekli(yetki):
             return f(*args, **kwargs)
         return wrapper
     return decorator
-# ----------------------
-# KULLANICILAR
-# ----------------------
-
-KULLANICILAR = {
-    "admin":      {"sifre":"163131",  "ad":"Admin",              "rol":"admin"},
-    "bakar":      {"sifre":"bb5528",  "ad":"Berkcan Burak Akar", "rol":"admin"},
-    "hazirlayan": {"sifre":"hz5528",  "ad":"Hazırlayan",         "rol":"hazirlayan"},
-    "okaraca":    {"sifre":"ok1234",  "ad":"Özge Karaca,",       "rol":"admin"},
-    "bkonyar":    {"sifre":"bk1234",  "ad":"Bora Konyar",        "rol":"admin"},
-    "pgur":       {"sifre":"pg1453",  "ad":"Pınar Ecem Gür",     "rol":"admin"},
-    "grnt":       {"sifre":"grnt1234","ad":"Görüntüleyici",      "rol":"goruntuleyici"},
-    "hors":       {"sifre":"ho1793",  "ad":"Havva Örs",          "rol":"admin"},
-    "sayim":      {"sifre":"sy1234",  "ad":"Sayim Ekibi",        "rol":"sayim"},
-}
+# ═══════════════════════════════════════════════
+# KULLANICILAR artık kullanici_db.py içinde (JSON tabanlı, ortak klasörde)
+# İlk kullanıcılar ILK_KULLANICILAR sabitinde tanımlı.
+# ═══════════════════════════════════════════════
 
 
 def giris_yapildi_mi(): return session.get("kullanici") is not None
@@ -364,11 +288,23 @@ def splash(): return render_template("splash.html")
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method=="POST":
-        d=request.json; k=d.get("kullanici","").strip(); s=d.get("sifre","").strip()
-        if k in KULLANICILAR and KULLANICILAR[k]["sifre"]==s:
-            session["kullanici"]=k; session["ad"]=KULLANICILAR[k]["ad"]; session["rol"]=KULLANICILAR[k].get("rol","hazirlayan")
-            return jsonify({"durum":"ok","ad":KULLANICILAR[k]["ad"],"rol":KULLANICILAR[k].get("rol","hazirlayan")})
-        return jsonify({"durum":"hata","mesaj":"Kullanıcı adı veya şifre hatalı."}), 401
+        d = request.json
+        k = d.get("kullanici","").strip().lower()
+        s = d.get("sifre","").strip()
+
+        # JSON tabanlı doğrulama (kullanici_db.py)
+        if not sifre_dogrula(k, s):
+            return jsonify({"durum":"hata","mesaj":"Kullanıcı adı veya şifre hatalı."}), 401
+
+        bilgi = kullanici_bilgi_al(k)
+        if not bilgi:
+            return jsonify({"durum":"hata","mesaj":"Kullanıcı bulunamadı."}), 401
+
+        session["kullanici"] = k
+        session["ad"]        = bilgi["ad"]
+        session["rol"]       = bilgi["rol"]
+        return jsonify({"durum":"ok", "ad":bilgi["ad"], "rol":bilgi["rol"]})
+
     return render_template("login.html")
 
 @app.route("/logout")
@@ -874,12 +810,38 @@ def kullanici_bilgi():
     if not giris_yapildi_mi():
         return jsonify({"durum":"hata"}), 401
 
+    # JSON'dan TAZE oku - admin biri rolü değiştirdiyse anında yansır
+    username = session["kullanici"]
+    bilgi = kullanici_bilgi_al(username)
+
+    # Kullanıcı silinmişse session'ı temizle
+    if not bilgi:
+        session.clear()
+        return jsonify({"durum":"hata","mesaj":"Kullanıcı silinmiş"}), 401
+
+    # Session'ı da güncelle (rol değişimleri senkron olsun)
+    session["ad"]  = bilgi["ad"]
+    session["rol"] = bilgi["rol"]
+
     return jsonify({
-        "kullanici": session["kullanici"],
-        "ad": session["ad"],
-        "rol": kullanici_rol(),
-        "yetkiler": kullanici_yetkileri()
+        "kullanici": username,
+        "ad":        bilgi["ad"],
+        "rol":       bilgi["rol"],
+        "yetkiler":  bilgi["yetkiler"]
     })
+
+
+# ═══════════════════════════════════════════════
+# KULLANICI YÖNETİMİ SAYFASI (sadece admin)
+# ═══════════════════════════════════════════════
+@app.route("/kullanici-yonetimi")
+def kullanici_yonetimi_sayfa():
+    if not giris_yapildi_mi():
+        return redirect(url_for("login"))
+    # Sadece "admin" kullanıcı adı ile giriş yapan görebilir
+    if session.get("kullanici") != "admin":
+        return redirect(url_for("index"))
+    return render_template("kullanici-yonetimi.html")
 
 
 # ---- SEVKİYAT PLAN API ----

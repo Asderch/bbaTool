@@ -141,6 +141,12 @@
   <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
   <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
   <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+  {% if session.kullanici == "admin" %}
+  <div class="nav-section">Yönetim</div>
+  <a href="/kullanici-yonetimi" class="nav-item">
+    <i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi
+  </a>
+  {% endif %}
   <div class="sidebar-footer">
     <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i> Açık Tema</button>
     <button class="cikis-btn" onclick="cikisYap()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
@@ -294,6 +300,11 @@
       <div class="hi-icon blue"><i class="fa-solid fa-code-compare"></i></div>
       <div class="hi-ad">Mutabakat</div>
     </a>
+    </a>
+    <a href="/kullanici_yonetimi" class="hizli-item">
+      <div class="hi-icon blue"><i class="fa-solid fa-right-left"></i></div>
+      <div class="hi-ad">Kullanici Yönetimi</div>   
+    </a>    
     
   </div>
 

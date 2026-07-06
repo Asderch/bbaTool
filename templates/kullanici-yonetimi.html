@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kullanıcı Yönetimi · BBA Ambar Data</title>
+
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/popup.js" defer></script>
+
+<style>
+  /* ─── SAYFAYA ÖZGÜ STİLLER ─── */
+
+  .db-durum-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; margin-bottom: 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    background: rgba(62,207,142,0.06);
+    border: 1px solid rgba(62,207,142,0.3);
+    color: var(--text2);
+  }
+  .db-durum-bar.uyari {
+    background: rgba(245,158,11,0.08);
+    border-color: rgba(245,158,11,0.4);
+  }
+  .db-durum-bar .badge {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(62,207,142,0.15);
+    color: var(--primary);
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 11px;
+  }
+  .db-durum-bar.uyari .badge {
+    background: rgba(245,158,11,0.15);
+    color: var(--amber);
+  }
+
+  .section-satir {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px; margin-top: 20px;
+  }
+  .section-satir h2 {
+    font-size: 16px; font-weight: 700;
+    color: var(--text); margin: 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-satir h2 i { color: var(--primary); font-size: 14px; }
+
+  .yeni-btn {
+    background: var(--primary); color: #000;
+    padding: 9px 16px; border-radius: 6px; border: none;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+    font-size: 12px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .yeni-btn:hover { filter: brightness(1.1); }
+
+  .kullanici-tablo {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .kullanici-tablo th {
+    background: var(--bg);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--text3);
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+  }
+  .kullanici-tablo td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 13px;
+    color: var(--text);
+  }
+  .kullanici-tablo tr:last-child td { border-bottom: none; }
+  .kullanici-tablo tr:hover td { background: var(--bg-hover); }
+  .kullanici-tablo .username {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .kullanici-tablo .self-mark {
+    font-size: 10px;
+    color: var(--primary);
+    margin-left: 6px;
+    background: rgba(62,207,142,0.15);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+
+  .rol-rozet {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .rol-rozet.admin         { background: rgba(220,38,38,0.15);  color: var(--red); }
+  .rol-rozet.hazirlayan    { background: rgba(62,207,142,0.15); color: var(--primary); }
+  .rol-rozet.goruntuleyici { background: rgba(99,102,241,0.15); color: var(--blue); }
+  .rol-rozet.sayim         { background: rgba(245,158,11,0.15); color: var(--amber); }
+
+  .aksiyon-grup {
+    display: inline-flex; gap: 4px;
+  }
+  .aksiyon-btn {
+    width: 32px; height: 32px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    transition: all .12s;
+  }
+  .aksiyon-btn:hover:not(:disabled) {
+    color: var(--text);
+    background: var(--bg-hover);
+  }
+  .aksiyon-btn.duz:hover { color: var(--blue); border-color: var(--blue); }
+  .aksiyon-btn.sil:hover { color: var(--red);  border-color: var(--red); }
+  .aksiyon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ─── ROL MATRİKSİ ─── */
+  .yetki-matrix-wrap {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: auto;
+    padding: 4px;
+    box-shadow: var(--shadow-sm);
+  }
+  .yetki-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+  }
+  .yetki-matrix th, .yetki-matrix td {
+    padding: 8px 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .yetki-matrix th {
+    background: var(--bg);
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    font-size: 10.5px;
+    letter-spacing: .3px;
+    position: sticky; top: 0;
+  }
+  .yetki-matrix td.yetki-adi {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 11.5px;
+    padding-left: 14px;
+  }
+  .yetki-var {
+    color: var(--green);
+    font-size: 13px;
+  }
+  .yetki-yok {
+    color: var(--text3);
+    opacity: 0.4;
+  }
+
+  /* ─── MODAL ─── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 9999;
+    align-items: center; justify-content: center;
+  }
+  .modal-bg.goster { display: flex; }
+  .modal-ic {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+    max-width: 460px; width: 92%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .modal-ic h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .modal-ic h3 i { color: var(--primary); }
+  .modal-ic .modal-alt {
+    font-size: 11.5px; color: var(--text3);
+    margin-bottom: 16px;
+  }
+  .modal-ic label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text2);
+    font-weight: 600;
+    margin-top: 12px;
+    margin-bottom: 5px;
+  }
+  .modal-ic input, .modal-ic select {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    margin: 0;
+  }
+  .modal-ic input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .modal-ic .not {
+    font-size: 10.5px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .modal-actions button {
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    border: none;
+  }
+  .modal-iptal {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border) !important;
+  }
+  .modal-iptal:hover { background: var(--bg-hover); }
+  .modal-onayla {
+    background: var(--primary);
+    color: #000;
+  }
+  .modal-onayla:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .bos-durum {
+    padding: 40px;
+    text-align: center;
+    color: var(--text3);
+    font-size: 13px;
+  }
+  .bos-durum i {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo/bba-logo-mini.png" alt="BBA" onerror="this.style.display='none'">
+      <h2>Ambar Data</h2>
+      <span>V4.0</span>
+    </div>
+
+    <nav>
+      <div class="nav-section">Main Data</div>
+      <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+
+      <div class="nav-section">Sevkiyat</div>
+      <a href="/planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+      <a href="/dashboard" class="nav-item"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+
+      <div class="nav-section">Araçlar</div>
+      <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Ağırlık Hesaplama</a>
+      <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+      <a href="/doluluk" class="nav-item"><i class="fa-solid fa-warehouse"></i> Doluluk</a>
+      <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+
+      <div class="nav-section">Raporlama</div>
+      <a href="/analytics" class="nav-item"><i class="fa-solid fa-chart-simple"></i> Analytics Dashboard</a>
+      <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-unbalanced"></i> Fark Raporu</a>
+      <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-handshake"></i> Mutabakat</a>
+      <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+
+      <div class="nav-section">Yönetim</div>
+      <a href="/kullanici-yonetimi" class="nav-item active">
+        <i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+        <i class="fa-solid fa-sun"></i> Açık Tema
+      </button>
+      <a href="/" class="cikis-btn"><i class="fa-solid fa-arrow-left"></i> Ana Menü</a>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+ </nav>
+<div class="main-area">
+<div class="topbar">
+  <div><div class="topbar-breadcrumb"><span class="bc-current">Home Page</span></div><div class="topbar-title">Kullanıcı Yönetimi</div><div class="topbar-sub">Kullanıcılar - Rol Yönetimi</div></div>
+  <div class="topbar-actions">
+    <button class="topbar-notif" title="Bildirimler"><i class="fa-solid fa-bell"></i><span class="notif-dot"></span></button>
+    <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
+    <div class="topbar-avatar" id="topbarAvatar" title="Profil">BA</div>
+  </div>
+</div>
+<div class="content">
+
+      <div class="container">
+
+        <!-- DB DURUM BARI -->
+        <div class="db-durum-bar" id="dbDurumBar">
+          <i class="fa-solid fa-database"></i>
+          <span>Kullanıcı DB Durumu:</span>
+          <span class="badge" id="dbDurumBadge">Yükleniyor...</span>
+          <span id="dbDurumMetin" style="color:var(--text3)"></span>
+        </div>
+
+        <!-- KULLANICI TABLOSU -->
+        <div class="section-satir">
+          <h2><i class="fa-solid fa-users"></i> Aktif Kullanıcılar <span id="kullaniciSayi" style="color:var(--text3);font-size:13px;font-weight:400"></span></h2>
+          <button class="yeni-btn" onclick="yeniKullaniciModal()">
+            <i class="fa-solid fa-user-plus"></i> Yeni Kullanıcı
+          </button>
+        </div>
+
+        <table class="kullanici-tablo">
+          <thead>
+            <tr>
+              <th style="width:20%">Kullanıcı Adı</th>
+              <th style="width:35%">Ad Soyad</th>
+              <th style="width:20%">Rol</th>
+              <th style="width:25%; text-align:right">İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="kullaniciTbody">
+            <tr><td colspan="4" class="bos-durum">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              Yükleniyor...
+            </td></tr>
+          </tbody>
+        </table>
+
+        <!-- YETKI MATRİKSİ -->
+        <div class="section-satir" style="margin-top:36px">
+          <h2><i class="fa-solid fa-key"></i> Rol Yetki Matriksi</h2>
+          <span style="font-size:11px;color:var(--text3)">
+            <i class="fa-solid fa-circle-info"></i> Yetkiler sabittir, kod içinde tanımlanmıştır
+          </span>
+        </div>
+
+        <div class="yetki-matrix-wrap">
+          <div id="yetkiMatrix">
+            <div class="bos-durum">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              Yükleniyor...
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+  YENİ / DÜZENLE MODAL
+═════════════════════════════════════════════════ -->
+<div class="modal-bg" id="kullaniciModal" onclick="if(event.target===this)modalKapat()">
+  <div class="modal-ic">
+    <h3 id="modalsection"><i class="fa-solid fa-user-plus"></i> Yeni Kullanıcı</h3>
+    <div class="modal-alt" id="modalAlt">Yeni kullanıcı bilgilerini gir</div>
+
+    <label>Kullanıcı Adı</label>
+    <input type="text" id="modalUsername" placeholder="örn: mkaya" maxlength="20" autocomplete="off">
+    <div class="not">Küçük harf, boşluk yok. Sonradan değiştirilemez.</div>
+
+    <label>Ad Soyad</label>
+    <input type="text" id="modalAd" placeholder="Örn: Mehmet Kaya" maxlength="60" autocomplete="off">
+
+    <label>Şifre <span id="sifreNot" style="font-weight:400;color:var(--text3);font-size:10.5px"></span></label>
+    <input type="text" id="modalSifre" placeholder="Şifre" maxlength="30" autocomplete="off">
+
+    <label>Rol</label>
+    <select id="modalRol">
+      <option value="admin">Admin — Tam yetki, kullanıcı yönetimi</option>
+      <option value="hazirlayan" selected>Hazırlayan — Plan/kalem işlemleri</option>
+      <option value="goruntuleyici">Görüntüleyici — Sadece görme + export</option>
+      <option value="sayim">Sayım — Ağırlık hesaplama modülü</option>
+    </select>
+
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="modalKapat()">İptal</button>
+      <button class="modal-onayla" onclick="kullaniciKaydet()" id="kaydetBtn">
+        <i class="fa-solid fa-save"></i> Kaydet
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═════════════════════════════════════════════════
+// STATE
+// ═════════════════════════════════════════════════
+var tumKullanicilar = []
+var tumRoller = {}
+var duzenlemeMode = null   // null = yeni, "username" = düzenleme
+var mevcutUser = null      // giriş yapan kullanıcı (kendini silmesin diye)
+
+// ═════════════════════════════════════════════════
+// VERİ YÜKLE
+// ═════════════════════════════════════════════════
+async function veriYukle() {
+  try {
+    // DB durumu
+    var rDurum = await fetch("/api/kullanici/db-durum")
+    var durum = await rDurum.json()
+    dbDurumGuncelle(durum)
+
+    // Mevcut kullanıcı bilgisi
+    try {
+      var rBen = await fetch("/api/kullanici-bilgi")
+      var ben = await rBen.json()
+      mevcutUser = ben.username || null
+    } catch(e) {}
+
+    // Kullanıcı listesi
+    var r1 = await fetch("/api/kullanici/liste")
+    tumKullanicilar = await r1.json()
+
+    // Rol matriksi
+    var r2 = await fetch("/api/kullanici/roller")
+    tumRoller = await r2.json()
+
+    tabloCiz()
+    yetkiMatrixCiz()
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Hata", "hata")
+    else alert("Yükleme hatası: " + e.message)
+  }
+}
+
+function dbDurumGuncelle(d) {
+  var bar = document.getElementById("dbDurumBar")
+  var badge = document.getElementById("dbDurumBadge")
+  var metin = document.getElementById("dbDurumMetin")
+
+  if (d.ortak_erisim) {
+    bar.classList.remove("uyari")
+    badge.textContent = "Ortak Klasör"
+    metin.innerHTML = 'Değişiklikler tüm PC\'lere yansır · <code style="font-size:11px">' + d.json_yolu + '</code>'
+  } else {
+    bar.classList.add("uyari")
+    badge.textContent = "Lokal — Ortak Erişim Yok"
+    metin.innerHTML = 'UYARI: Değişiklikler sadece bu PC\'ye kaydolur · <code style="font-size:11px">' + d.json_yolu + '</code>'
+  }
+}
+
+// ═════════════════════════════════════════════════
+// TABLO ÇİZİMİ
+// ═════════════════════════════════════════════════
+function tabloCiz() {
+  var tbody = document.getElementById("kullaniciTbody")
+  var sayi = document.getElementById("kullaniciSayi")
+
+  sayi.textContent = "(" + tumKullanicilar.length + " kullanıcı)"
+
+  if (!tumKullanicilar.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="bos-durum">' +
+      '<i class="fa-solid fa-user-slash"></i>Kayıt yok</td></tr>'
+    return
+  }
+
+  var html = ""
+  tumKullanicilar.forEach(function(k) {
+    var isSelf = (mevcutUser && k.username === mevcutUser)
+    var selfMark = isSelf ? '<span class="self-mark">SİZ</span>' : ""
+
+    html += '<tr>' +
+      '<td><span class="username">' + escHtml(k.username) + '</span>' + selfMark + '</td>' +
+      '<td>' + escHtml(k.ad) + '</td>' +
+      '<td><span class="rol-rozet ' + k.rol + '">' + k.rol.toUpperCase() + '</span></td>' +
+      '<td style="text-align:right">' +
+        '<div class="aksiyon-grup">' +
+          '<button class="aksiyon-btn duz" title="Düzenle" onclick="duzenle(\'' + k.username + '\')">' +
+            '<i class="fa-solid fa-pen"></i></button>' +
+          '<button class="aksiyon-btn sil" title="Sil" onclick="sil(\'' + k.username + '\')"' +
+            (isSelf ? ' disabled' : '') + '>' +
+            '<i class="fa-solid fa-trash"></i></button>' +
+        '</div>' +
+      '</td>' +
+    '</tr>'
+  })
+  tbody.innerHTML = html
+}
+
+function yetkiMatrixCiz() {
+  var roller = Object.keys(tumRoller)
+  if (!roller.length) {
+    document.getElementById("yetkiMatrix").innerHTML = '<div class="bos-durum">Rol tanımı yok</div>'
+    return
+  }
+  var yetkiler = Object.keys(tumRoller[roller[0]])
+
+  var html = '<table class="yetki-matrix"><thead><tr>' +
+    '<th style="text-align:left; padding-left:14px">Yetki</th>'
+  roller.forEach(function(r) {
+    html += '<th><span class="rol-rozet ' + r + '">' + r.toUpperCase() + '</span></th>'
+  })
+  html += '</tr></thead><tbody>'
+
+  yetkiler.forEach(function(y) {
+    html += '<tr><td class="yetki-adi">' +
+      y.replace(/_/g, " ")
+       .replace(/\b\w/g, function(c){return c.toUpperCase()}) +
+      '</td>'
+    roller.forEach(function(r) {
+      var var_mi = tumRoller[r][y]
+      html += '<td>' + (var_mi
+        ? '<i class="fa-solid fa-check yetki-var"></i>'
+        : '<i class="fa-solid fa-minus yetki-yok"></i>') + '</td>'
+    })
+    html += '</tr>'
+  })
+  html += '</tbody></table>'
+  document.getElementById("yetkiMatrix").innerHTML = html
+}
+
+// ═════════════════════════════════════════════════
+// MODAL — YENİ / DÜZENLE
+// ═════════════════════════════════════════════════
+function yeniKullaniciModal() {
+  duzenlemeMode = null
+  document.getElementById("modalsection").innerHTML = '<i class="fa-solid fa-user-plus"></i> Yeni Kullanıcı'
+  document.getElementById("modalAlt").textContent = "Yeni kullanıcı bilgilerini gir"
+  document.getElementById("modalUsername").value = ""
+  document.getElementById("modalUsername").disabled = false
+  document.getElementById("modalAd").value = ""
+  document.getElementById("modalSifre").value = ""
+  document.getElementById("modalSifre").placeholder = "Şifre"
+  document.getElementById("modalRol").value = "hazirlayan"
+  document.getElementById("sifreNot").textContent = "(zorunlu, en az 4 karakter)"
+  document.getElementById("kullaniciModal").classList.add("goster")
+  setTimeout(function() {
+    document.getElementById("modalUsername").focus()
+  }, 50)
+}
+
+function duzenle(username) {
+  var k = tumKullanicilar.find(function(x) { return x.username === username })
+  if (!k) return
+  duzenlemeMode = username
+  document.getElementById("modalsection").innerHTML = '<i class="fa-solid fa-pen"></i> Düzenle: ' + username
+  document.getElementById("modalAlt").textContent = "Kullanıcı adı sabittir, değiştirilemez"
+  document.getElementById("modalUsername").value = username
+  document.getElementById("modalUsername").disabled = true
+  document.getElementById("modalAd").value = k.ad
+  document.getElementById("modalSifre").value = ""
+  document.getElementById("modalSifre").placeholder = "Boş bırakırsan şifre değişmez"
+  document.getElementById("modalRol").value = k.rol
+  document.getElementById("sifreNot").textContent = "(boş bırakırsan değişmez)"
+  document.getElementById("kullaniciModal").classList.add("goster")
+  setTimeout(function() {
+    document.getElementById("modalAd").focus()
+  }, 50)
+}
+
+function modalKapat() {
+  document.getElementById("kullaniciModal").classList.remove("goster")
+}
+
+async function kullaniciKaydet() {
+  var username = document.getElementById("modalUsername").value.trim().toLowerCase()
+  var ad = document.getElementById("modalAd").value.trim()
+  var sifre = document.getElementById("modalSifre").value.trim()
+  var rol = document.getElementById("modalRol").value
+
+  // Validasyon
+  if (!ad) {
+    if (typeof bildirim === "function") bildirim("Ad zorunlu", "Uyarı", "uyari")
+    else alert("Ad zorunlu")
+    return
+  }
+  if (!rol) {
+    if (typeof bildirim === "function") bildirim("Rol seç", "Uyarı", "uyari")
+    else alert("Rol seç")
+    return
+  }
+  if (!duzenlemeMode) {
+    if (!username) {
+      if (typeof bildirim === "function") bildirim("Kullanıcı adı zorunlu", "Uyarı", "uyari")
+      return
+    }
+    if (!sifre) {
+      if (typeof bildirim === "function") bildirim("Şifre zorunlu", "Uyarı", "uyari")
+      return
+    }
+  }
+
+  var btn = document.getElementById("kaydetBtn")
+  var eskiHtml = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kaydediliyor...'
+
+  var url, body
+  if (duzenlemeMode) {
+    url = "/api/kullanici/guncelle/" + encodeURIComponent(duzenlemeMode)
+    body = { ad: ad, rol: rol }
+    if (sifre) body.sifre = sifre
+  } else {
+    url = "/api/kullanici/ekle"
+    body = { username: username, ad: ad, sifre: sifre, rol: rol }
+  }
+
+  try {
+    var r = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      modalKapat()
+      veriYukle()
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+      else alert("Hata: " + d.mesaj)
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+    else alert("Bağlantı hatası: " + e.message)
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eskiHtml
+  }
+}
+
+// ═════════════════════════════════════════════════
+// SİL
+// ═════════════════════════════════════════════════
+async function sil(username) {
+  var k = tumKullanicilar.find(function(x) { return x.username === username })
+  if (!k) return
+
+  var onay = false
+  if (typeof onayla === "function") {
+    onay = await onayla(
+      k.ad + " (" + username + ") kullanıcısını silmek istediğine emin misin? Bu işlem geri alınamaz.",
+      "Kullanıcı Sil",
+      {tip:"uyari", onay:"Sil", iptal:"İptal"}
+    )
+  } else {
+    onay = confirm(k.ad + " kullanıcısını silmek istediğine emin misin?")
+  }
+  if (!onay) return
+
+  try {
+    var r = await fetch("/api/kullanici/sil/" + encodeURIComponent(username), {method: "DELETE"})
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      veriYukle()
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+      else alert("Hata: " + d.mesaj)
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+    else alert("Bağlantı hatası: " + e.message)
+  }
+}
+
+// ═════════════════════════════════════════════════
+// YARDIMCILAR
+// ═════════════════════════════════════════════════
+function escHtml(s) {
+  if (s === null || s === undefined) return ""
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
+// ═════════════════════════════════════════════════
+// BAŞLAT
+// ═════════════════════════════════════════════════
+document.addEventListener("DOMContentLoaded", veriYukle)
+
+// ESC ile modal kapat
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") modalKapat()
+})
+</script>
+
+</body>
+</html>
