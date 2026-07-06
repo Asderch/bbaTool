@@ -125,7 +125,7 @@
 
 <div class="shell">
 <nav class="sidebar">
-  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>V4.0</span></div>
+  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>V{{ APP_VERSION }}</span></div>
   <div class="nav-section">Main Data</div>
   <a href="/" class="nav-item active"><i class="fa-solid fa-house"></i> Ana Menü</a>
   <div class="nav-section">Sevkiyat</div>
@@ -145,8 +145,13 @@
   <div class="nav-section">Yönetim</div>
   <a href="/kullanici-yonetimi" class="nav-item">
     <i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi
+
+  <a href="/surum-yonetimi" class="nav-item">
+    <i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi
+</a>
   </a>
   {% endif %}
+
   <div class="sidebar-footer">
     <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i> Açık Tema</button>
     <button class="cikis-btn" onclick="cikisYap()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
@@ -309,7 +314,7 @@
   </div>
 
   <div class="footer-bar">
-    <span>Warehouse Data Management · Version 4.0</span>
+    <span>Warehouse Data Management · Version {{ APP_VERSION }}</span>
     <span>Hazırlayan: Berkcan Burak Akar</span>
   </div>
 

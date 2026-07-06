@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Güncelleme Gerekli · BBA Ambar Data</title>
+
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="/assets/js/theme.js"></script>
+
+<style>
+  body {
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    margin: 0;
+  }
+
+  .kilit-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    text-align: center;
+  }
+
+  .kilit-ikon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: rgba(245,158,11,0.15);
+    color: var(--amber);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+
+  .kilit-baslik {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0 0 6px 0;
+  }
+
+  .kilit-alt {
+    font-size: 13px;
+    color: var(--text3);
+    margin: 0 0 24px 0;
+  }
+
+  .versiyon-kutu {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 20px 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .versiyon-kutu .item {
+    text-align: center;
+    flex: 1;
+  }
+
+  .versiyon-kutu .label {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .versiyon-kutu .deger {
+    font-size: 20px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .versiyon-kutu .item.mevcut .deger { color: var(--red); }
+  .versiyon-kutu .item.gerekli .deger { color: var(--primary); }
+
+  .versiyon-kutu .ok {
+    font-size: 20px;
+    color: var(--text3);
+  }
+
+  .aciklama {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.5;
+    margin: 20px 0;
+    padding: 14px;
+    background: rgba(62,207,142,0.06);
+    border: 1px solid rgba(62,207,142,0.3);
+    border-radius: 8px;
+    text-align: left;
+  }
+
+  .aciklama strong { color: var(--primary); }
+  .aciklama i { color: var(--primary); margin-right: 6px; }
+
+  .mesaj-kutu {
+    font-size: 12px;
+    color: var(--text3);
+    font-style: italic;
+    margin: 12px 0;
+    padding: 10px;
+    background: var(--bg);
+    border-left: 3px solid var(--primary);
+    text-align: left;
+    border-radius: 4px;
+  }
+
+  .aksiyonlar {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 24px;
+  }
+
+  .cikis-btn-buyuk {
+    background: var(--bg);
+    color: var(--text2);
+    border: 1px solid var(--border);
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cikis-btn-buyuk:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+  }
+
+  .tekrar-kontrol {
+    background: var(--primary);
+    color: #000;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tekrar-kontrol:hover { filter: brightness(1.1); }
+
+  .alt-not {
+    margin-top: 20px;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .alt-not code {
+    background: var(--bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<div class="kilit-kart">
+  <div class="kilit-ikon">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+  </div>
+
+  <h1 class="kilit-baslik">Güncelleme Gerekli</h1>
+  <p class="kilit-alt">Kullandığın sürüm artık desteklenmiyor</p>
+
+  <div class="versiyon-kutu">
+    <div class="item mevcut">
+      <div class="label">Bu Cihaz</div>
+      <div class="deger">V<span id="mevcutVersiyon">?</span></div>
+    </div>
+    <div class="ok">→</div>
+    <div class="item gerekli">
+      <div class="label">Gerekli</div>
+      <div class="deger">V<span id="gerekliVersiyon">?</span></div>
+    </div>
+  </div>
+
+  <div class="aciklama">
+    <i class="fa-solid fa-circle-info"></i>
+    <strong>Yeni sürümü indir ve kur.</strong> Uygulamayı kullanmaya devam etmek için ortak klasördeki en güncel BBA Tool sürümünü almalısın.
+  </div>
+
+  <div class="mesaj-kutu" id="mesajKutu" style="display:none">
+    <i class="fa-solid fa-comment"></i>
+    <span id="mesajMetin"></span>
+  </div>
+
+  <div class="aksiyonlar">
+    <button class="cikis-btn-buyuk" onclick="cikisYap()">
+      <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+    </button>
+    <button class="tekrar-kontrol" onclick="tekrarKontrol()">
+      <i class="fa-solid fa-rotate"></i> Tekrar Kontrol Et
+    </button>
+  </div>
+
+  <div class="alt-not">
+    Son güncelleme: <code id="sonGuncelleme">-</code> · <code id="guncelleyen">-</code>
+  </div>
+</div>
+
+<script>
+async function veriYukle() {
+  try {
+    var r = await fetch("/api/versiyon/durum")
+    var d = await r.json()
+    document.getElementById("mevcutVersiyon").textContent = d.app_version
+    document.getElementById("gerekliVersiyon").textContent = d.min_versiyon
+    document.getElementById("sonGuncelleme").textContent = d.son_guncelleme || "-"
+    document.getElementById("guncelleyen").textContent = d.guncelleyen || "-"
+
+    if (d.mesaj) {
+      document.getElementById("mesajKutu").style.display = "block"
+      document.getElementById("mesajMetin").textContent = d.mesaj
+    }
+
+    // Eğer güncelse (belki yönetici sürüm eşiğini düşürdü), ana sayfaya at
+    if (d.guncel_mi) {
+      window.location.href = "/"
+    }
+  } catch(e) {
+    console.error("Versiyon bilgisi alınamadı:", e)
+  }
+}
+
+function tekrarKontrol() {
+  var btn = event.target.closest("button")
+  var eski = btn.innerHTML
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kontrol ediliyor...'
+  btn.disabled = true
+  setTimeout(function() {
+    window.location.reload()
+  }, 500)
+}
+
+function cikisYap() {
+  window.location.href = "/logout"
+}
+
+document.addEventListener("DOMContentLoaded", veriYukle)
+</script>
+
+</body>
+</html>

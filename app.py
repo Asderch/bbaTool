@@ -11,6 +11,13 @@ from kullanici_db import (
     kullanici_bilgi as kullanici_bilgi_al,
     VARSAYILAN_ROLLER as ROLLER_YENI,
 )
+
+from versiyon_db import (
+    versiyon_bp,
+    versiyon_dosyasini_hazirla,
+    guncel_mi,
+)
+
 import threading
 import webview
 import time
@@ -55,13 +62,15 @@ app.register_blueprint(agirlik_bp)
 app.register_blueprint(mb52_bp)
 app.register_blueprint(malzeme_bp)
 app.register_blueprint(kullanici_bp)
+app.register_blueprint(versiyon_bp)
+versiyon_dosyasini_hazirla()
 
 # ═══ Kullanıcı JSON dosyasını hazırla (yoksa oluşturur) ═══
 kullanici_dosyasini_hazirla()
 
 from functools import wraps
 
-APP_VERSION = "4.0"
+APP_VERSION = "4.1"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -105,6 +114,25 @@ def yetki_gerekli(yetki):
 # KULLANICILAR artık kullanici_db.py içinde (JSON tabanlı, ortak klasörde)
 # İlk kullanıcılar ILK_KULLANICILAR sabitinde tanımlı.
 # ═══════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════
+# SÜRÜM KİLİDİ MIDDLEWARE
+# Eski sürüm ise sadece /guncelle ve /api/versiyon/* açık kalır
+# ═══════════════════════════════════════════════
+@app.before_request
+def surum_kilit_kontrolu():
+    # Guncelleme ekranı ve static dosyalar her zaman açık
+    if request.path.startswith("/guncelle") or \
+       request.path.startswith("/api/versiyon/") or \
+       request.path.startswith("/assets/") or \
+       request.path.startswith("/static/") or \
+       request.path == "/logout" or \
+       request.path.startswith("/favicon"):
+        return None
+
+    # Sürüm güncel değilse zorla /guncelle'ye yönlendir
+    if not guncel_mi():
+        return redirect(url_for("guncelle_sayfasi"))
 
 
 def giris_yapildi_mi(): return session.get("kullanici") is not None
@@ -842,6 +870,21 @@ def kullanici_yonetimi_sayfa():
     if session.get("kullanici") != "admin":
         return redirect(url_for("index"))
     return render_template("kullanici-yonetimi.html")
+
+# Güncelleme kilit ekranı (herkese açık — kimlik doğrulama bile gerektirmez)
+@app.route("/guncelle")
+def guncelle_sayfasi():
+    return render_template("guncelle.html")
+
+
+# Sürüm yönetimi sayfası — sadece admin kullanıcı adı
+@app.route("/surum-yonetimi")
+def surum_yonetimi_sayfa():
+    if not giris_yapildi_mi():
+        return redirect(url_for("login"))
+    if session.get("kullanici") != "admin":
+        return redirect(url_for("index"))
+    return render_template("surum-yonetimi.html")
 
 
 # ---- SEVKİYAT PLAN API ----

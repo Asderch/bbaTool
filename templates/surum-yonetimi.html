@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sürüm Yönetimi · BBA Ambar Data</title>
+
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/popup.js" defer></script>
+
+<style>
+  .durum-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .durum-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .durum-kart .label {
+    font-size: 10px;
+    color: var(--text3);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    margin-bottom: 6px;
+  }
+
+  .durum-kart .deger {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 4px;
+  }
+
+  .durum-kart.min .deger { color: var(--primary); }
+  .durum-kart.mevcut .deger { color: var(--text); }
+  .durum-kart.info .deger { font-size: 14px; }
+
+  .durum-kart .alt {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .form-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    max-width: 640px;
+  }
+
+  .form-kart h2 {
+    font-size: 15px;
+    color: var(--text);
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .form-kart h2 i { color: var(--primary); font-size: 13px; }
+
+  .form-kart .alt-metin {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 20px;
+  }
+
+  .form-kart label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text2);
+    font-weight: 600;
+    margin-top: 14px;
+    margin-bottom: 5px;
+  }
+
+  .form-kart input, .form-kart textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+
+  .form-kart input:focus, .form-kart textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .form-kart .not {
+    font-size: 10.5px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  .uyari-kart {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.4);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 20px 0;
+    font-size: 12.5px;
+    color: var(--text);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .uyari-kart i {
+    color: var(--amber);
+    font-size: 16px;
+    margin-top: 2px;
+  }
+
+  .kaydet-btn {
+    background: var(--primary);
+    color: #000;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .kaydet-btn:hover { filter: brightness(1.1); }
+  .kaydet-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  @media (max-width: 800px) {
+    .durum-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR (birebir index.html) -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
+      <h2>Warehouse Data</h2>
+      <span>V{{ APP_VERSION }}</span>
+    </div>
+
+    <div class="nav-section">Main Data</div>
+    <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+
+    <div class="nav-section">Sevkiyat</div>
+    <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+    <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+
+    <div class="nav-section">Araçlar</div>
+    <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+    <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+    <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+    <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+
+    <div class="nav-section">Raporlama</div>
+    <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+    <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+    <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+    <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item">
+      <i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi
+    </a>
+    <a href="/surum-yonetimi" class="nav-item active">
+      <i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi
+    </a>
+
+    <div class="sidebar-footer">
+      <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+        <i class="fa-solid fa-sun"></i> Açık Tema
+      </button>
+      <button class="cikis-btn" onclick="cikisYap()">
+        <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+      </button>
+    </div>
+  </nav>
+
+  <div class="main-area">
+
+    <div class="topbar">
+      <div>
+        <div class="topbar-breadcrumb">
+          <a href="/">Ana Sayfa</a> · <span>Yönetim</span> · <span class="bc-current">Sürüm Yönetimi</span>
+        </div>
+        <div class="topbar-title">Sürüm Yönetimi</div>
+        <div class="topbar-sub">Minimum kabul edilen sürümü değiştir · Eski sürümler kilitlenir</div>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()">
+          <i class="fa-solid fa-sun"></i>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar" title="Profil">BA</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DURUM KARTLARI -->
+      <div class="durum-grid">
+        <div class="durum-kart mevcut">
+          <div class="label">Bu Cihaz</div>
+          <div class="deger">V<span id="mevcutVersiyon">?</span></div>
+          <div class="alt">Bu exe'nin gömülü sürümü</div>
+        </div>
+
+        <div class="durum-kart min">
+          <div class="label">Minimum Sürüm</div>
+          <div class="deger">V<span id="minVersiyon">?</span></div>
+          <div class="alt">Bu ve üstü çalışabilir</div>
+        </div>
+
+        <div class="durum-kart info">
+          <div class="label">Son Güncelleme</div>
+          <div class="deger" id="sonGuncelleme">-</div>
+          <div class="alt" id="guncelleyen">-</div>
+        </div>
+      </div>
+
+      <!-- YENİ SÜRÜM EŞİĞİ FORMU -->
+      <div class="form-kart">
+        <h2><i class="fa-solid fa-code-branch"></i> Minimum Sürüm Değiştir</h2>
+        <p class="alt-metin">Yeni bir zorunlu sürüm yayınladığında buraya gir. Eski sürümlü PC'ler bir sonraki açılışta güncelleme ekranına düşer.</p>
+
+        <div class="uyari-kart">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>
+            <strong>Dikkat:</strong> Bu değer değiştirildiği anda, minimum sürümün altındaki tüm PC'ler bir sonraki uygulama açılışında kilitlenir. Kendi kullandığın exe'nin sürümü de bu değerin altındaysa sen bile kilitlenirsin.
+          </div>
+        </div>
+
+        <label>Yeni Minimum Sürüm</label>
+        <input type="text" id="yeniMinVersiyon" placeholder="Örn: 4.1 veya 4.2.1" maxlength="10">
+        <div class="not">Format: rakam.rakam veya rakam.rakam.rakam</div>
+
+        <label>Açıklama (opsiyonel)</label>
+        <textarea id="mesaj" placeholder="Örn: Kritik güvenlik güncellemesi - hemen güncelleyin" rows="3" maxlength="200"></textarea>
+        <div class="not">Bu mesaj güncelleme ekranında kullanıcılara gösterilir</div>
+
+        <button class="kaydet-btn" id="kaydetBtn" onclick="kaydet()">
+          <i class="fa-solid fa-save"></i> Değişikliği Uygula
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+var mevcutDurum = null
+
+async function veriYukle() {
+  try {
+    var r = await fetch("/api/versiyon/durum")
+    if (!r.ok) throw new Error("HTTP " + r.status)
+    var d = await r.json()
+    mevcutDurum = d
+    document.getElementById("mevcutVersiyon").textContent = d.app_version
+    document.getElementById("minVersiyon").textContent = d.min_versiyon
+    document.getElementById("sonGuncelleme").textContent = d.son_guncelleme || "-"
+    document.getElementById("guncelleyen").textContent = "Değiştiren: " + (d.guncelleyen || "-")
+
+    // Default input değeri
+    document.getElementById("yeniMinVersiyon").value = d.min_versiyon
+    if (d.mesaj) document.getElementById("mesaj").value = d.mesaj
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Hata", "hata")
+    else alert("Yükleme hatası: " + e.message)
+  }
+}
+
+async function topbarAvatarGuncelle() {
+  try {
+    var r = await fetch("/api/kullanici-bilgi")
+    if (!r.ok) return
+    var b = await r.json()
+    var avatar = document.getElementById("topbarAvatar")
+    if (avatar && b.ad) {
+      var initials = b.ad.split(" ").map(function(w) { return w[0] }).join("").slice(0, 2).toUpperCase()
+      avatar.innerText = initials
+      avatar.title = b.ad + (b.rol ? " (" + b.rol + ")" : "")
+    }
+  } catch(e) {}
+}
+
+function cikisYap() {
+  window.location.href = "/logout"
+}
+
+async function kaydet() {
+  var yeniMin = document.getElementById("yeniMinVersiyon").value.trim()
+  var mesaj = document.getElementById("mesaj").value.trim()
+
+  if (!yeniMin) {
+    if (typeof bildirim === "function") bildirim("Sürüm numarası gerekli", "Uyarı", "uyari")
+    return
+  }
+
+  // Kendini kilitlemesin diye ekstra onay
+  var mevcutParse = mevcutDurum.app_version.split(".").map(Number)
+  var yeniParse = yeniMin.split(".").map(Number)
+  var kendiniKilit = false
+  for (var i = 0; i < Math.max(mevcutParse.length, yeniParse.length); i++) {
+    var a = mevcutParse[i] || 0
+    var b = yeniParse[i] || 0
+    if (a < b) { kendiniKilit = true; break }
+    if (a > b) break
+  }
+
+  var onayMetin = "Minimum sürüm V" + yeniMin + " olarak ayarlansın mı? Eski sürümlü tüm PC'ler kilitlenecek."
+  if (kendiniKilit) {
+    onayMetin = "DİKKAT: Bu değişiklik seni de kilitleyecek!\n\n" +
+                "Senin sürümün V" + mevcutDurum.app_version + ", ayarlamak istediğin minimum V" + yeniMin + ".\n" +
+                "Bu değişikliğin ardından sen de güncelleme ekranına düşeceksin.\n\n" +
+                "Yine de devam edilsin mi?"
+  }
+
+  var onay = false
+  if (typeof onayla === "function") {
+    onay = await onayla(onayMetin, "Sürüm Kilidi", {tip: kendiniKilit ? "uyari" : "bilgi", onay:"Uygula", iptal:"İptal"})
+  } else {
+    onay = confirm(onayMetin)
+  }
+  if (!onay) return
+
+  var btn = document.getElementById("kaydetBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kaydediliyor...'
+
+  try {
+    var r = await fetch("/api/versiyon/guncelle", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ min_versiyon: yeniMin, mesaj: mesaj })
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      setTimeout(function() {
+        // Eğer kendini kilitlediyse otomatik logout
+        if (kendiniKilit) {
+          window.location.href = "/guncelle"
+        } else {
+          veriYukle()
+        }
+      }, 1000)
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+      else alert("Hata: " + d.mesaj)
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+    else alert(e.message)
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  topbarAvatarGuncelle()
+  veriYukle()
+})
+</script>
+
+</body>
+</html>
