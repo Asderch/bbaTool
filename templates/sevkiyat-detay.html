@@ -55,6 +55,16 @@
   <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
   <div class="nav-section">Raporlama</div>
   <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+    {% if session.kullanici == "admin" %}
+  <div class="nav-section">Yönetim</div>
+  <a href="/kullanici-yonetimi" class="nav-item">
+    <i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi
+
+  <a href="/surum-yonetimi" class="nav-item">
+    <i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi
+</a>
+  </a>
+  {% endif %}
   <div class="sidebar-footer">
     <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
   <i class="fa-solid fa-sun"></i> Açık Tema
