@@ -400,6 +400,29 @@ function topla074(){ const o={}; D.zmm074.rows.forEach(r=>{const k=irsKey(r[D.zm
 function toplaKg(key){ const d=D[key]; if(!d||!d.map.irs||!d.map.kg)return null; const o={}; d.rows.forEach(r=>{const k=irsKey(r[d.map.irs]); if(!k)return; const v=num(r[d.map.kg]); if(v!=null)o[k]=(o[k]||0)+v;}); return o; }
 function topla068(){ const d=D.zmm068; if(!d||!d.map.irs||!d.map.kg)return null; const o={}; d.rows.forEach(r=>{const k=irsKey(r[d.map.irs]); if(!k)return; const v=num(r[d.map.kg]); if(v!=null&&v<0)o[k]=(o[k]||0)+v;}); for(const k in o)o[k]*=-1; return o; }
 
+// Türkçe tarih formatı (Belge Tarihi için)
+function trTarih(v){
+  if(v==null||v==='') return '';
+  let d;
+  if(v instanceof Date) d = v;
+  else if(typeof v === 'number'){
+    // Excel serial numarası
+    d = new Date(Date.UTC(1899,11,30) + v*86400000);
+  } else {
+    const s = String(v).trim();
+    d = new Date(s);
+    if(isNaN(d.getTime())){
+      // dd.mm.yyyy veya dd/mm/yyyy dene
+      const m = s.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
+      if(m) d = new Date(+m[3], +m[2]-1, +m[1]);
+    }
+  }
+  if(!(d instanceof Date) || isNaN(d.getTime())) return String(v);
+  const p=n=>String(n).padStart(2,'0');
+  return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear();
+}
+
+
 /* ---------- Karşılaştır ---------- */
 let LAST=[], fKat='all', fDurum='all', MIDX={};
 function karsilastir(){
@@ -416,6 +439,7 @@ function karsilastir(){
     seen[k]=1;
     const sip=r[kk.map.sip], katId=siniflandir(sip), kat=katBul(katId);
     const row={irs:String(r[kk.map.irs]).trim(), key:k, sip:sipBaz(sip), katId:kat.id, kat:kat,
+               tarih: kk.map.tarih ? r[kk.map.tarih] : null,
                zmm074:(k in ref)?ref[k]:null, cmp:{}, durum:'tamam'};
     let diff=false, miss=false;
     if(row.zmm074==null) miss=true;
@@ -483,7 +507,8 @@ function ciz(){
   if(!rows.length){ document.getElementById('tbody').innerHTML='<tr><td colspan="20"><div class="bos"><i class="fa-solid fa-inbox"></i>Bu filtrede kayıt yok</div></td></tr>'; return; }
   let h='';
   rows.forEach(r=>{
-    h+='<tr><td class="mt-irs" onclick="detayAc(\''+r.key+'\')">'+r.irs+'</td>';
+    const tarihStr = trTarih(r.tarih);
+    h+='<tr'+(tarihStr?' title="Belge Tarihi: '+tarihStr+'"':'')+'><td class="mt-irs" onclick="detayAc(\''+r.key+'\')">'+r.irs+'</td>';
     h+='<td><span class="kat-badge" style="background:'+r.kat.renk+'22;color:'+r.kat.renk+'"><span class="kat-dot" style="background:'+r.kat.renk+'"></span>'+r.kat.ad+'</span></td>';
     h+='<td class="num">'+(r.zmm074==null?'<span class="cell-miss">eksik</span>':fmt(r.zmm074))+'</td>';
     used.forEach(s=>{
@@ -631,10 +656,10 @@ async function excelAktar(){
   const wb=XLSX.utils.book_new();
 
   /* --- 1) Mutabakat (ana, renkli) --- */
-  const head=[{k:'irs',t:'İrsaliye No',w:22},{k:'kat',t:'Kategori',w:18},{k:'zmm074',t:'ZMM074 (kg)',w:14,num:1}];
+  const head=[{k:'irs',t:'İrsaliye No',w:22},{k:'tarih',t:'Belge Tarihi',w:13},{k:'kat',t:'Kategori',w:18},{k:'zmm074',t:'ZMM074 (kg)',w:14,num:1}];
   used.forEach(s=>{ head.push({k:s+'_kg',t:lbl[s]+' (kg)',w:14,num:1}); head.push({k:s+'_f',t:lbl[s]+' Fark',w:12,num:1}); });
   head.push({k:'durum',t:'Durum',w:11});
-  const rows=inc.map(r=>{ const o={irs:r.irs,kat:r.kat.ad,zmm074:r.zmm074,durum:stTxt[r.durum],_d:r.durum,_cmp:r.cmp};
+  const rows=inc.map(r=>{ const o={irs:r.irs,tarih:trTarih(r.tarih),kat:r.kat.ad,zmm074:r.zmm074,durum:stTxt[r.durum],_d:r.durum,_cmp:r.cmp};
     used.forEach(s=>{const c=r.cmp[s]||{}; o[s+'_kg']=c.miss?'EKSİK':c.kg; o[s+'_f']=c.diff==null?'':c.diff;}); return o; });
   const mainStyler=(row,k)=>{
     if(k==='durum') return XDUR[row._d];
@@ -663,7 +688,7 @@ async function excelAktar(){
   /* --- 3) Kalem Bazlı Detay (farklı/eksik) --- */
   if(SHEETS.kalem){
     const tol=num(document.getElementById('tol').value)||0;
-    const kh=[{k:'irs',t:'İrsaliye No',w:22},{k:'kat',t:'Kategori',w:16},{k:'kod',t:'Malzeme Kodu',w:16},{k:'ad',t:'Malzeme',w:40}];
+    const kh=[{k:'irs',t:'İrsaliye No',w:22},{k:'tarih',t:'Belge Tarihi',w:13},{k:'kat',t:'Kategori',w:16},{k:'kod',t:'Malzeme Kodu',w:16},{k:'ad',t:'Malzeme',w:40}];
     used.forEach(s=>kh.push({k:s,t:lbl[s]+' (kg)',w:14,num:1})); kh.push({k:'durum',t:'Durum',w:11});
     const krows=[];
     inc.filter(r=>r.durum!=='tamam').forEach(r=>{
@@ -673,7 +698,7 @@ async function excelAktar(){
         const vals=used.map(s=>mm[s][mk]?mm[s][mk].kg:null), dolu=vals.filter(v=>v!=null), ref=dolu.length?dolu[0]:null;
         const eksik=vals.some(v=>v==null), farkli=dolu.length>1&&dolu.some(v=>Math.abs(v-ref)>tol);
         const info=used.map(s=>mm[s][mk]).find(x=>x);
-        const o={irs:r.irs,kat:r.kat.ad,kod:info?info.kod:'',ad:info?(info.ad||mk):mk,_d:eksik?'eksik':(farkli?'farkli':'tamam'),durum:eksik?'Eksik':(farkli?'Farklı':'Tamam'),_vals:{}};
+        const o={irs:r.irs,tarih:trTarih(r.tarih),kat:r.kat.ad,kod:info?info.kod:'',ad:info?(info.ad||mk):mk,_d:eksik?'eksik':(farkli?'farkli':'tamam'),durum:eksik?'Eksik':(farkli?'Farklı':'Tamam'),_vals:{}};
         used.forEach((s,i)=>{ o[s]=vals[i]==null?'EKSİK':vals[i]; o._vals[s]={v:vals[i],bad:vals[i]==null||(ref!=null&&dolu.length>1&&Math.abs((vals[i]||0)-ref)>tol)}; });
         krows.push(o);
       });
