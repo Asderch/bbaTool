@@ -37,7 +37,7 @@ YEDEK_KLASOR = os.path.join(VERSIYON_KLASOR, "versiyon_yedek")
 # ─── Sabit: Uygulamanın kendi versiyonu ───
 # Bu değer PyInstaller build sırasında sabittir, exe'ye gömülür.
 # Değiştirmek için app.py'de APP_VERSION'u güncelle + yeniden build al.
-APP_VERSION = "4.1"
+APP_VERSION = "4.2"
 
 
 # ─── İlk kurulum verileri ───

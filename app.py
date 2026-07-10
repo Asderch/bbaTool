@@ -70,7 +70,7 @@ kullanici_dosyasini_hazirla()
 
 from functools import wraps
 
-APP_VERSION = "4.1"
+APP_VERSION = "4.2"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
