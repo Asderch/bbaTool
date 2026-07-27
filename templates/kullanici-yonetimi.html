@@ -414,12 +414,13 @@
     <input type="text" id="modalSifre" placeholder="Şifre" maxlength="30" autocomplete="off">
 
     <label>Rol</label>
-    <select id="modalRol">
-      <option value="admin">Admin — Tam yetki, kullanıcı yönetimi</option>
-      <option value="hazirlayan" selected>Hazırlayan — Plan/kalem işlemleri</option>
-      <option value="goruntuleyici">Görüntüleyici — Sadece görme + export</option>
-      <option value="sayim">Sayım — Ağırlık hesaplama modülü</option>
-    </select>
+  <select id="modalRol">
+    <option value="admin">Admin — Tam yetki, kullanıcı yönetimi</option>
+    <option value="hazirlayan" selected>Hazırlayan — Plan/kalem işlemleri</option>
+    <option value="goruntuleyici">Görüntüleyici — Sadece görme + export</option>
+    <option value="sayim">Sayım — Ağırlık hesaplama modülü</option>
+    <option value="yasakli">🎉 Sürpriz Rolü (test için)</option>
+</select>
 
     <div class="modal-actions">
       <button class="modal-iptal" onclick="modalKapat()">İptal</button>

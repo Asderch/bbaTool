@@ -138,6 +138,16 @@ VARSAYILAN_ROLLER = {
         "personel_izin":     False,
         "kullanici_yonet":   False,
     },
+
+    "yasakli": {
+        "panel_gor":         False, "plan_olustur":    False, "plan_gor":        False,
+        "plan_sil":          False, "plan_kapat":      False, "kalem_ekle":      False,
+        "kalem_toplu_ekle":  False, "kalem_guncelle":  False, "kalem_sil":       False,
+        "kalem_gonder":      False, "kalem_sifirla":   False, "toplu_devret":    False,
+        "export_pdf":        False, "export_excel":    False, "import_excel":    False,
+        "rapor_gor":         False, "dosya_sil":       False, "personel_izin":   False,
+        "kullanici_yonet":   False,
+    },
 }
 
 

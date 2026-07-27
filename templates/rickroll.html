@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Yükleniyor...</title>
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+  }
+  .gif-wrap {
+    max-width: 600px;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    margin-bottom: 30px;
+  }
+  .gif-wrap img { width: 100%; display: block; }
+  .mesaj {
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 12px;
+    animation: renkAt 2s infinite;
+  }
+  .alt {
+    font-size: 14px;
+    color: #999;
+    max-width: 500px;
+    line-height: 1.6;
+  }
+  .cikis-btn {
+    margin-top: 24px;
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    opacity: 0.5;
+  }
+  .cikis-btn:hover { opacity: 1; }
+  @keyframes renkAt {
+    0%   { color: #ff0080; }
+    25%  { color: #00ff88; }
+    50%  { color: #ffcc00; }
+    75%  { color: #00ccff; }
+    100% { color: #ff0080; }
+  }
+  .kucuk-ipucu {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    font-size: 10px;
+    color: #444;
+  }
+</style>
+</head>
+<body>
+
+<div class="mesaj">🎉 SÜRPRİZ! 🎉</div>
+
+<div class="gif-wrap">
+  <!-- Rickroll GIF - Giphy'den -->
+  <img src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif" alt="troll">
+</div>
+
+<div class="alt">
+  ————————————————————! 🕵️<br>
+  — Engellendin —
+</div>
+
+<button class="cikis-btn" onclick="window.location.href='/logout'">
+  Çıkış Yap
+</button>
+
+<div class="kucuk-ipucu">/logout - kaçış rotası</div>
+
+<script>
+  // Kullanıcı kaçmaya çalışırsa her tıklamada aynı sayfaya getir
+  document.addEventListener("click", function(e) {
+    if (e.target.classList.contains("cikis-btn")) return;
+    e.preventDefault();
+  });
+
+  // Sağ tık engelle (fazladan troll)
+  document.addEventListener("contextmenu", function(e) { e.preventDefault(); });
+
+  // Alt gerçek gif URL'i - farklı seçenekler istersen değiştir:
+  // https://media.giphy.com/media/dvKzGqvIkkAA0/giphy.gif  → dans eden pisi
+  // https://i.giphy.com/media/g7GKcSzwQfugw/giphy.gif      → rickroll
+  // https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif → şaşkın
+</script>
+
+</body>
+</html>

@@ -137,6 +137,26 @@ def surum_kilit_kontrolu():
 
 def giris_yapildi_mi(): return session.get("kullanici") is not None
 
+
+# ═══════════════════════════════════════════════
+# TROLL MIDDLEWARE 😄
+# "yasakli" rolündeki kullanıcılar her tıklamada rickroll'e gider
+# ═══════════════════════════════════════════════
+@app.before_request
+def yasakli_troll_kontrolu():
+    # Bu path'ler açık kalmalı (yoksa çıkış bile yapamaz)
+    if request.path.startswith("/rickroll") or \
+       request.path.startswith("/assets/") or \
+       request.path.startswith("/static/") or \
+       request.path == "/logout" or \
+       request.path == "/login" or \
+       request.path.startswith("/favicon"):
+        return None
+
+    # Kullanıcı yasakli rolündeyse zorla rickroll'e yönlendir
+    if session.get("rol") == "yasakli":
+        return redirect(url_for("rickroll_sayfasi"))
+
 # ----------------------
 # SQLite
 # ----------------------
@@ -3146,6 +3166,10 @@ def mutabakat_export():
 @app.route("/malzeme-kontrol")
 def malzeme_kontrol_sayfa():
     return render_template("malzeme-kontrol.html")
+
+@app.route("/rickroll")
+def rickroll_sayfasi():
+    return render_template("rickroll.html")
 
 # ---- SERVER ----
 def start_server(): app.run(host="127.0.0.1",port=5000)
