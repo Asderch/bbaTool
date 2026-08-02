@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stok Mutabakatı · BBA Ambar Data</title>
+
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/popup.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+  /* ─── Upload Zones ─── */
+  .upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .upload-zone {
+    background: var(--bg-white);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .upload-zone:hover { border-color: var(--primary); background: rgba(62,207,142,0.04); }
+  .upload-zone.dragover { border-color: var(--primary); background: rgba(62,207,142,0.08); border-style: solid; }
+  .upload-zone.dolu { border-color: var(--primary); border-style: solid; background: rgba(62,207,142,0.04); }
+
+  .upload-zone .ikon {
+    width: 44px; height: 44px; margin: 0 auto 10px;
+    border-radius: 10px;
+    background: rgba(62,207,142,0.15);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .upload-zone .baslik { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .upload-zone .alt   { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+  .upload-zone .durum {
+    font-size: 11px;
+    color: var(--primary);
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .upload-zone input[type=file] { display: none; }
+
+  /* ─── Kontrol Bar ─── */
+  .kontrol-bar {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+  }
+  .kontrol-bar label {
+    font-size: 11px; color: var(--text3);
+    font-weight: 700; text-transform: uppercase;
+    letter-spacing: .3px;
+    margin-right: 4px;
+  }
+  .kontrol-bar input[type=number] {
+    width: 70px;
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    margin: 0;
+  }
+  .depo-liste {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    align-items: center;
+  }
+  .depo-cb {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 11px;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    user-select: none;
+  }
+  .depo-cb:hover { border-color: var(--primary); color: var(--text); }
+  .depo-cb.aktif {
+    background: rgba(62,207,142,0.12);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .depo-cb input { display: none; }
+
+  .kars-btn {
+    background: var(--primary);
+    color: #000;
+    padding: 9px 20px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .kars-btn:hover:not(:disabled) { filter: brightness(1.1); }
+  .kars-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .excel-btn {
+    background: #16a34a;
+    color: #fff;
+    padding: 9px 16px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .excel-btn:hover { filter: brightness(1.1); }
+
+  /* ─── Özet Kartları ─── */
+  .ozet-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .ozet-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .ozet-kart .label {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .ozet-kart .deger {
+    font-size: 22px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .ozet-kart.uyum .deger    { color: var(--green); }
+  .ozet-kart.uyum .label i  { color: var(--green); }
+  .ozet-kart.fark .deger    { color: var(--red); }
+  .ozet-kart.fark .label i  { color: var(--red); }
+  .ozet-kart.eksik-ex .deger{ color: var(--amber); }
+  .ozet-kart.eksik-ex .label i { color: var(--amber); }
+  .ozet-kart.eksik-mb .deger{ color: var(--purple); }
+  .ozet-kart.eksik-mb .label i { color: var(--purple); }
+
+  /* ─── Tab Butonları ─── */
+  .tab-bar {
+    display: flex; gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    padding: 9px 18px;
+    background: transparent;
+    color: var(--text3);
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: -1px;
+  }
+  .tab-btn.aktif {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .tab-btn:hover:not(.aktif) { color: var(--text); }
+
+  .tab-icerik { display: none; }
+  .tab-icerik.aktif { display: block; }
+
+  /* ─── Sonuç Tabloları ─── */
+  .sonuc-tablo {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    font-size: 12px;
+  }
+  .sonuc-tablo th {
+    background: var(--bg);
+    padding: 9px 12px;
+    text-align: left;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    color: var(--text3);
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    z-index: 10;
+  }
+  .sonuc-tablo td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text);
+  }
+  .sonuc-tablo tr:hover td { background: var(--bg-hover); }
+  .sonuc-tablo .num {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .sonuc-tablo .kod {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+  .durum-rozet {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .durum-rozet.uyum     { background: rgba(34,197,94,0.15);  color: var(--green); }
+  .durum-rozet.fark     { background: rgba(220,38,38,0.15);  color: var(--red); }
+  .durum-rozet.eksik-ex { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .durum-rozet.eksik-mb { background: rgba(168,85,247,0.15); color: var(--purple); }
+
+  tr.satir-uyum     td:first-child { box-shadow: inset 3px 0 0 var(--green); }
+  tr.satir-fark     td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+  tr.satir-eksik-ex td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+  tr.satir-eksik-mb td:first-child { box-shadow: inset 3px 0 0 var(--purple); }
+
+  /* ─── Filtre butonları ─── */
+  .filtre-bar {
+    display: flex; gap: 6px; margin-bottom: 10px;
+    flex-wrap: wrap; align-items: center;
+  }
+  .filtre-bar input[type=search] {
+    flex: 1; min-width: 160px;
+    padding: 6px 10px;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    margin: 0;
+  }
+  .filtre-btn {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .filtre-btn.aktif {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+  }
+
+  .bos-durum {
+    padding: 40px;
+    text-align: center;
+    color: var(--text3);
+    font-size: 13px;
+  }
+  .bos-durum i {
+    font-size: 26px;
+    display: block;
+    margin-bottom: 10px;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 900px) {
+    .upload-grid { grid-template-columns: 1fr; }
+    .ozet-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
+      <h2>Warehouse Data</h2>
+      <span>V{{ APP_VERSION }}</span>
+    </div>
+    <div class="nav-section">Main Data</div>
+    <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+    <div class="nav-section">Sevkiyat</div>
+    <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+    <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+    <div class="nav-section">Araçlar</div>
+    <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+    <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+    <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+    <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+    <div class="nav-section">Raporlama</div>
+    <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+    <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+    <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+    <a href="/stok-mutabakat" class="nav-item active"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
+    <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+    {% if session.kullanici == "admin" %}
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
+    {% endif %}
+    <div class="sidebar-footer">
+      <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+        <i class="fa-solid fa-sun"></i> Açık Tema
+      </button>
+      <button class="cikis-btn" onclick="cikisYap()">
+        <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+      </button>
+    </div>
+  </nav>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-breadcrumb">
+          <a href="/">Ana Sayfa</a> · <span>Raporlama</span> · <span class="bc-current">Stok Mutabakatı</span>
+        </div>
+        <div class="topbar-title">Stok Mutabakatı</div>
+        <div class="topbar-sub">Excel ↔ MB52 karşılaştırması · Mal grubu + Malzeme bazlı</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()">
+          <i class="fa-solid fa-sun"></i>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar" title="Profil">BA</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══════ UPLOAD ZONE'LAR ═══════ -->
+      <div class="upload-grid">
+        <label class="upload-zone" id="upExcel" for="fExcel">
+          <div class="ikon"><i class="fa-solid fa-file-excel"></i></div>
+          <div class="baslik">1. Kendi Excel'ini Yükle</div>
+          <div class="alt">SAP Kodu · Malzeme Tanımı · Mal Grubu · Miktar · Birim · Depo Yeri</div>
+          <div class="durum" id="durumExcel">Dosya seçilmedi</div>
+          <input type="file" id="fExcel" accept=".xlsx,.xls" onchange="dosyaYukle('excel', this)">
+        </label>
+
+        <label class="upload-zone" id="upMB52" for="fMB52">
+          <div class="ikon"><i class="fa-solid fa-database"></i></div>
+          <div class="baslik">2. MB52 (SAP) Yükle</div>
+          <div class="alt">Malzeme · Kısa Metni · Mal Grubu · Depo · Tahditsiz · Birim</div>
+          <div class="durum" id="durumMB52">Dosya seçilmedi</div>
+          <input type="file" id="fMB52" accept=".xlsx,.xls" onchange="dosyaYukle('mb52', this)">
+        </label>
+      </div>
+
+      <!-- ═══════ KONTROL BAR ═══════ -->
+      <div class="kontrol-bar" id="kontrolBar" style="display:none">
+        <label><i class="fa-solid fa-warehouse"></i> Depolar:</label>
+        <div class="depo-liste" id="depoListe"></div>
+
+        <div style="border-left: 1px solid var(--border); height: 24px; margin: 0 8px"></div>
+
+        <label>Tolerans:</label>
+        <input type="number" id="tolerans" value="5" min="0" max="100" step="0.1">
+        <span style="font-size:11px;color:var(--text3)">%</span>
+
+        <button class="kars-btn" id="karsBtn" onclick="karsilastir()" disabled>
+          <i class="fa-solid fa-code-compare"></i> Karşılaştır
+        </button>
+      </div>
+
+      <!-- ═══════ ÖZET KARTLARI ═══════ -->
+      <div class="ozet-grid" id="ozetGrid" style="display:none">
+        <div class="ozet-kart uyum">
+          <div class="label"><i class="fa-solid fa-check"></i> Uyum</div>
+          <div class="deger" id="sayiUyum">0</div>
+        </div>
+        <div class="ozet-kart fark">
+          <div class="label"><i class="fa-solid fa-triangle-exclamation"></i> Fark</div>
+          <div class="deger" id="sayiFark">0</div>
+        </div>
+        <div class="ozet-kart eksik-ex">
+          <div class="label"><i class="fa-solid fa-arrow-down"></i> MB52'de Yok</div>
+          <div class="deger" id="sayiEksikEx">0</div>
+        </div>
+        <div class="ozet-kart eksik-mb">
+          <div class="label"><i class="fa-solid fa-arrow-up"></i> Excel'de Yok</div>
+          <div class="deger" id="sayiEksikMb">0</div>
+        </div>
+      </div>
+
+      <!-- ═══════ SONUÇ TAB'LARI ═══════ -->
+      <div id="sonucArea" style="display:none">
+
+        <div class="tab-bar">
+          <button class="tab-btn aktif" onclick="tabAc('malgrubu')">
+            <i class="fa-solid fa-layer-group"></i> Mal Grubu Bazlı
+          </button>
+          <button class="tab-btn" onclick="tabAc('malzeme')">
+            <i class="fa-solid fa-boxes-packing"></i> Malzeme Bazlı
+          </button>
+          <button class="excel-btn" style="margin-left:auto" onclick="excelExport()">
+            <i class="fa-solid fa-file-excel"></i> Excel Export
+          </button>
+        </div>
+
+        <!-- Mal Grubu Tab -->
+        <div class="tab-icerik aktif" id="tabMalgrubu">
+          <div class="filtre-bar">
+            <input type="search" id="araMg" placeholder="Mal grubunda ara..." oninput="renderMg()">
+            <button class="filtre-btn aktif" data-mg-fil="tumu" onclick="filtreMg('tumu')">Tümü</button>
+            <button class="filtre-btn" data-mg-fil="uyum" onclick="filtreMg('uyum')">Uyum</button>
+            <button class="filtre-btn" data-mg-fil="fark" onclick="filtreMg('fark')">Fark</button>
+            <button class="filtre-btn" data-mg-fil="eksik-ex" onclick="filtreMg('eksik-ex')">MB52'de Yok</button>
+            <button class="filtre-btn" data-mg-fil="eksik-mb" onclick="filtreMg('eksik-mb')">Excel'de Yok</button>
+          </div>
+          <table class="sonuc-tablo">
+            <thead>
+              <tr>
+                <th style="width:14%">Mal Grubu</th>
+                <th class="num" style="width:12%">Excel Miktar</th>
+                <th class="num" style="width:12%">MB52 Miktar</th>
+                <th class="num" style="width:12%">Fark</th>
+                <th class="num" style="width:8%">Fark %</th>
+                <th class="num" style="width:8%">Kalem</th>
+                <th style="width:14%">Durum</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyMg">
+              <tr><td colspan="7" class="bos-durum">Karşılaştırma bekleniyor</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Malzeme Tab -->
+        <div class="tab-icerik" id="tabMalzeme">
+          <div class="filtre-bar">
+            <input type="search" id="araMz" placeholder="Kod/Ad'da ara..." oninput="renderMz()">
+            <button class="filtre-btn aktif" data-mz-fil="tumu" onclick="filtreMz('tumu')">Tümü</button>
+            <button class="filtre-btn" data-mz-fil="uyum" onclick="filtreMz('uyum')">Uyum</button>
+            <button class="filtre-btn" data-mz-fil="fark" onclick="filtreMz('fark')">Fark</button>
+            <button class="filtre-btn" data-mz-fil="eksik-ex" onclick="filtreMz('eksik-ex')">MB52'de Yok</button>
+            <button class="filtre-btn" data-mz-fil="eksik-mb" onclick="filtreMz('eksik-mb')">Excel'de Yok</button>
+          </div>
+          <table class="sonuc-tablo">
+            <thead>
+              <tr>
+                <th style="width:12%">SAP Kod</th>
+                <th style="width:24%">Malzeme</th>
+                <th style="width:9%">Mal Grubu</th>
+                <th class="num" style="width:10%">Excel</th>
+                <th class="num" style="width:10%">MB52</th>
+                <th class="num" style="width:10%">Fark</th>
+                <th class="num" style="width:7%">Fark %</th>
+                <th style="width:6%">Birim</th>
+                <th style="width:12%">Durum</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyMz">
+              <tr><td colspan="9" class="bos-durum">Karşılaştırma bekleniyor</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div id="bosDurum" class="bos-durum" style="padding:60px;background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-lg)">
+        <i class="fa-solid fa-arrow-up"></i>
+        İki dosyayı da yükle, depoyu seç, karşılaştırmayı başlat.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ═════════════════════════════════════════════════
+// STATE
+// ═════════════════════════════════════════════════
+var EXCEL = { rows: [], adet: 0 }
+var MB52  = { rows: [], adet: 0, depolar: [] }
+var SECILI_DEPOLAR = new Set()
+var SONUC_MG = []      // Mal grubu bazlı
+var SONUC_MZ = []      // Malzeme bazlı
+var FILTRE_MG = "tumu"
+var FILTRE_MZ = "tumu"
+
+// ═════════════════════════════════════════════════
+// KOLON EŞLEŞTİRME
+// (Excel başlıkları normalize edilerek eşleştirilir)
+// ═════════════════════════════════════════════════
+var EXCEL_KOLON = {
+  kod:     ["sap kodu", "malzeme kodu", "malzeme", "kod"],
+  ad:      ["malzeme tanımı", "malzeme adi", "malzeme adı", "malzeme kisa metni", "ad", "tanım"],
+  malgrup: ["mal grubu", "malzeme grubu", "malgrubu", "grup"],
+  miktar:  ["miktar", "adet", "stok", "toplam"],
+  birim:   ["birim", "temel ölçü birimi", "ölçü birimi", "ol.brm"],
+  depo:    ["depo yeri", "depo", "depo yer"]
+}
+
+var MB52_KOLON = {
+  kod:      ["malzeme", "sap kodu", "material"],
+  ad:       ["malzeme kısa metni", "malzeme kisa metni", "malzeme adı", "malzeme adi", "kısa metin"],
+  malgrup:  ["mal grubu", "malzeme grubu", "malgrubu"],
+  depo:     ["depo yeri", "depo", "storage location"],
+  depoAd:   ["depo yeri tanımı", "depo tanımı", "depo adı"],
+  miktar:   ["tahditsiz klnb.", "tahditsiz kln.b.", "tahditsiz klnb", "kısıtsız kul.stok", "kisitsiz", "unrestricted", "tahditsiz"],
+  birim:    ["temel ölçü birimi", "ölçü birimi", "temel olcu birimi", "birim", "ol.brm"]
+}
+
+function normalizeStr(s) {
+  if (s === null || s === undefined) return ""
+  return String(s).trim().toLowerCase()
+    .replace(/[\u00A0]/g, " ")
+    .replace(/\s+/g, " ")
+}
+
+function kolonEsle(baslıklar, aday_listesi) {
+  // Baslıklarda hangi index eşleşiyor?
+  for (var i = 0; i < baslıklar.length; i++) {
+    var norm = normalizeStr(baslıklar[i])
+    for (var j = 0; j < aday_listesi.length; j++) {
+      var aday = normalizeStr(aday_listesi[j])
+      if (norm === aday || norm.indexOf(aday) !== -1) return i
+    }
+  }
+  return -1
+}
+
+// ═════════════════════════════════════════════════
+// DOSYA YÜKLEME
+// ═════════════════════════════════════════════════
+function dosyaYukle(hangi, input) {
+  var f = input.files[0]
+  if (!f) return
+  var okur = new FileReader()
+  okur.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, {type: "array", cellDates: true})
+      var ws = wb.Sheets[wb.SheetNames[0]]
+      var raw = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ""})
+      if (raw.length < 2) throw new Error("Dosya boş veya başlık yok")
+
+      var baslıklar = raw[0].map(function(x){ return String(x).trim() })
+      var kolonHar = (hangi === "excel") ? EXCEL_KOLON : MB52_KOLON
+      var kolon = {}
+      for (var k in kolonHar) {
+        kolon[k] = kolonEsle(baslıklar, kolonHar[k])
+      }
+
+      // Zorunlu kolonlar
+      var eksikKolonlar = []
+      if (kolon.kod < 0) eksikKolonlar.push("Malzeme/SAP Kodu")
+      if (kolon.miktar < 0) eksikKolonlar.push("Miktar/Tahditsiz")
+      if (hangi === "excel" && kolon.malgrup < 0) eksikKolonlar.push("Mal Grubu")
+      if (hangi === "mb52" && kolon.depo < 0) eksikKolonlar.push("Depo Yeri")
+
+      if (eksikKolonlar.length) {
+        throw new Error("Şu kolonlar bulunamadı: " + eksikKolonlar.join(", ") + "\n\nDosyadaki başlıklar: " + baslıklar.join(" | "))
+      }
+
+      var rows = []
+      for (var i = 1; i < raw.length; i++) {
+        var r = raw[i]
+        var kod = String(r[kolon.kod] || "").trim()
+        if (!kod) continue
+        var miktar = parseFloat(r[kolon.miktar]) || 0
+        rows.push({
+          kod:     kod,
+          ad:      String(r[kolon.ad] || "").trim(),
+          malgrup: String(r[kolon.malgrup] || "").trim(),
+          depo:    String(r[kolon.depo] || "").trim(),
+          miktar:  miktar,
+          birim:   String(r[kolon.birim] || "").trim(),
+        })
+      }
+
+      if (hangi === "excel") {
+        EXCEL.rows = rows
+        EXCEL.adet = rows.length
+        document.getElementById("durumExcel").textContent = f.name + " · " + rows.length + " satır"
+        document.getElementById("upExcel").classList.add("dolu")
+      } else {
+        MB52.rows = rows
+        MB52.adet = rows.length
+        // Depoları çıkar
+        var depoSet = new Set()
+        rows.forEach(function(r){ if (r.depo) depoSet.add(r.depo) })
+        MB52.depolar = Array.from(depoSet).sort()
+        document.getElementById("durumMB52").textContent = f.name + " · " + rows.length + " satır · " + MB52.depolar.length + " depo"
+        document.getElementById("upMB52").classList.add("dolu")
+        depoListeCiz()
+      }
+
+      kontrolBarDurum()
+    } catch (err) {
+      if (typeof bildirim === "function") bildirim(err.message, "Dosya Hatası", "hata")
+      else alert(err.message)
+      input.value = ""
+    }
+  }
+  okur.readAsArrayBuffer(f)
+}
+
+// Depo checkbox'larını çiz
+function depoListeCiz() {
+  var el = document.getElementById("depoListe")
+  if (!MB52.depolar.length) {
+    el.innerHTML = '<span style="font-size:11px;color:var(--text3)">MB52 yüklenince buraya gelecek</span>'
+    return
+  }
+  el.innerHTML = ""
+  MB52.depolar.forEach(function(d) {
+    var lbl = document.createElement("label")
+    lbl.className = "depo-cb"
+    lbl.innerHTML = '<input type="checkbox" value="' + d + '" onchange="depoTogle(this)"><span>' + d + '</span>'
+    el.appendChild(lbl)
+  })
+  // Varsayılan: hepsi seçili
+  el.querySelectorAll("input").forEach(function(cb){ cb.checked = true; SECILI_DEPOLAR.add(cb.value) })
+  el.querySelectorAll("label").forEach(function(l){ l.classList.add("aktif") })
+}
+
+function depoTogle(cb) {
+  if (cb.checked) {
+    SECILI_DEPOLAR.add(cb.value)
+    cb.closest("label").classList.add("aktif")
+  } else {
+    SECILI_DEPOLAR.delete(cb.value)
+    cb.closest("label").classList.remove("aktif")
+  }
+  kontrolBarDurum()
+}
+
+function kontrolBarDurum() {
+  var iki_dosya = EXCEL.adet > 0 && MB52.adet > 0
+  document.getElementById("kontrolBar").style.display = iki_dosya ? "flex" : "none"
+  document.getElementById("karsBtn").disabled = !(iki_dosya && SECILI_DEPOLAR.size > 0)
+}
+
+// ═════════════════════════════════════════════════
+// KARŞILAŞTIRMA
+// ═════════════════════════════════════════════════
+function karsilastir() {
+  var tolerans = parseFloat(document.getElementById("tolerans").value) || 0
+
+  // Excel: SAP koduna göre topla (aynı kod birden fazla satırda olabilir)
+  var excelMap = new Map()
+  EXCEL.rows.forEach(function(r) {
+    var mevcut = excelMap.get(r.kod)
+    if (mevcut) {
+      mevcut.miktar += r.miktar
+    } else {
+      excelMap.set(r.kod, {
+        kod:     r.kod,
+        ad:      r.ad,
+        malgrup: r.malgrup,
+        miktar:  r.miktar,
+        birim:   r.birim
+      })
+    }
+  })
+
+  // MB52: Sadece seçili depolardaki satırları al, aynı SAP kodunu topla (partili)
+  var mb52Map = new Map()
+  MB52.rows.forEach(function(r) {
+    if (!SECILI_DEPOLAR.has(r.depo)) return
+    var mevcut = mb52Map.get(r.kod)
+    if (mevcut) {
+      mevcut.miktar += r.miktar
+    } else {
+      mb52Map.set(r.kod, {
+        kod:     r.kod,
+        ad:      r.ad,
+        malgrup: r.malgrup,  // MB52'ye elle eklediğini varsayıyoruz
+        miktar:  r.miktar,
+        birim:   r.birim
+      })
+    }
+  })
+
+  // Tüm kodları topla
+  var tumKodlar = new Set()
+  excelMap.forEach(function(v, k){ tumKodlar.add(k) })
+  mb52Map.forEach(function(v, k){ tumKodlar.add(k) })
+
+  // Malzeme bazlı sonuçlar
+  SONUC_MZ = []
+  tumKodlar.forEach(function(kod) {
+    var e = excelMap.get(kod)
+    var m = mb52Map.get(kod)
+
+    if (e && !m) {
+      SONUC_MZ.push({
+        kod: kod,
+        ad: e.ad,
+        malgrup: e.malgrup,
+        excel: e.miktar,
+        mb52: null,
+        fark: null,
+        farkPct: null,
+        birim: e.birim,
+        durum: "eksik-ex"
+      })
+    } else if (!e && m) {
+      SONUC_MZ.push({
+        kod: kod,
+        ad: m.ad,
+        malgrup: m.malgrup,
+        excel: null,
+        mb52: m.miktar,
+        fark: null,
+        farkPct: null,
+        birim: m.birim,
+        durum: "eksik-mb"
+      })
+    } else {
+      // İkisinde de var
+      var fark = e.miktar - m.miktar
+      var farkPct = 0
+      var bolen = Math.max(Math.abs(e.miktar), Math.abs(m.miktar))
+      if (bolen > 0) farkPct = Math.abs(fark / bolen) * 100
+
+      var durum = (farkPct <= tolerans) ? "uyum" : "fark"
+
+      SONUC_MZ.push({
+        kod: kod,
+        ad: e.ad || m.ad,
+        malgrup: e.malgrup || m.malgrup,
+        excel: e.miktar,
+        mb52: m.miktar,
+        fark: fark,
+        farkPct: farkPct,
+        birim: e.birim || m.birim,
+        durum: durum
+      })
+    }
+  })
+
+  // Mal grubu bazlı özet
+  var mgMap = new Map()
+  SONUC_MZ.forEach(function(mz) {
+    var mg = mz.malgrup || "(Boş)"
+    var g = mgMap.get(mg)
+    if (!g) {
+      g = { malgrup: mg, excel: 0, mb52: 0, kalem: 0,
+            uyum: 0, fark: 0, eksikEx: 0, eksikMb: 0 }
+      mgMap.set(mg, g)
+    }
+    g.kalem++
+    if (mz.excel !== null) g.excel += mz.excel
+    if (mz.mb52  !== null) g.mb52  += mz.mb52
+    if (mz.durum === "uyum")     g.uyum++
+    if (mz.durum === "fark")     g.fark++
+    if (mz.durum === "eksik-ex") g.eksikEx++
+    if (mz.durum === "eksik-mb") g.eksikMb++
+  })
+
+  SONUC_MG = []
+  mgMap.forEach(function(g) {
+    var fark = g.excel - g.mb52
+    var bolen = Math.max(Math.abs(g.excel), Math.abs(g.mb52))
+    var farkPct = bolen > 0 ? Math.abs(fark / bolen) * 100 : 0
+
+    var durum = "uyum"
+    if (g.eksikEx > 0 && g.eksikMb > 0) durum = "fark"
+    else if (g.eksikEx > 0) durum = "eksik-ex"
+    else if (g.eksikMb > 0) durum = "eksik-mb"
+    else if (g.fark > 0) durum = "fark"
+    else if (farkPct > tolerans) durum = "fark"
+
+    SONUC_MG.push({
+      malgrup: g.malgrup,
+      excel: g.excel,
+      mb52: g.mb52,
+      fark: fark,
+      farkPct: farkPct,
+      kalem: g.kalem,
+      uyum: g.uyum,
+      farkAdet: g.fark,
+      eksikEx: g.eksikEx,
+      eksikMb: g.eksikMb,
+      durum: durum
+    })
+  })
+
+  // Özet sayıları
+  var u = 0, fa = 0, ex = 0, mb = 0
+  SONUC_MZ.forEach(function(m) {
+    if (m.durum === "uyum") u++
+    else if (m.durum === "fark") fa++
+    else if (m.durum === "eksik-ex") ex++
+    else if (m.durum === "eksik-mb") mb++
+  })
+  document.getElementById("sayiUyum").textContent = u
+  document.getElementById("sayiFark").textContent = fa
+  document.getElementById("sayiEksikEx").textContent = ex
+  document.getElementById("sayiEksikMb").textContent = mb
+
+  document.getElementById("bosDurum").style.display = "none"
+  document.getElementById("ozetGrid").style.display = "grid"
+  document.getElementById("sonucArea").style.display = "block"
+
+  renderMg()
+  renderMz()
+
+  if (typeof toast === "function") {
+    toast("Karşılaştırma tamamlandı: " + SONUC_MZ.length + " malzeme, " + SONUC_MG.length + " grup", "basari")
+  }
+}
+
+// ═════════════════════════════════════════════════
+// TAB SİSTEMİ
+// ═════════════════════════════════════════════════
+function tabAc(hangi) {
+  document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("aktif") })
+  document.querySelectorAll(".tab-icerik").forEach(function(c){ c.classList.remove("aktif") })
+  event.target.closest(".tab-btn").classList.add("aktif")
+  document.getElementById("tab" + hangi.charAt(0).toUpperCase() + hangi.slice(1)).classList.add("aktif")
+}
+
+// ═════════════════════════════════════════════════
+// RENDER — Mal Grubu
+// ═════════════════════════════════════════════════
+function filtreMg(f) {
+  FILTRE_MG = f
+  document.querySelectorAll("[data-mg-fil]").forEach(function(b){
+    b.classList.toggle("aktif", b.dataset.mgFil === f)
+  })
+  renderMg()
+}
+
+function renderMg() {
+  var ara = document.getElementById("araMg").value.toLowerCase().trim()
+  var liste = SONUC_MG.filter(function(g) {
+    if (FILTRE_MG !== "tumu" && g.durum !== FILTRE_MG) return false
+    if (ara && g.malgrup.toLowerCase().indexOf(ara) === -1) return false
+    return true
+  })
+  // Sırala: fark en üstte
+  liste.sort(function(a,b){
+    var öncelik = {"fark":0, "eksik-ex":1, "eksik-mb":2, "uyum":3}
+    return öncelik[a.durum] - öncelik[b.durum]
+  })
+
+  var tbody = document.getElementById("tbodyMg")
+  if (!liste.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="bos-durum">Filtreye uyan kayıt yok</td></tr>'
+    return
+  }
+  var html = ""
+  liste.forEach(function(g) {
+    var dstr = { uyum:"Uyum", fark:"Fark", "eksik-ex":"MB52'de Yok", "eksik-mb":"Excel'de Yok" }[g.durum]
+    html += '<tr class="satir-' + g.durum + '">' +
+      '<td><strong>' + escHtml(g.malgrup) + '</strong> <span style="color:var(--text3);font-size:10px">(' + g.kalem + ')</span></td>' +
+      '<td class="num">' + trNum(g.excel) + '</td>' +
+      '<td class="num">' + trNum(g.mb52) + '</td>' +
+      '<td class="num" style="color:' + (g.fark == 0 ? "var(--text3)" : (g.fark > 0 ? "var(--green)" : "var(--red)")) + '">' + trNum(g.fark, true) + '</td>' +
+      '<td class="num">' + (g.farkPct != null ? g.farkPct.toFixed(1) + "%" : "-") + '</td>' +
+      '<td class="num">' + g.kalem + '</td>' +
+      '<td><span class="durum-rozet ' + g.durum + '">' + dstr + '</span></td>' +
+      '</tr>'
+  })
+  tbody.innerHTML = html
+}
+
+// ═════════════════════════════════════════════════
+// RENDER — Malzeme
+// ═════════════════════════════════════════════════
+function filtreMz(f) {
+  FILTRE_MZ = f
+  document.querySelectorAll("[data-mz-fil]").forEach(function(b){
+    b.classList.toggle("aktif", b.dataset.mzFil === f)
+  })
+  renderMz()
+}
+
+function renderMz() {
+  var ara = document.getElementById("araMz").value.toLowerCase().trim()
+  var liste = SONUC_MZ.filter(function(m) {
+    if (FILTRE_MZ !== "tumu" && m.durum !== FILTRE_MZ) return false
+    if (ara) {
+      var hedef = (m.kod + " " + m.ad).toLowerCase()
+      if (hedef.indexOf(ara) === -1) return false
+    }
+    return true
+  })
+  liste.sort(function(a,b){
+    var öncelik = {"fark":0, "eksik-ex":1, "eksik-mb":2, "uyum":3}
+    return öncelik[a.durum] - öncelik[b.durum]
+  })
+
+  var tbody = document.getElementById("tbodyMz")
+  if (!liste.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="bos-durum">Filtreye uyan kayıt yok</td></tr>'
+    return
+  }
+  var html = ""
+  liste.forEach(function(m) {
+    var dstr = { uyum:"Uyum", fark:"Fark", "eksik-ex":"MB52'de Yok", "eksik-mb":"Excel'de Yok" }[m.durum]
+    html += '<tr class="satir-' + m.durum + '">' +
+      '<td class="kod">' + escHtml(m.kod) + '</td>' +
+      '<td>' + escHtml(m.ad) + '</td>' +
+      '<td><span style="font-size:10px;color:var(--text3)">' + escHtml(m.malgrup) + '</span></td>' +
+      '<td class="num">' + (m.excel != null ? trNum(m.excel) : '<span style="color:var(--text3)">-</span>') + '</td>' +
+      '<td class="num">' + (m.mb52 != null ? trNum(m.mb52) : '<span style="color:var(--text3)">-</span>') + '</td>' +
+      '<td class="num" style="color:' + (m.fark == null ? "var(--text3)" : (m.fark == 0 ? "var(--text3)" : (m.fark > 0 ? "var(--green)" : "var(--red)"))) + '">' + (m.fark != null ? trNum(m.fark, true) : "-") + '</td>' +
+      '<td class="num">' + (m.farkPct != null ? m.farkPct.toFixed(1) + "%" : "-") + '</td>' +
+      '<td>' + escHtml(m.birim) + '</td>' +
+      '<td><span class="durum-rozet ' + m.durum + '">' + dstr + '</span></td>' +
+      '</tr>'
+  })
+  tbody.innerHTML = html
+}
+
+// ═════════════════════════════════════════════════
+// EXCEL EXPORT
+// ═════════════════════════════════════════════════
+function excelExport() {
+  if (!SONUC_MZ.length) {
+    if (typeof toast === "function") toast("Önce karşılaştırma yap", "uyari")
+    return
+  }
+  var wb = XLSX.utils.book_new()
+
+  // Sheet 1: Mal Grubu
+  var mgData = [["Mal Grubu", "Excel Miktar", "MB52 Miktar", "Fark", "Fark %", "Kalem Sayısı", "Uyum", "Fark Adet", "Excel Fazla", "MB52 Fazla", "Durum"]]
+  SONUC_MG.forEach(function(g) {
+    mgData.push([
+      g.malgrup, g.excel, g.mb52, g.fark, +g.farkPct.toFixed(2),
+      g.kalem, g.uyum, g.farkAdet, g.eksikEx, g.eksikMb,
+      { uyum:"Uyum", fark:"Fark", "eksik-ex":"MB52'de Yok", "eksik-mb":"Excel'de Yok" }[g.durum]
+    ])
+  })
+  var ws1 = XLSX.utils.aoa_to_sheet(mgData)
+  ws1["!cols"] = [{wch:20},{wch:14},{wch:14},{wch:14},{wch:9},{wch:10},{wch:8},{wch:10},{wch:12},{wch:12},{wch:14}]
+  XLSX.utils.book_append_sheet(wb, ws1, "Mal Grubu")
+
+  // Sheet 2: Malzeme
+  var mzData = [["SAP Kod", "Malzeme", "Mal Grubu", "Excel Miktar", "MB52 Miktar", "Fark", "Fark %", "Birim", "Durum"]]
+  SONUC_MZ.forEach(function(m) {
+    mzData.push([
+      m.kod, m.ad, m.malgrup,
+      m.excel != null ? m.excel : "",
+      m.mb52  != null ? m.mb52  : "",
+      m.fark  != null ? m.fark  : "",
+      m.farkPct != null ? +m.farkPct.toFixed(2) : "",
+      m.birim,
+      { uyum:"Uyum", fark:"Fark", "eksik-ex":"MB52'de Yok", "eksik-mb":"Excel'de Yok" }[m.durum]
+    ])
+  })
+  var ws2 = XLSX.utils.aoa_to_sheet(mzData)
+  ws2["!cols"] = [{wch:16},{wch:36},{wch:14},{wch:12},{wch:12},{wch:12},{wch:9},{wch:8},{wch:14}]
+  XLSX.utils.book_append_sheet(wb, ws2, "Malzeme Detay")
+
+  var ad = "stok-mutabakat_" + new Date().toISOString().slice(0,10).replace(/-/g,"") + ".xlsx"
+  XLSX.writeFile(wb, ad)
+  if (typeof toast === "function") toast("Excel indirildi: " + ad, "basari")
+}
+
+// ═════════════════════════════════════════════════
+// YARDIMCILAR
+// ═════════════════════════════════════════════════
+function trNum(v, isaret) {
+  if (v == null) return "-"
+  var num = Number(v)
+  if (isNaN(num)) return "-"
+  var s = num.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  if (isaret && num > 0) s = "+" + s
+  return s
+}
+
+function escHtml(s) {
+  if (s === null || s === undefined) return ""
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
+function cikisYap() { window.location.href = "/logout" }
+
+async function topbarAvatarGuncelle() {
+  try {
+    var r = await fetch("/api/kullanici-bilgi")
+    if (!r.ok) return
+    var b = await r.json()
+    var av = document.getElementById("topbarAvatar")
+    if (av && b.ad) {
+      var i = b.ad.split(" ").map(function(w){ return w[0] }).join("").slice(0,2).toUpperCase()
+      av.innerText = i
+      av.title = b.ad + (b.rol ? " (" + b.rol + ")" : "")
+    }
+  } catch(e) {}
+}
+
+// Drag & drop
+;["upExcel", "upMB52"].forEach(function(id) {
+  var el = document.getElementById(id)
+  el.addEventListener("dragover", function(e) { e.preventDefault(); el.classList.add("dragover") })
+  el.addEventListener("dragleave", function() { el.classList.remove("dragover") })
+  el.addEventListener("drop", function(e) {
+    e.preventDefault()
+    el.classList.remove("dragover")
+    if (e.dataTransfer.files.length) {
+      var input = el.querySelector("input[type=file]")
+      input.files = e.dataTransfer.files
+      dosyaYukle(id === "upExcel" ? "excel" : "mb52", input)
+    }
+  })
+})
+
+document.addEventListener("DOMContentLoaded", topbarAvatarGuncelle)
+</script>
+
+</body>
+</html>

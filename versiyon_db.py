@@ -34,10 +34,12 @@ VERSIYON_JSON = os.path.join(VERSIYON_KLASOR, "versiyon.json")
 YEDEK_KLASOR = os.path.join(VERSIYON_KLASOR, "versiyon_yedek")
 
 
-# ─── Sabit: Uygulamanın kendi versiyonu ───
-# Bu değer PyInstaller build sırasında sabittir, exe'ye gömülür.
-# Değiştirmek için app.py'de APP_VERSION'u güncelle + yeniden build al.
-APP_VERSION = "4.2"
+# ─── Uygulama versiyonu (version.py'den import) ───
+# Sürümü değiştirmek için: version.py'de tek satır güncelle → restart
+try:
+    from version import APP_VERSION
+except ImportError:
+    APP_VERSION = "4.3"  # version.py yoksa fallback
 
 
 # ─── İlk kurulum verileri ───

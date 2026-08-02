@@ -70,7 +70,7 @@ kullanici_dosyasini_hazirla()
 
 from functools import wraps
 
-APP_VERSION = "4.2"
+APP_VERSION = "4.3"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -2964,6 +2964,12 @@ def klasor_ac():
     if not giris_yapildi_mi(): return jsonify({"durum":"hata"}), 401
     try: klasor=os.path.join(get_export_path(),"exports",request.json.get("tip"));os.makedirs(klasor,exist_ok=True);os.startfile(klasor);return jsonify({"durum":"ok"})
     except Exception as e: return jsonify({"durum":"hata","mesaj":str(e)}), 500
+
+@app.route("/stok-mutabakat")
+def stok_mutabakat_sayfa():
+    if not giris_yapildi_mi():
+        return redirect(url_for("login"))
+    return render_template("stok-mutabakat.html")
 
 @app.route('/mutabakat')
 def mutabakat():
