@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fason Takip · BBA Ambar Data</title>
+
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/popup.js" defer></script>
+
+<style>
+  /* ─── EKLE FORMU (FLEX ile güvenli) ─── */
+  .ekle-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .ekle-kart .kart-baslik {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ekle-kart .kart-baslik i { color: var(--primary); }
+  .ekle-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .form-grup {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 200px;
+    min-width: 180px;
+  }
+  .form-grup.buyuk { flex: 2 1 300px; }
+  .ekle-form label {
+    font-size: 10.5px;
+    color: var(--text3);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    margin-bottom: 5px;
+  }
+  .ekle-form input {
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .ekle-form input:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+  .ekle-btn {
+    background: var(--primary);
+    color: #000;
+    padding: 0 22px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    height: 40px;
+    flex: 0 0 auto;
+    min-width: 100px;
+  }
+  .ekle-btn:hover { filter: brightness(1.1); }
+  .ekle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ekle-btn.toplu {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .ekle-btn.toplu:hover { border-color: var(--primary); color: var(--primary); background: var(--bg); filter: none; }
+
+  /* ─── ARAÇ BAR (export/import) ─── */
+  .arac-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .arac-btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-white);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .arac-btn:hover { border-color: var(--primary); }
+  .arac-btn.export:hover { color: #22c55e; }
+  .arac-btn.import:hover { color: var(--blue); }
+
+  /* ─── ÖZET KARTLAR ─── */
+  .ozet-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .ozet-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .ozet-kart:hover { border-color: var(--primary); transform: translateY(-1px); }
+  .ozet-kart.aktif { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(62,207,142,0.2); }
+  .ozet-kart .label {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .ozet-kart .deger {
+    font-size: 22px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .ozet-kart.amber .deger  { color: var(--amber); }
+  .ozet-kart.amber .label i{ color: var(--amber); }
+  .ozet-kart.red .deger    { color: var(--red); }
+  .ozet-kart.red .label i  { color: var(--red); }
+  .ozet-kart.purple .deger { color: var(--purple); }
+  .ozet-kart.purple .label i { color: var(--purple); }
+  .ozet-kart.green .deger  { color: var(--green); }
+  .ozet-kart.green .label i{ color: var(--green); }
+
+  /* Toplam fiyat özet kartı */
+  .toplam-kart {
+    background: linear-gradient(135deg, rgba(62,207,142,0.08), rgba(62,207,142,0.02));
+    border: 1px solid rgba(62,207,142,0.3);
+    border-radius: var(--radius-lg);
+    padding: 14px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .toplam-kart .sol { display: flex; align-items: center; gap: 12px; }
+  .toplam-kart .ikon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(62,207,142,0.2); color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .toplam-kart .baslik {
+    font-size: 11px; color: var(--text3);
+    font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+  }
+  .toplam-kart .tutar {
+    font-size: 22px; font-weight: 800; color: var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .toplam-kart .sag { display: flex; gap: 24px; flex-wrap: wrap; }
+  .toplam-kart .mini { text-align: right; }
+  .toplam-kart .mini .lbl {
+    font-size: 10px; color: var(--text3); font-weight: 700;
+    text-transform: uppercase; letter-spacing: .3px;
+  }
+  .toplam-kart .mini .val {
+    font-size: 14px; color: var(--text); font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ─── FİLTRE BAR ─── */
+  .filtre-bar {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .filtre-bar input[type=search] {
+    flex: 1; min-width: 220px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    margin: 0;
+  }
+  .filtre-bar select {
+    padding: 7px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .goster-toggle {
+    display: inline-flex;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px;
+  }
+  .goster-toggle button {
+    padding: 5px 12px;
+    background: transparent;
+    border: none;
+    color: var(--text3);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .goster-toggle button.aktif {
+    background: var(--primary);
+    color: #000;
+  }
+
+  /* ─── KART GÖRÜNÜMÜ ─── */
+  .kart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+  }
+  .fason-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: all .12s;
+    position: relative;
+    overflow: hidden;
+  }
+  .fason-kart:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .fason-kart .durum-cizgi {
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+  }
+  .fason-kart.d-amber  .durum-cizgi { background: var(--amber); }
+  .fason-kart.d-red    .durum-cizgi { background: var(--red); }
+  .fason-kart.d-purple .durum-cizgi { background: var(--purple); }
+  .fason-kart.d-green  .durum-cizgi { background: var(--green); }
+  .fason-kart.d-blue   .durum-cizgi { background: var(--blue); }
+  .fason-kart.d-text3  .durum-cizgi { background: var(--text3); }
+
+  .fason-kart .irs-basik {
+    display: flex; justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+  .fason-kart .irs-no {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .fason-kart .irs-tarih {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .fason-kart .aciklama {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 10px;
+    min-height: 14px;
+  }
+  .fason-kart .durum-rozet {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .fason-kart .durum-rozet.d-amber  { background: rgba(245,158,11,0.15);  color: var(--amber); }
+  .fason-kart .durum-rozet.d-red    { background: rgba(220,38,38,0.15);   color: var(--red); }
+  .fason-kart .durum-rozet.d-purple { background: rgba(168,85,247,0.15);  color: var(--purple); }
+  .fason-kart .durum-rozet.d-green  { background: rgba(34,197,94,0.15);   color: var(--green); }
+  .fason-kart .durum-rozet.d-blue   { background: rgba(99,102,241,0.15);  color: var(--blue); }
+  .fason-kart .durum-rozet.d-text3  { background: rgba(160,160,160,0.15); color: var(--text3); }
+
+  .rakam-satir {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+    padding: 10px 0;
+    margin: 8px 0;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    font-size: 11px;
+  }
+  .rakam-satir .item {
+    display: flex; justify-content: space-between;
+  }
+  .rakam-satir .item .lbl { color: var(--text3); font-weight: 600; }
+  .rakam-satir .item .val {
+    color: var(--text); font-family: 'JetBrains Mono', monospace; font-weight: 700;
+  }
+  .rakam-satir .fiyat-satir {
+    grid-column: 1 / -1;
+    padding-top: 4px;
+    margin-top: 4px;
+    border-top: 1px dashed var(--border);
+  }
+  .rakam-satir .fiyat-satir .val { color: var(--primary); font-size: 13px; }
+
+  .fason-kart .meta {
+    font-size: 10.5px;
+    color: var(--text3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+  }
+  .fason-kart .not {
+    font-size: 11px;
+    color: var(--text2);
+    font-style: italic;
+    background: var(--bg);
+    padding: 6px 10px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    border-left: 2px solid var(--border);
+  }
+  .fason-kart .sil-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    z-index: 2;
+  }
+  .fason-kart:hover .sil-btn { display: inline-flex; }
+  .fason-kart .sil-btn:hover { color: var(--red); border-color: var(--red); }
+
+  /* ─── TABLO GÖRÜNÜMÜ ─── */
+  .tablo-wrap {
+    overflow-x: auto;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  .fason-tablo {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 1400px;
+  }
+  .fason-tablo th {
+    background: var(--bg);
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    color: var(--text3);
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .fason-tablo td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text);
+  }
+  .fason-tablo tr { cursor: pointer; }
+  .fason-tablo tr:hover td { background: var(--bg-hover); }
+  .fason-tablo tr:last-child td { border-bottom: none; }
+  .fason-tablo .irs-no {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+  .fason-tablo .num {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .fason-tablo .num.fiyat { color: var(--primary); font-weight: 700; }
+  .fason-tablo .durum-rozet {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .fason-tablo .durum-rozet.d-amber  { background: rgba(245,158,11,0.15);  color: var(--amber); }
+  .fason-tablo .durum-rozet.d-red    { background: rgba(220,38,38,0.15);   color: var(--red); }
+  .fason-tablo .durum-rozet.d-purple { background: rgba(168,85,247,0.15);  color: var(--purple); }
+  .fason-tablo .durum-rozet.d-green  { background: rgba(34,197,94,0.15);   color: var(--green); }
+  .fason-tablo .durum-rozet.d-blue   { background: rgba(99,102,241,0.15);  color: var(--blue); }
+  .fason-tablo .durum-rozet.d-text3  { background: rgba(160,160,160,0.15); color: var(--text3); }
+  .fason-tablo .meta {
+    font-size: 10.5px;
+    color: var(--text3);
+  }
+  tr.satir-amber  td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+  tr.satir-red    td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+  tr.satir-purple td:first-child { box-shadow: inset 3px 0 0 var(--purple); }
+  tr.satir-green  td:first-child { box-shadow: inset 3px 0 0 var(--green); }
+
+  /* ─── MODAL ─── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 9999;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-bg.goster { display: flex; }
+  .modal-ic {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+    max-width: 520px; width: 100%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-ic h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .modal-ic h3 .irs-mono {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--primary);
+  }
+  .modal-ic .modal-alt {
+    font-size: 11.5px; color: var(--text3);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .modal-ic label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text2);
+    font-weight: 600;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  .modal-ic textarea, .modal-ic select, .modal-ic input[type=file] {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    box-sizing: border-box;
+    margin: 0;
+  }
+  .modal-ic textarea { resize: vertical; min-height: 60px; }
+  .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .modal-actions button {
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    border: none;
+  }
+  .modal-iptal {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border) !important;
+  }
+  .modal-iptal:hover { background: var(--bg-hover); }
+  .modal-onayla { background: var(--primary); color: #000; }
+  .modal-onayla:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .import-info {
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .import-info b { color: var(--blue); }
+  .import-info ul { margin: 6px 0 0 20px; padding: 0; }
+  .import-info code {
+    background: var(--bg);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
+
+  .import-sonuc {
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text);
+    margin-top: 12px;
+  }
+  .import-sonuc.hata {
+    background: rgba(220,38,38,0.08);
+    border-color: rgba(220,38,38,0.3);
+  }
+
+  .bos-durum {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text3);
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .bos-durum i {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 700px) {
+    .ozet-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
+      <h2>Warehouse Data</h2>
+      <span>V{{ APP_VERSION }}</span>
+    </div>
+    <div class="nav-section">Main Data</div>
+    <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+    <div class="nav-section">Sevkiyat</div>
+    <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+    <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+    <div class="nav-section">Araçlar</div>
+    <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+    <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+    <a href="/fason" class="nav-item active"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+    <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+    <div class="nav-section">Raporlama</div>
+    <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+    <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+    <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+    <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
+    <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+    {% if session.kullanici == "admin" %}
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
+    <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
+    {% endif %}
+    <div class="sidebar-footer">
+      <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+        <i class="fa-solid fa-sun"></i> Açık Tema
+      </button>
+      <button class="cikis-btn" onclick="cikisYap()">
+        <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+      </button>
+    </div>
+  </nav>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-breadcrumb">
+          <a href="/">Ana Sayfa</a> · <span class="bc-current">Fason Takip</span>
+        </div>
+        <div class="topbar-title">Fason Takip</div>
+        <div class="topbar-sub">İrsaliye girişleri · Çıkış durumu takibi</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()">
+          <i class="fa-solid fa-sun"></i>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar" title="Profil">BA</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══════ EKLE FORMU (TEK VE ÇOKLU) ═══════ -->
+      <div class="ekle-kart" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:block;">
+        <div class="kart-baslik">
+          <i class="fa-solid fa-plus-circle"></i> Yeni İrsaliye Ekle
+        </div>
+        <form class="ekle-form" onsubmit="event.preventDefault(); irsaliyeEkle()">
+          <div class="form-grup">
+            <label>İrsaliye No *</label>
+            <input type="text" id="yeniIrsNo" placeholder="Örn: D012026000000619" maxlength="50" autocomplete="off" required>
+          </div>
+          <div class="form-grup buyuk">
+            <label>Açıklama (opsiyonel)</label>
+            <input type="text" id="yeniAciklama" placeholder="Örn: X projesinden geldi" maxlength="200" autocomplete="off">
+          </div>
+          <button type="submit" class="ekle-btn" id="ekleBtn">
+            <i class="fa-solid fa-plus"></i> Ekle
+          </button>
+          <button type="button" class="ekle-btn toplu" onclick="topluEkleModalAc()">
+            <i class="fa-solid fa-file-arrow-up"></i> Toplu Ekle (Excel)
+          </button>
+        </form>
+      </div>
+
+      <!-- ═══════ ARAÇ BAR (Export/Import) ═══════ -->
+      <div class="arac-bar">
+        <button class="arac-btn export" onclick="excelExport()">
+          <i class="fa-solid fa-file-arrow-down"></i> Excel'e Aktar
+        </button>
+        {% if session.kullanici == "admin" or session.rol == "admin" %}
+        <button class="arac-btn import" onclick="importModalAc()">
+          <i class="fa-solid fa-file-pen"></i> Excel'den Güncelle
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- ═══════ TOPLAM ÖZET ═══════ -->
+      <div class="toplam-kart" id="toplamKart" style="display:none">
+        <div class="sol">
+          <div class="ikon"><i class="fa-solid fa-lira-sign"></i></div>
+          <div>
+            <div class="baslik">Toplam İrsaliye Tutarı</div>
+            <div class="tutar" id="toplamFiyat">₺ 0</div>
+          </div>
+        </div>
+        <div class="sag">
+          <div class="mini">
+            <div class="lbl">Toplam Kayıt</div>
+            <div class="val" id="toplamKayit">0</div>
+          </div>
+          <div class="mini">
+            <div class="lbl">Fiyatı Girilmiş</div>
+            <div class="val" id="fiyatliKayit">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════ ÖZET KARTLAR ═══════ -->
+      <div class="ozet-grid" id="ozetGrid"></div>
+
+      <!-- ═══════ FİLTRE BAR ═══════ -->
+      <div class="filtre-bar">
+        <input type="search" id="ara" placeholder="İrsaliye no veya açıklamada ara..." oninput="renderList()">
+
+        <select id="filtreDurum" onchange="renderList()">
+          <option value="">Tüm durumlar</option>
+        </select>
+
+        <select id="sirala" onchange="renderList()">
+          <option value="yeni">🆕 En yeni önce</option>
+          <option value="eski">📅 En eski önce</option>
+          <option value="durum">🎨 Duruma göre</option>
+          <option value="irs">🔢 İrsaliye no</option>
+          <option value="fiyat-buyuk">💰 Fiyat (büyükten küçüğe)</option>
+          <option value="fiyat-kucuk">💰 Fiyat (küçükten büyüğe)</option>
+        </select>
+
+        <div class="goster-toggle">
+          <button id="gorunumKart" class="aktif" onclick="gorunumSec('kart')">
+            <i class="fa-solid fa-grip"></i> Kart
+          </button>
+          <button id="gorunumTablo" onclick="gorunumSec('tablo')">
+            <i class="fa-solid fa-list"></i> Tablo
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══════ LİSTE ═══════ -->
+      <div id="listeAlan">
+        <div class="bos-durum">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          Yükleniyor...
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+  DURUM DEĞİŞTİRME MODAL
+═════════════════════════════════════════════════ -->
+<div class="modal-bg" id="durumModal" onclick="if(event.target===this)modalKapat()">
+  <div class="modal-ic">
+    <h3><i class="fa-solid fa-arrow-right-arrow-left"></i> İrsaliye: <span class="irs-mono" id="modalIrsNo"></span></h3>
+    <div class="modal-alt" id="modalMeta"></div>
+
+    <label>Durum</label>
+    <select id="modalDurum">
+      <option value="">— Seçilmedi —</option>
+    </select>
+
+    <label>Not (opsiyonel)</label>
+    <textarea id="modalNot" placeholder="Örn: Yarın hazırlanacak, X hattından çıktı..." maxlength="500" rows="3"></textarea>
+
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="modalKapat()">İptal</button>
+      <button class="modal-onayla" onclick="durumKaydet()" id="kaydetBtn">
+        <i class="fa-solid fa-save"></i> Kaydet
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+  TOPLU EKLE MODAL (Basit)
+═════════════════════════════════════════════════ -->
+<div class="modal-bg" id="topluEkleModal" onclick="if(event.target===this)topluEkleModalKapat()">
+  <div class="modal-ic">
+    <h3><i class="fa-solid fa-file-arrow-up"></i> Excel'den Toplu Ekleme</h3>
+    <div class="modal-alt">Bir defada onlarca/yüzlerce irsaliye ekle</div>
+
+    <div class="import-info">
+      <b><i class="fa-solid fa-circle-info"></i> Excel Formatı:</b>
+      <ul>
+        <li>1. sütun: <code>İrsaliye No</code> (zorunlu)</li>
+        <li>2. sütun: <code>Açıklama</code> (opsiyonel)</li>
+      </ul>
+      <div style="margin-top:8px">
+        <strong>Not:</strong> Aynı irsaliye numarası varsa yine de eklenir (uyarı gösterilir).<br>
+        Başlık satırı olmasa da çalışır — direkt numaralarla dolu Excel de kabul edilir.
+      </div>
+    </div>
+
+    <label>Excel Dosyası (.xlsx / .xls)</label>
+    <input type="file" id="topluEkleDosya" accept=".xlsx,.xls">
+
+    <div id="topluEkleSonucAlani"></div>
+
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="topluEkleModalKapat()">İptal</button>
+      <button class="modal-onayla" onclick="topluEkleGonder()" id="topluEkleBtn">
+        <i class="fa-solid fa-upload"></i> Yükle ve Ekle
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+  IMPORT MODAL (Güncelleme)
+═════════════════════════════════════════════════ -->
+<div class="modal-bg" id="importModal" onclick="if(event.target===this)importModalKapat()">
+  <div class="modal-ic">
+    <h3><i class="fa-solid fa-file-pen"></i> Excel'den Güncelle</h3>
+    <div class="modal-alt">Export ettiğin Excel'i düzenleyip yükleyebilirsin</div>
+
+    <div class="import-info">
+      <b><i class="fa-solid fa-circle-info"></i> Sadece bu 6 kolon güncellenir:</b>
+      <ul>
+        <li>İrsaliye Tarihi</li>
+        <li>Stok Miktarı / Giriş Miktarı</li>
+        <li>OTIS Stok / OTIS Giriş</li>
+        <li>Toplam Fiyat</li>
+      </ul>
+      <div style="margin-top:8px">Diğer kolonlar (irsaliye no, durum, not, tarih...) korunur.</div>
+    </div>
+
+    <label>Excel Dosyası (.xlsx)</label>
+    <input type="file" id="importDosya" accept=".xlsx,.xls">
+
+    <div id="importSonucAlani"></div>
+
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="importModalKapat()">İptal</button>
+      <button class="modal-onayla" onclick="importGonder()" id="importBtn">
+        <i class="fa-solid fa-upload"></i> Yükle ve Güncelle
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var TUM = []
+var DURUMLAR = []
+var FILTRE_DURUM = ""
+var SIRALA = "yeni"
+var GORUNUM = "kart"
+var MEVCUT_KULLANICI = null
+var MEVCUT_ROL = null
+var SECILI_IRS = null
+
+document.addEventListener("DOMContentLoaded", function() {
+  topbarAvatarGuncelle()
+  veriYukle()
+  var g = localStorage.getItem("fasonGorunum")
+  if (g) gorunumSec(g)
+})
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") {
+    modalKapat()
+    importModalKapat()
+    topluEkleModalKapat()
+  }
+})
+
+async function topbarAvatarGuncelle() {
+  try {
+    var r = await fetch("/api/kullanici-bilgi")
+    if (!r.ok) return
+    var b = await r.json()
+    var av = document.getElementById("topbarAvatar")
+    if (av && b.ad) {
+      var i = b.ad.split(" ").map(function(w){ return w[0] }).join("").slice(0,2).toUpperCase()
+      av.innerText = i
+      av.title = b.ad + (b.rol ? " (" + b.rol + ")" : "")
+    }
+    MEVCUT_KULLANICI = b.kullanici || null
+    MEVCUT_ROL = b.rol || null
+  } catch(e) {}
+}
+
+function cikisYap() { window.location.href = "/logout" }
+
+async function veriYukle() {
+  try {
+    var r1 = await fetch("/api/fason/durumlar")
+    if (r1.ok) {
+      DURUMLAR = await r1.json()
+      durumSelectDoldur()
+    }
+  } catch(e) { console.error("Durumlar yüklenemedi:", e) }
+
+  try {
+    var r2 = await fetch("/api/fason/liste")
+    if (!r2.ok) throw new Error("HTTP " + r2.status)
+    TUM = await r2.json()
+    ozetGuncelle()
+    toplamGuncelle()
+    renderList()
+  } catch(e) {
+    console.error("Liste hatası:", e)
+    document.getElementById("listeAlan").innerHTML =
+      '<div class="bos-durum"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i>Hata: ' + escHtml(e.message) + '</div>'
+  }
+}
+
+function durumSelectDoldur() {
+  var fs = document.getElementById("filtreDurum")
+  fs.innerHTML = '<option value="">Tüm durumlar</option>' +
+    '<option value="__yok__">— Durum atanmamış —</option>'
+  DURUMLAR.forEach(function(d) {
+    fs.innerHTML += '<option value="' + d.id + '">' + escHtml(d.ad) + '</option>'
+  })
+
+  var ms = document.getElementById("modalDurum")
+  ms.innerHTML = '<option value="">— Durum yok —</option>'
+  DURUMLAR.forEach(function(d) {
+    ms.innerHTML += '<option value="' + d.id + '">' + escHtml(d.ad) + '</option>'
+  })
+}
+
+async function irsaliyeEkle() {
+  var irsNo = document.getElementById("yeniIrsNo").value.trim()
+  var aciklama = document.getElementById("yeniAciklama").value.trim()
+
+  if (!irsNo) return
+
+  var btn = document.getElementById("ekleBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'
+
+  try {
+    var r = await fetch("/api/fason/ekle", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ irsaliye_no: irsNo, aciklama: aciklama })
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      if (d.uyari && typeof toast === "function") {
+        setTimeout(function() { toast(d.uyari, "uyari") }, 300)
+      }
+      document.getElementById("yeniIrsNo").value = ""
+      document.getElementById("yeniAciklama").value = ""
+      document.getElementById("yeniIrsNo").focus()
+      veriYukle()
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+      else alert("Hata: " + d.mesaj)
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+    else alert(e.message)
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
+  }
+}
+
+// ═════════════════════════════════════════════════
+// TOPLU EKLEME
+// ═════════════════════════════════════════════════
+function topluEkleModalAc() {
+  document.getElementById("topluEkleDosya").value = ""
+  document.getElementById("topluEkleSonucAlani").innerHTML = ""
+  document.getElementById("topluEkleModal").classList.add("goster")
+}
+function topluEkleModalKapat() {
+  document.getElementById("topluEkleModal").classList.remove("goster")
+}
+
+async function topluEkleGonder() {
+  var fInput = document.getElementById("topluEkleDosya")
+  if (!fInput.files.length) {
+    if (typeof bildirim === "function") bildirim("Dosya seçin", "Uyarı", "uyari")
+    return
+  }
+
+  var fd = new FormData()
+  fd.append("dosya", fInput.files[0])
+
+  var btn = document.getElementById("topluEkleBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...'
+  document.getElementById("topluEkleSonucAlani").innerHTML = ""
+
+  try {
+    var r = await fetch("/api/fason/toplu-ekle", { method: "POST", body: fd })
+    var d = await r.json()
+
+    if (d.durum === "ok") {
+      var html = '<div class="import-sonuc">' +
+        '<b><i class="fa-solid fa-check-circle"></i> Başarılı!</b><br>' +
+        d.mesaj +
+        '<div style="margin-top:6px;font-size:11px;color:var(--text3)">' +
+        'Eklenen: <b>' + d.eklenen + '</b>' +
+        (d.mukerrer ? ' · Mükerrer: <b>' + d.mukerrer + '</b>' : '') +
+        (d.atlanan ? ' · Atlanan: <b>' + d.atlanan + '</b>' : '') +
+        '</div></div>'
+      document.getElementById("topluEkleSonucAlani").innerHTML = html
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      setTimeout(function() { veriYukle() }, 500)
+    } else {
+      document.getElementById("topluEkleSonucAlani").innerHTML =
+        '<div class="import-sonuc hata"><b><i class="fa-solid fa-triangle-exclamation"></i> Hata</b><br>' + escHtml(d.mesaj) + '</div>'
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+    }
+  } catch(e) {
+    document.getElementById("topluEkleSonucAlani").innerHTML =
+      '<div class="import-sonuc hata"><b>Bağlantı Hatası</b><br>' + escHtml(e.message) + '</div>'
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
+  }
+}
+
+async function excelExport() {
+  try {
+    if (typeof toast === "function") toast("Excel hazırlanıyor...", "bilgi")
+
+    var r = await fetch("/api/fason/export", { method: "GET" })
+    var d = await r.json()
+
+    if (d.durum === "ok") {
+      if (typeof toast === "function") {
+        toast(d.mesaj + " · Klasör açıldı", "basari")
+      }
+    } else {
+      if (typeof bildirim === "function") {
+        bildirim(d.mesaj, "Excel Hatası", "hata")
+      } else {
+        alert("Hata: " + d.mesaj)
+      }
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") {
+      bildirim(e.message, "Bağlantı Hatası", "hata")
+    } else {
+      alert(e.message)
+    }
+  }
+}
+
+function importModalAc() {
+  document.getElementById("importDosya").value = ""
+  document.getElementById("importSonucAlani").innerHTML = ""
+  document.getElementById("importModal").classList.add("goster")
+}
+function importModalKapat() {
+  document.getElementById("importModal").classList.remove("goster")
+}
+
+async function importGonder() {
+  var fInput = document.getElementById("importDosya")
+  if (!fInput.files.length) {
+    if (typeof bildirim === "function") bildirim("Dosya seçin", "Uyarı", "uyari")
+    return
+  }
+
+  var fd = new FormData()
+  fd.append("dosya", fInput.files[0])
+
+  var btn = document.getElementById("importBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...'
+  document.getElementById("importSonucAlani").innerHTML = ""
+
+  try {
+    var r = await fetch("/api/fason/import", { method: "POST", body: fd })
+    var d = await r.json()
+
+    if (d.durum === "ok") {
+      var html = '<div class="import-sonuc">' +
+        '<b><i class="fa-solid fa-check-circle"></i> Başarılı!</b><br>' +
+        d.mesaj +
+        '<div style="margin-top:6px;font-size:11px;color:var(--text3)">Güncellenen kolonlar: ' +
+        (d.kolonlar ? d.kolonlar.join(", ") : "-") + '</div>'
+      if (d.hatalar && d.hatalar.length) {
+        html += '<div style="margin-top:8px;font-size:11px"><b>Not:</b> ' + d.hatalar.length + ' satır atlandı</div>'
+      }
+      html += '</div>'
+      document.getElementById("importSonucAlani").innerHTML = html
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      setTimeout(function() { veriYukle() }, 500)
+    } else {
+      document.getElementById("importSonucAlani").innerHTML =
+        '<div class="import-sonuc hata"><b><i class="fa-solid fa-triangle-exclamation"></i> Hata</b><br>' + escHtml(d.mesaj) + '</div>'
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Import Hatası", "hata")
+    }
+  } catch(e) {
+    document.getElementById("importSonucAlani").innerHTML =
+      '<div class="import-sonuc hata"><b>Bağlantı Hatası</b><br>' + escHtml(e.message) + '</div>'
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
+  }
+}
+
+function ozetGuncelle() {
+  var grid = document.getElementById("ozetGrid")
+  var sayilar = {}
+  TUM.forEach(function(r) {
+    if (r.durum_id) sayilar[r.durum_id] = (sayilar[r.durum_id] || 0) + 1
+  })
+
+  var html = ""
+  DURUMLAR.forEach(function(d) {
+    var sayi = sayilar[d.id] || 0
+    var aktif = (String(FILTRE_DURUM) === String(d.id)) ? " aktif" : ""
+    html += '<div class="ozet-kart ' + escHtml(d.renk) + aktif + '" onclick="durumFiltrele(' + d.id + ')">' +
+      '<div class="label"><i class="fa-solid ' + escHtml(d.ikon) + '"></i> ' + escHtml(d.ad) + '</div>' +
+      '<div class="deger">' + sayi + '</div>' +
+      '</div>'
+  })
+  grid.innerHTML = html
+}
+
+function toplamGuncelle() {
+  if (!TUM.length) {
+    document.getElementById("toplamKart").style.display = "none"
+    return
+  }
+  var toplam = 0
+  var fiyatli = 0
+  TUM.forEach(function(r) {
+    if (r.toplam_fiyat != null && !isNaN(r.toplam_fiyat)) {
+      toplam += Number(r.toplam_fiyat)
+      fiyatli++
+    }
+  })
+
+  document.getElementById("toplamKart").style.display = "flex"
+  document.getElementById("toplamFiyat").textContent = "₺ " + toplam.toLocaleString("tr-TR", {minimumFractionDigits: 2, maximumFractionDigits: 2})
+  document.getElementById("toplamKayit").textContent = TUM.length
+  document.getElementById("fiyatliKayit").textContent = fiyatli
+}
+
+function durumFiltrele(did) {
+  if (String(FILTRE_DURUM) === String(did)) FILTRE_DURUM = ""
+  else FILTRE_DURUM = String(did)
+  document.getElementById("filtreDurum").value = FILTRE_DURUM
+  ozetGuncelle()
+  renderList()
+}
+
+function renderList() {
+  FILTRE_DURUM = document.getElementById("filtreDurum").value
+  SIRALA = document.getElementById("sirala").value
+  var ara = document.getElementById("ara").value.toLowerCase().trim()
+
+  var liste = TUM.filter(function(r) {
+    if (FILTRE_DURUM === "__yok__") { if (r.durum_id) return false }
+    else if (FILTRE_DURUM && String(r.durum_id) !== FILTRE_DURUM) return false
+
+    if (ara) {
+      var h = (r.irsaliye_no + " " + (r.aciklama || "")).toLowerCase()
+      if (h.indexOf(ara) === -1) return false
+    }
+    return true
+  })
+
+  if (SIRALA === "yeni") liste.sort(function(a,b){ return b.id - a.id })
+  else if (SIRALA === "eski") liste.sort(function(a,b){ return a.id - b.id })
+  else if (SIRALA === "irs") liste.sort(function(a,b){ return String(a.irsaliye_no).localeCompare(String(b.irsaliye_no), 'tr', {numeric:true}) })
+  else if (SIRALA === "fiyat-buyuk") liste.sort(function(a,b){ return (b.toplam_fiyat || 0) - (a.toplam_fiyat || 0) })
+  else if (SIRALA === "fiyat-kucuk") liste.sort(function(a,b){ return (a.toplam_fiyat || 0) - (b.toplam_fiyat || 0) })
+  else if (SIRALA === "durum") {
+    liste.sort(function(a,b){
+      var da = DURUMLAR.find(function(x){ return x.id === a.durum_id })
+      var db = DURUMLAR.find(function(x){ return x.id === b.durum_id })
+      var sa = da ? da.sira : 99999
+      var sb = db ? db.sira : 99999
+      return sa - sb || (b.id - a.id)
+    })
+  }
+
+  ozetGuncelle()
+
+  if (!liste.length) {
+    document.getElementById("listeAlan").innerHTML =
+      '<div class="bos-durum"><i class="fa-solid fa-inbox"></i>Kayıt yok</div>'
+    return
+  }
+
+  if (GORUNUM === "kart") kartRender(liste)
+  else tabloRender(liste)
+}
+
+function kartRender(liste) {
+  var html = '<div class="kart-grid">'
+  liste.forEach(function(r) {
+    var renk = r.durum_renk || "text3"
+    var ikon = r.durum_ikon || "fa-circle"
+    var durumAd = r.durum_ad || "— Belirlenmedi —"
+    var canSil = (MEVCUT_KULLANICI === "admin" || MEVCUT_ROL === "admin" || r.giren_kullanici === MEVCUT_KULLANICI)
+
+    var rakamHtml = ''
+    var hasVeri = (r.stok_miktari != null || r.giris_miktari != null ||
+                   r.otis_stok != null || r.otis_giris != null ||
+                   r.toplam_fiyat != null)
+
+    if (hasVeri) {
+      rakamHtml = '<div class="rakam-satir">' +
+        '<div class="item"><span class="lbl">Stok:</span> <span class="val">' + fmtNum(r.stok_miktari) + '</span></div>' +
+        '<div class="item"><span class="lbl">Giriş:</span> <span class="val">' + fmtNum(r.giris_miktari) + '</span></div>' +
+        '<div class="item"><span class="lbl">OTIS Stok:</span> <span class="val">' + fmtNum(r.otis_stok) + '</span></div>' +
+        '<div class="item"><span class="lbl">OTIS Giriş:</span> <span class="val">' + fmtNum(r.otis_giris) + '</span></div>'
+      if (r.toplam_fiyat != null) {
+        rakamHtml += '<div class="item fiyat-satir"><span class="lbl">Toplam Fiyat:</span> <span class="val">' + fmtTL(r.toplam_fiyat) + '</span></div>'
+      }
+      rakamHtml += '</div>'
+    }
+
+    html += '<div class="fason-kart d-' + escHtml(renk) + '" onclick="modalAc(' + r.id + ')">' +
+      '<div class="durum-cizgi"></div>' +
+      (canSil ? '<button class="sil-btn" onclick="event.stopPropagation();sil(' + r.id + ')" title="Sil"><i class="fa-solid fa-trash"></i></button>' : '') +
+      '<div class="irs-basik">' +
+        '<div class="irs-no">' + escHtml(r.irsaliye_no) + '</div>' +
+        (r.irsaliye_tarihi ? '<div class="irs-tarih"><i class="fa-solid fa-calendar"></i> ' + escHtml(r.irsaliye_tarihi) + '</div>' : '') +
+      '</div>' +
+      (r.aciklama ? '<div class="aciklama">' + escHtml(r.aciklama) + '</div>' : '<div class="aciklama"></div>') +
+      '<div class="durum-rozet d-' + escHtml(renk) + '">' +
+        '<i class="fa-solid ' + escHtml(ikon) + '"></i> ' + escHtml(durumAd) +
+      '</div>' +
+      rakamHtml +
+      (r.durum_notu ? '<div class="not">' + escHtml(r.durum_notu) + '</div>' : '') +
+      '<div class="meta">' +
+        '<span><i class="fa-solid fa-user"></i> ' + escHtml(r.giren_kullanici) + '</span>' +
+        '<span>' + trTarih(r.girilme_tarihi) + '</span>' +
+      '</div>' +
+    '</div>'
+  })
+  html += '</div>'
+  document.getElementById("listeAlan").innerHTML = html
+}
+
+function tabloRender(liste) {
+  var html = '<div class="tablo-wrap"><table class="fason-tablo"><thead><tr>' +
+    '<th>İrsaliye No</th>' +
+    '<th>İrs. Tarihi</th>' +
+    '<th>Açıklama</th>' +
+    '<th>Durum</th>' +
+    '<th class="num">Stok</th>' +
+    '<th class="num">Giriş</th>' +
+    '<th class="num">OTIS Stok</th>' +
+    '<th class="num">OTIS Giriş</th>' +
+    '<th class="num">Fiyat</th>' +
+    '<th>Not</th>' +
+    '<th>Giren</th>' +
+    '<th>Girilme</th>' +
+    '</tr></thead><tbody>'
+
+  liste.forEach(function(r) {
+    var renk = r.durum_renk || "text3"
+    var ikon = r.durum_ikon || "fa-circle"
+    var durumAd = r.durum_ad || "—"
+    html += '<tr class="satir-' + escHtml(renk) + '" onclick="modalAc(' + r.id + ')">' +
+      '<td class="irs-no">' + escHtml(r.irsaliye_no) + '</td>' +
+      '<td class="meta">' + escHtml(r.irsaliye_tarihi || "—") + '</td>' +
+      '<td>' + escHtml(r.aciklama || "") + '</td>' +
+      '<td><span class="durum-rozet d-' + escHtml(renk) + '"><i class="fa-solid ' + escHtml(ikon) + '"></i> ' + escHtml(durumAd) + '</span></td>' +
+      '<td class="num">' + fmtNum(r.stok_miktari) + '</td>' +
+      '<td class="num">' + fmtNum(r.giris_miktari) + '</td>' +
+      '<td class="num">' + fmtNum(r.otis_stok) + '</td>' +
+      '<td class="num">' + fmtNum(r.otis_giris) + '</td>' +
+      '<td class="num fiyat">' + (r.toplam_fiyat != null ? fmtTL(r.toplam_fiyat) : '—') + '</td>' +
+      '<td class="meta">' + escHtml(r.durum_notu || "") + '</td>' +
+      '<td class="meta">' + escHtml(r.giren_kullanici) + '</td>' +
+      '<td class="meta">' + trTarih(r.girilme_tarihi) + '</td>' +
+    '</tr>'
+  })
+
+  html += '</tbody></table></div>'
+  document.getElementById("listeAlan").innerHTML = html
+}
+
+function gorunumSec(g) {
+  GORUNUM = g
+  document.getElementById("gorunumKart").classList.toggle("aktif", g === "kart")
+  document.getElementById("gorunumTablo").classList.toggle("aktif", g === "tablo")
+  localStorage.setItem("fasonGorunum", g)
+  renderList()
+}
+
+function modalAc(id) {
+  var r = TUM.find(function(x){ return x.id === id })
+  if (!r) return
+  SECILI_IRS = r
+
+  document.getElementById("modalIrsNo").textContent = r.irsaliye_no
+
+  var meta = "Giren: " + r.giren_kullanici + " · " + trTarih(r.girilme_tarihi)
+  if (r.aciklama) meta += " · " + r.aciklama
+  if (r.durum_guncelleyen) {
+    meta += " · Son güncelleyen: " + r.durum_guncelleyen + " (" + trTarih(r.durum_guncelleme_tarihi) + ")"
+  }
+  document.getElementById("modalMeta").textContent = meta
+
+  document.getElementById("modalDurum").value = r.durum_id || ""
+  document.getElementById("modalNot").value = r.durum_notu || ""
+
+  document.getElementById("durumModal").classList.add("goster")
+  setTimeout(function(){ document.getElementById("modalDurum").focus() }, 50)
+}
+
+function modalKapat() {
+  document.getElementById("durumModal").classList.remove("goster")
+  SECILI_IRS = null
+}
+
+async function durumKaydet() {
+  if (!SECILI_IRS) return
+  var durumId = document.getElementById("modalDurum").value
+  var not = document.getElementById("modalNot").value.trim()
+
+  var btn = document.getElementById("kaydetBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'
+
+  try {
+    var r = await fetch("/api/fason/durum-guncelle/" + SECILI_IRS.id, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ durum_id: durumId, durum_notu: not })
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast("Durum güncellendi", "basari")
+      modalKapat()
+      veriYukle()
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
+  }
+}
+
+async function sil(id) {
+  var r = TUM.find(function(x){ return x.id === id })
+  if (!r) return
+
+  var onay = false
+  if (typeof onayla === "function") {
+    onay = await onayla(
+      r.irsaliye_no + " numaralı irsaliyeyi silmek istediğine emin misin?",
+      "İrsaliye Sil",
+      {tip:"uyari", onay:"Sil", iptal:"İptal"}
+    )
+  } else {
+    onay = confirm(r.irsaliye_no + " silinsin mi?")
+  }
+  if (!onay) return
+
+  try {
+    var res = await fetch("/api/fason/sil/" + id, {method: "DELETE"})
+    var d = await res.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      veriYukle()
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+  }
+}
+
+function escHtml(s) {
+  if (s === null || s === undefined) return ""
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
+function fmtNum(v) {
+  if (v == null || v === "") return '—'
+  var n = Number(v)
+  if (isNaN(n)) return '—'
+  return n.toLocaleString("tr-TR", {maximumFractionDigits: 2})
+}
+
+function fmtTL(v) {
+  if (v == null) return '—'
+  var n = Number(v)
+  if (isNaN(n)) return '—'
+  return "₺ " + n.toLocaleString("tr-TR", {minimumFractionDigits: 2, maximumFractionDigits: 2})
+}
+
+function trTarih(s) {
+  if (!s) return ""
+  var m = String(s).match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/)
+  if (m) return m[3] + "." + m[2] + "." + m[1] + " " + m[4] + ":" + m[5]
+  return String(s)
+}
+</script>
+
+</body>
+</html>

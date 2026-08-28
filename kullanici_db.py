@@ -76,7 +76,7 @@ VARSAYILAN_ROLLER = {
         "kullanici_yonet":   True,
     },
     "hazirlayan": {
-        "panel_gor":         False,
+        "panel_gor":         True,
         "plan_olustur":      True,
         "plan_gor":          True,
         "plan_sil":          True,
@@ -90,7 +90,7 @@ VARSAYILAN_ROLLER = {
         "toplu_devret":      True,
         "export_pdf":        False,
         "export_excel":      False,
-        "import_excel":      False,
+        "import_excel":      True,
         "rapor_gor":         True,
         "dosya_sil":         False,
         "personel_izin":     False,

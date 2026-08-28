@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fason Durumları · BBA Ambar Data</title>
+
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/popup.js" defer></script>
+
+<style>
+  .baslik-satir {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+  }
+  .baslik-satir h2 {
+    font-size: 16px; font-weight: 700;
+    color: var(--text); margin: 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .baslik-satir h2 i { color: var(--primary); font-size: 14px; }
+
+  .yeni-btn {
+    background: var(--primary); color: #000;
+    padding: 9px 16px; border-radius: 6px; border: none;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+    font-size: 12px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .yeni-btn:hover { filter: brightness(1.1); }
+
+  .durum-liste {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .durum-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .durum-kart .cizgi {
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+  }
+  .durum-kart.c-amber  .cizgi { background: var(--amber); }
+  .durum-kart.c-red    .cizgi { background: var(--red); }
+  .durum-kart.c-purple .cizgi { background: var(--purple); }
+  .durum-kart.c-green  .cizgi { background: var(--green); }
+  .durum-kart.c-blue   .cizgi { background: var(--blue); }
+  .durum-kart.c-text3  .cizgi { background: var(--text3); }
+  .durum-kart.pasif { opacity: 0.5; }
+
+  .durum-kart .ust {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .durum-kart .ikon-kutu {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .durum-kart.c-amber  .ikon-kutu { background: rgba(245,158,11,0.15);  color: var(--amber); }
+  .durum-kart.c-red    .ikon-kutu { background: rgba(220,38,38,0.15);   color: var(--red); }
+  .durum-kart.c-purple .ikon-kutu { background: rgba(168,85,247,0.15);  color: var(--purple); }
+  .durum-kart.c-green  .ikon-kutu { background: rgba(34,197,94,0.15);   color: var(--green); }
+  .durum-kart.c-blue   .ikon-kutu { background: rgba(99,102,241,0.15);  color: var(--blue); }
+  .durum-kart.c-text3  .ikon-kutu { background: rgba(160,160,160,0.15); color: var(--text3); }
+
+  .durum-kart .ad {
+    font-size: 13.5px; font-weight: 700; color: var(--text);
+    flex: 1; min-width: 0;
+  }
+  .durum-kart .meta {
+    font-size: 11px; color: var(--text3);
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-light);
+    margin-top: 10px;
+  }
+  .durum-kart .pasif-etiket {
+    background: rgba(220,38,38,0.15);
+    color: var(--red);
+    font-size: 9.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .durum-kart .aksiyonlar {
+    display: flex; gap: 4px;
+  }
+  .durum-kart .btn-sm {
+    width: 28px; height: 28px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+  .durum-kart .btn-sm:hover { color: var(--text); background: var(--bg-hover); }
+  .durum-kart .btn-sm.duz:hover { color: var(--blue); border-color: var(--blue); }
+  .durum-kart .btn-sm.sil:hover { color: var(--red); border-color: var(--red); }
+
+  /* ─── MODAL ─── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 9999;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-bg.goster { display: flex; }
+  .modal-ic {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+    max-width: 480px; width: 100%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .modal-ic h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .modal-ic h3 i { color: var(--primary); }
+  .modal-ic .modal-alt {
+    font-size: 11.5px; color: var(--text3);
+    margin-bottom: 16px;
+  }
+  .modal-ic label {
+    display: block;
+    font-size: 11.5px; color: var(--text2);
+    font-weight: 600;
+    margin-top: 14px; margin-bottom: 6px;
+  }
+  .modal-ic input, .modal-ic select {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  .renk-secim { display: flex; gap: 6px; flex-wrap: wrap; }
+  .renk-cip {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white;
+    font-size: 12px;
+  }
+  .renk-cip.aktif { border-color: var(--text); box-shadow: 0 0 0 2px var(--primary); }
+  .renk-cip.r-amber  { background: var(--amber); }
+  .renk-cip.r-red    { background: var(--red); }
+  .renk-cip.r-purple { background: var(--purple); }
+  .renk-cip.r-green  { background: var(--green); }
+  .renk-cip.r-blue   { background: var(--blue); }
+  .renk-cip.r-text3  { background: var(--text3); }
+
+  .ikon-secim {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+  }
+  .ikon-cip {
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .ikon-cip.aktif {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+  }
+  .ikon-cip:hover:not(.aktif) { border-color: var(--primary); color: var(--text); }
+
+  .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .modal-actions button {
+    padding: 9px 18px; border-radius: 6px;
+    font-size: 12.5px; font-weight: 700;
+    cursor: pointer; font-family: inherit; border: none;
+  }
+  .modal-iptal {
+    background: transparent; color: var(--text2);
+    border: 1px solid var(--border) !important;
+  }
+  .modal-onayla { background: var(--primary); color: #000; }
+
+  .bos-durum {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text3);
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .bos-durum i {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
+      <h2>Warehouse Data</h2>
+      <span>V{{ APP_VERSION }}</span>
+    </div>
+    <div class="nav-section">Main Data</div>
+    <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+    <div class="nav-section">Araçlar</div>
+    <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
+    <a href="/fason/durumlar" class="nav-item active"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
+    <div class="sidebar-footer">
+      <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+        <i class="fa-solid fa-sun"></i> Açık Tema
+      </button>
+      <button class="cikis-btn" onclick="cikisYap()">
+        <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+      </button>
+    </div>
+  </nav>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <div class="topbar-breadcrumb">
+          <a href="/">Ana Sayfa</a> · <a href="/fason">Fason</a> · <span class="bc-current">Durumlar</span>
+        </div>
+        <div class="topbar-title">Fason Durum Yönetimi</div>
+        <div class="topbar-sub">İrsaliye durumlarını ekle, düzenle, pasifleştir · Sadece admin</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()">
+          <i class="fa-solid fa-sun"></i>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar" title="Profil">BA</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="baslik-satir">
+        <h2><i class="fa-solid fa-sliders"></i> Tanımlı Durumlar <span id="sayi" style="color:var(--text3);font-size:13px;font-weight:400"></span></h2>
+        <button class="yeni-btn" onclick="yeniDurumModal()">
+          <i class="fa-solid fa-plus"></i> Yeni Durum
+        </button>
+      </div>
+
+      <div id="listeAlan">
+        <div class="bos-durum"><i class="fa-solid fa-spinner fa-spin"></i>Yükleniyor...</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+  DURUM MODAL
+═════════════════════════════════════════════════ -->
+<div class="modal-bg" id="durumModal" onclick="if(event.target===this)modalKapat()">
+  <div class="modal-ic">
+    <h3 id="modalBaslik"><i class="fa-solid fa-plus"></i> Yeni Durum</h3>
+    <div class="modal-alt">Durum adı, rengi ve ikonu belirle</div>
+
+    <label>Durum Adı</label>
+    <input type="text" id="modalAd" placeholder="Örn: Sevkiyat hazırlanıyor" maxlength="60">
+
+    <label>Renk</label>
+    <div class="renk-secim" id="renkSecim">
+      <div class="renk-cip r-amber"  data-r="amber"  onclick="renkSec('amber')"><i class="fa-solid fa-hourglass-half"></i></div>
+      <div class="renk-cip r-red"    data-r="red"    onclick="renkSec('red')"><i class="fa-solid fa-ban"></i></div>
+      <div class="renk-cip r-purple" data-r="purple" onclick="renkSec('purple')"><i class="fa-solid fa-clock"></i></div>
+      <div class="renk-cip r-green"  data-r="green"  onclick="renkSec('green')"><i class="fa-solid fa-check"></i></div>
+      <div class="renk-cip r-blue"   data-r="blue"   onclick="renkSec('blue')"><i class="fa-solid fa-info"></i></div>
+      <div class="renk-cip r-text3"  data-r="text3"  onclick="renkSec('text3')"><i class="fa-solid fa-circle"></i></div>
+    </div>
+
+    <label>İkon</label>
+    <div class="ikon-secim" id="ikonSecim"></div>
+
+    <label>Sıra (küçük olan üstte)</label>
+    <input type="number" id="modalSira" value="100" min="0" step="10">
+
+    <label style="display:flex;align-items:center;gap:8px;margin-top:16px">
+      <input type="checkbox" id="modalAktif" checked style="width:auto;margin:0">
+      <span>Aktif (görünsün)</span>
+    </label>
+
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="modalKapat()">İptal</button>
+      <button class="modal-onayla" onclick="kaydet()" id="kaydetBtn">
+        <i class="fa-solid fa-save"></i> Kaydet
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var TUM = []
+var DUZENLEME_ID = null
+var SECILI_RENK = "amber"
+var SECILI_IKON = "fa-hourglass-half"
+
+var IKON_LISTE = [
+  "fa-hourglass-half", "fa-ban", "fa-check", "fa-clock-rotate-left",
+  "fa-circle", "fa-triangle-exclamation", "fa-check-double", "fa-xmark",
+  "fa-flag", "fa-star", "fa-thumbs-up", "fa-thumbs-down",
+  "fa-truck", "fa-box", "fa-boxes-stacked", "fa-warehouse",
+  "fa-file-invoice", "fa-file-signature", "fa-clipboard-check", "fa-list-check",
+  "fa-hourglass", "fa-clock", "fa-calendar", "fa-bell",
+  "fa-user", "fa-users", "fa-phone", "fa-envelope"
+]
+
+function ikonSecimDoldur() {
+  var el = document.getElementById("ikonSecim")
+  el.innerHTML = ""
+  IKON_LISTE.forEach(function(i) {
+    var d = document.createElement("div")
+    d.className = "ikon-cip" + (i === SECILI_IKON ? " aktif" : "")
+    d.dataset.i = i
+    d.innerHTML = '<i class="fa-solid ' + i + '"></i>'
+    d.onclick = function() { ikonSec(i) }
+    el.appendChild(d)
+  })
+}
+
+function ikonSec(i) {
+  SECILI_IKON = i
+  document.querySelectorAll(".ikon-cip").forEach(function(x) {
+    x.classList.toggle("aktif", x.dataset.i === i)
+  })
+}
+
+function renkSec(r) {
+  SECILI_RENK = r
+  document.querySelectorAll(".renk-cip").forEach(function(x) {
+    x.classList.toggle("aktif", x.dataset.r === r)
+  })
+}
+
+async function veriYukle() {
+  try {
+    var r = await fetch("/api/fason/durumlar?tumu=1")
+    if (!r.ok) throw new Error("HTTP " + r.status)
+    TUM = await r.json()
+    render()
+  } catch(e) {
+    document.getElementById("listeAlan").innerHTML =
+      '<div class="bos-durum"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i>Hata: ' + escHtml(e.message) + '</div>'
+  }
+}
+
+function render() {
+  document.getElementById("sayi").textContent = "(" + TUM.length + " durum)"
+  if (!TUM.length) {
+    document.getElementById("listeAlan").innerHTML =
+      '<div class="bos-durum"><i class="fa-solid fa-inbox"></i>Henüz durum yok</div>'
+    return
+  }
+  var html = '<div class="durum-liste">'
+  TUM.forEach(function(d) {
+    html += '<div class="durum-kart c-' + escHtml(d.renk) + (d.aktif ? '' : ' pasif') + '">' +
+      '<div class="cizgi"></div>' +
+      '<div class="ust">' +
+        '<div class="ikon-kutu"><i class="fa-solid ' + escHtml(d.ikon) + '"></i></div>' +
+        '<div class="ad">' + escHtml(d.ad) + '</div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text3)">Sıra: ' + d.sira + '</div>' +
+      '<div class="meta">' +
+        (d.aktif ? '<span></span>' : '<span class="pasif-etiket">Pasif</span>') +
+        '<div class="aksiyonlar">' +
+          '<button class="btn-sm duz" onclick="duzenle(' + d.id + ')" title="Düzenle"><i class="fa-solid fa-pen"></i></button>' +
+          '<button class="btn-sm sil" onclick="sil(' + d.id + ')" title="Sil"><i class="fa-solid fa-trash"></i></button>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  })
+  html += '</div>'
+  document.getElementById("listeAlan").innerHTML = html
+}
+
+function yeniDurumModal() {
+  DUZENLEME_ID = null
+  document.getElementById("modalBaslik").innerHTML = '<i class="fa-solid fa-plus"></i> Yeni Durum'
+  document.getElementById("modalAd").value = ""
+  document.getElementById("modalSira").value = "100"
+  document.getElementById("modalAktif").checked = true
+  renkSec("amber")
+  SECILI_IKON = "fa-hourglass-half"
+  ikonSecimDoldur()
+  document.getElementById("durumModal").classList.add("goster")
+  setTimeout(function(){ document.getElementById("modalAd").focus() }, 50)
+}
+
+function duzenle(id) {
+  var d = TUM.find(function(x){ return x.id === id })
+  if (!d) return
+  DUZENLEME_ID = id
+  document.getElementById("modalBaslik").innerHTML = '<i class="fa-solid fa-pen"></i> Düzenle: ' + escHtml(d.ad)
+  document.getElementById("modalAd").value = d.ad
+  document.getElementById("modalSira").value = d.sira
+  document.getElementById("modalAktif").checked = !!d.aktif
+  renkSec(d.renk || "amber")
+  SECILI_IKON = d.ikon || "fa-circle"
+  ikonSecimDoldur()
+  document.getElementById("durumModal").classList.add("goster")
+}
+
+function modalKapat() {
+  document.getElementById("durumModal").classList.remove("goster")
+}
+
+async function kaydet() {
+  var ad = document.getElementById("modalAd").value.trim()
+  var sira = parseInt(document.getElementById("modalSira").value) || 100
+  var aktif = document.getElementById("modalAktif").checked ? 1 : 0
+
+  if (!ad) {
+    if (typeof bildirim === "function") bildirim("Ad zorunlu", "Uyarı", "uyari")
+    return
+  }
+
+  var btn = document.getElementById("kaydetBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'
+
+  var url, body
+  if (DUZENLEME_ID) {
+    url = "/api/fason/durum-guncelle-tanim/" + DUZENLEME_ID
+    body = { ad: ad, renk: SECILI_RENK, ikon: SECILI_IKON, sira: sira, aktif: aktif }
+  } else {
+    url = "/api/fason/durum-ekle"
+    body = { ad: ad, renk: SECILI_RENK, ikon: SECILI_IKON, sira: sira }
+  }
+
+  try {
+    var r = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      modalKapat()
+      veriYukle()
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
+  }
+}
+
+async function sil(id) {
+  var d = TUM.find(function(x){ return x.id === id })
+  if (!d) return
+
+  var onay = false
+  if (typeof onayla === "function") {
+    onay = await onayla(
+      "'" + d.ad + "' durumunu silmek istediğine emin misin? Kullanılıyorsa pasifleştirilir.",
+      "Durum Sil",
+      {tip:"uyari", onay:"Sil/Pasifleştir", iptal:"İptal"}
+    )
+  } else {
+    onay = confirm(d.ad + " silinsin mi?")
+  }
+  if (!onay) return
+
+  try {
+    var r = await fetch("/api/fason/durum-sil/" + id, {method: "DELETE"})
+    var res = await r.json()
+    if (res.durum === "ok") {
+      if (typeof toast === "function") toast(res.mesaj, "basari")
+      veriYukle()
+    } else {
+      if (typeof bildirim === "function") bildirim(res.mesaj, "Hata", "hata")
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+  }
+}
+
+async function topbarAvatarGuncelle() {
+  try {
+    var r = await fetch("/api/kullanici-bilgi")
+    if (!r.ok) return
+    var b = await r.json()
+    var av = document.getElementById("topbarAvatar")
+    if (av && b.ad) {
+      var i = b.ad.split(" ").map(function(w){ return w[0] }).join("").slice(0,2).toUpperCase()
+      av.innerText = i
+      av.title = b.ad + (b.rol ? " (" + b.rol + ")" : "")
+    }
+  } catch(e) {}
+}
+
+function cikisYap() { window.location.href = "/logout" }
+
+function escHtml(s) {
+  if (s === null || s === undefined) return ""
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  topbarAvatarGuncelle()
+  ikonSecimDoldur()
+  veriYukle()
+})
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") modalKapat()
+})
+</script>
+
+</body>
+</html>

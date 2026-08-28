@@ -29,12 +29,14 @@
   <div class="nav-section">Araçlar</div>
   <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
   <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+  <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
   <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
   <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
   <div class="nav-section">Raporlama</div>
   <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
   <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
   <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+  <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
   <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
     {% if session.kullanici == "admin" %}
   <div class="nav-section">Yönetim</div>
@@ -43,6 +45,9 @@
 
   <a href="/surum-yonetimi" class="nav-item">
     <i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi
+
+  <a href="/fason/durumlar" class="nav-item">
+    <i class="fa-solid fa-code-branch"></i> Fason Durumlar
 </a>
   </a>
   {% endif %}

@@ -1,3 +1,4 @@
 rmdir /s /q build dist
-del "BBA Tool V4.2.spec"
-PY -m PyInstaller --onedir --windowed --name "BBA Tool V4.2" --add-data "templates;templates" --add-data "assets;assets" --icon=assets/icon/bba.ico --hidden-import=webview --hidden-import=flask --hidden-import=openpyxl --hidden-import=fpdf --hidden-import=sqlite3 --hidden-import=reportlab --hidden-import=reportlab.graphics --hidden-import=agirlik_db app.py
+del "BBA Tool V5.0.spec"
+
+PY -m PyInstaller --onedir --windowed --name "BBA Tool V5.1" --add-data "templates;templates" --add-data "assets;assets" --icon=assets/icon/bba.ico --hidden-import=webview --hidden-import=flask --hidden-import=openpyxl --hidden-import=fpdf --hidden-import=sqlite3 --hidden-import=reportlab --hidden-import=reportlab.graphics --hidden-import=agirlik_db --hidden-import=fason_db --hidden-import=kullanici_db --hidden-import=versiyon_db --hidden-import=mb52_backend --hidden-import=malzeme_kontrol --hidden-import=version app.py

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from agirlik_db import agirlik_bp, init_agirlik_db
+from fason_db import fason_bp, init_fason_db
 from mb52_backend import mb52_bp, mb52_init_db
 from malzeme_kontrol import malzeme_bp, init_malzeme_db
 
@@ -62,6 +63,8 @@ app.register_blueprint(agirlik_bp)
 app.register_blueprint(mb52_bp)
 app.register_blueprint(malzeme_bp)
 app.register_blueprint(kullanici_bp)
+app.register_blueprint(fason_bp)
+init_fason_db()
 app.register_blueprint(versiyon_bp)
 versiyon_dosyasini_hazirla()
 
@@ -70,7 +73,7 @@ kullanici_dosyasini_hazirla()
 
 from functools import wraps
 
-APP_VERSION = "4.3"
+APP_VERSION = "5.0"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -114,6 +117,28 @@ def yetki_gerekli(yetki):
 # KULLANICILAR artık kullanici_db.py içinde (JSON tabanlı, ortak klasörde)
 # İlk kullanıcılar ILK_KULLANICILAR sabitinde tanımlı.
 # ═══════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════
+# CACHE KAPATMA - HTML/JS güncellenirse anında yansısın
+# ═══════════════════════════════════════════════
+@app.after_request
+def no_cache_headers(response):
+    if request.path.endswith(('.html', '/')) or request.path.startswith(('/fason', '/kullanici', '/surum')):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
+
+# ═══════════════════════════════════════════════
+# CACHE KAPATMA - HTML/JS güncellenirse anında yansısın
+# ═══════════════════════════════════════════════
+@app.after_request
+def no_cache_headers(response):
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 # ═══════════════════════════════════════════════
 # SÜRÜM KİLİDİ MIDDLEWARE
@@ -933,6 +958,24 @@ def sevkiyat_plan_yeni():
         return jsonify({"durum":"ok","id":pid})
     except Exception as e:
         return jsonify({"durum":"hata","mesaj":str(e)}), 500
+
+# ─── FASON TAKİP SAYFALARI ───
+@app.route("/fason")
+def fason_sayfa():
+    if not giris_yapildi_mi():
+        return redirect(url_for("login"))
+    return render_template("fason.html")
+
+
+@app.route("/fason/durumlar")
+def fason_durumlar_sayfa():
+    if not giris_yapildi_mi():
+        return redirect(url_for("login"))
+    # Sadece admin
+    if session.get("kullanici") != "admin" and session.get("rol") != "admin":
+        return redirect(url_for("fason_sayfa"))
+    return render_template("fason-durumlar.html")
+
 
 @app.route("/api/sevkiyat/plan-liste")
 def sevkiyat_plan_liste():
@@ -3195,4 +3238,5 @@ if __name__=="__main__":
     os.makedirs(os.path.join(e,"assets","fonts"),exist_ok=True)
     server=threading.Thread(target=start_server);server.daemon=True;server.start()
     webview.create_window("Warehouse Data Management","http://127.0.0.1:5000/splash",width=1200,height=800)
-    threading.Thread(target=open_login).start();webview.start()
+    threading.Thread(target=open_login).start()
+    webview.start(debug=True)  # ← debug=True eklendi
