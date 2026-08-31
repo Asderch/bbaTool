@@ -73,7 +73,7 @@ kullanici_dosyasini_hazirla()
 
 from functools import wraps
 
-APP_VERSION = "5.0"
+APP_VERSION = "5.1"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -117,17 +117,6 @@ def yetki_gerekli(yetki):
 # KULLANICILAR artık kullanici_db.py içinde (JSON tabanlı, ortak klasörde)
 # İlk kullanıcılar ILK_KULLANICILAR sabitinde tanımlı.
 # ═══════════════════════════════════════════════
-
-# ═══════════════════════════════════════════════
-# CACHE KAPATMA - HTML/JS güncellenirse anında yansısın
-# ═══════════════════════════════════════════════
-@app.after_request
-def no_cache_headers(response):
-    if request.path.endswith(('.html', '/')) or request.path.startswith(('/fason', '/kullanici', '/surum')):
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-    return response
 
 
 # ═══════════════════════════════════════════════
@@ -3239,4 +3228,4 @@ if __name__=="__main__":
     server=threading.Thread(target=start_server);server.daemon=True;server.start()
     webview.create_window("Warehouse Data Management","http://127.0.0.1:5000/splash",width=1200,height=800)
     threading.Thread(target=open_login).start()
-    webview.start(debug=True)  # ← debug=True eklendi
+    webview.start()

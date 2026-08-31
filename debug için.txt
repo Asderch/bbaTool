@@ -1,0 +1,6 @@
+import os
+DEBUG_MODE = os.path.exists("DEBUG.txt")  # bu dosya varsa debug açık
+
+webview.create_window("Warehouse Data Management","http://127.0.0.1:5000/splash",width=1200,height=800)
+threading.Thread(target=open_login).start()
+webview.start(debug=DEBUG_MODE)

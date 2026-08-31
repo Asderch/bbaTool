@@ -11,14 +11,13 @@
 <script src="/assets/js/popup.js" defer></script>
 
 <style>
-  /* ─── EKLE FORMU (FLEX ile güvenli) ─── */
+  /* ─── EKLE FORMU ─── */
   .ekle-kart {
-    background: var(--bg-white);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
     padding: 16px 20px;
     margin-bottom: 16px;
-    box-shadow: var(--shadow-sm);
   }
   .ekle-kart .kart-baslik {
     font-size: 12px;
@@ -53,7 +52,7 @@
     letter-spacing: .3px;
     margin-bottom: 5px;
   }
-  .ekle-form input {
+  .ekle-form input, .ekle-form select {
     padding: 10px 12px;
     background: var(--bg);
     border: 1px solid var(--border);
@@ -64,11 +63,34 @@
     margin: 0;
     width: 100%;
     box-sizing: border-box;
+    height: 40px;
   }
-  .ekle-form input:focus {
+  .ekle-form input:focus, .ekle-form select:focus {
     border-color: var(--primary);
     outline: none;
   }
+  .firma-input-wrap {
+    display: flex;
+    gap: 6px;
+  }
+  .firma-input-wrap select { flex: 1; }
+  .firma-yeni-btn {
+    background: var(--bg);
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+  .firma-yeni-btn:hover { border-color: var(--primary); color: var(--primary); }
+
   .ekle-btn {
     background: var(--primary);
     color: #000;
@@ -97,7 +119,7 @@
   }
   .ekle-btn.toplu:hover { border-color: var(--primary); color: var(--primary); background: var(--bg); filter: none; }
 
-  /* ─── ARAÇ BAR (export/import) ─── */
+  /* ─── ARAÇ BAR ─── */
   .arac-bar {
     display: flex;
     gap: 8px;
@@ -122,52 +144,210 @@
   .arac-btn.export:hover { color: #22c55e; }
   .arac-btn.import:hover { color: var(--blue); }
 
-  /* ─── ÖZET KARTLAR ─── */
+  /* ─── FİRMA STRIP (YENİ TASARIM) ─── */
+  .firma-strip-wrap {
+    margin-bottom: 16px;
+  }
+  .firma-strip-baslik {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .firma-strip-baslik i { color: var(--blue); }
+  .firma-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+  }
+  .firma-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: all .15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .firma-kart::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--fr-color, #6366f1);
+  }
+  .firma-kart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    border-color: var(--fr-color, #6366f1);
+  }
+  .firma-kart.aktif {
+    border-color: var(--fr-color, #6366f1);
+    box-shadow: 0 0 0 2px var(--fr-glow, rgba(99,102,241,0.25)), 0 4px 12px rgba(0,0,0,0.15);
+    background: var(--fr-softBg, rgba(99,102,241,0.05));
+  }
+  .firma-kart-ust {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .firma-kart .ikon-kutu {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: var(--fr-bg, rgba(99,102,241,0.15));
+    color: var(--fr-color, #6366f1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex: 0 0 auto;
+  }
+  .firma-kart .ad {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+  .firma-kart .kartlar-alt {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11px;
+  }
+  .firma-kart .say-blok {
+    color: var(--text2);
+  }
+  .firma-kart .say-blok .num {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .firma-kart .tut-blok {
+    color: var(--primary);
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .firma-kart .progress-bar {
+    height: 4px;
+    background: var(--border-light);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .firma-kart .progress-fill {
+    height: 100%;
+    background: var(--fr-color, #6366f1);
+    border-radius: 2px;
+    transition: width .3s;
+  }
+  .firma-kart .progress-label {
+    font-size: 9.5px;
+    color: var(--text3);
+    margin-top: 4px;
+    text-align: right;
+    font-weight: 700;
+  }
+
+  /* ─── DURUM ÖZET KARTLARI (YENİ TASARIM) ─── */
   .ozet-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 10px;
     margin-bottom: 16px;
   }
   .ozet-kart {
     background: var(--bg-white);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
     padding: 14px 16px;
     box-shadow: var(--shadow-sm);
     cursor: pointer;
-    transition: all .12s;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
   }
-  .ozet-kart:hover { border-color: var(--primary); transform: translateY(-1px); }
-  .ozet-kart.aktif { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(62,207,142,0.2); }
-  .ozet-kart .label {
+  .ozet-kart:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+  .ozet-kart::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+  }
+  .ozet-kart.amber::before  { background: var(--amber); }
+  .ozet-kart.red::before    { background: var(--red); }
+  .ozet-kart.purple::before { background: var(--purple); }
+  .ozet-kart.green::before  { background: var(--green); }
+  .ozet-kart.blue::before   { background: var(--blue); }
+  .ozet-kart.text3::before  { background: var(--text3); }
+  .ozet-kart.aktif {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(62,207,142,0.25), 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .ozet-kart .ozet-ikon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex: 0 0 auto;
+  }
+  .ozet-kart.amber  .ozet-ikon { background: rgba(245,158,11,0.15);  color: var(--amber); }
+  .ozet-kart.red    .ozet-ikon { background: rgba(220,38,38,0.15);   color: var(--red); }
+  .ozet-kart.purple .ozet-ikon { background: rgba(168,85,247,0.15);  color: var(--purple); }
+  .ozet-kart.green  .ozet-ikon { background: rgba(34,197,94,0.15);   color: var(--green); }
+  .ozet-kart.blue   .ozet-ikon { background: rgba(99,102,241,0.15);  color: var(--blue); }
+  .ozet-kart.text3  .ozet-ikon { background: rgba(160,160,160,0.15); color: var(--text3); }
+  .ozet-kart .ozet-ic { flex: 1; min-width: 0; }
+  .ozet-kart .ozet-label {
     font-size: 10px;
     color: var(--text3);
     text-transform: uppercase;
     letter-spacing: .4px;
     font-weight: 700;
-    margin-bottom: 4px;
-    display: flex; align-items: center; gap: 5px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .ozet-kart .deger {
-    font-size: 22px;
+  .ozet-kart .ozet-deger {
+    font-size: 24px;
     font-weight: 800;
     font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
   }
-  .ozet-kart.amber .deger  { color: var(--amber); }
-  .ozet-kart.amber .label i{ color: var(--amber); }
-  .ozet-kart.red .deger    { color: var(--red); }
-  .ozet-kart.red .label i  { color: var(--red); }
-  .ozet-kart.purple .deger { color: var(--purple); }
-  .ozet-kart.purple .label i { color: var(--purple); }
-  .ozet-kart.green .deger  { color: var(--green); }
-  .ozet-kart.green .label i{ color: var(--green); }
+  .ozet-kart.amber  .ozet-deger { color: var(--amber); }
+  .ozet-kart.red    .ozet-deger { color: var(--red); }
+  .ozet-kart.purple .ozet-deger { color: var(--purple); }
+  .ozet-kart.green  .ozet-deger { color: var(--green); }
+  .ozet-kart.blue   .ozet-deger { color: var(--blue); }
+  .ozet-kart.text3  .ozet-deger { color: var(--text); }
+  .ozet-kart .ozet-alt {
+    font-size: 10.5px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+  .ozet-kart .ozet-alt.tutar { color: var(--primary); }
 
-  /* Toplam fiyat özet kartı */
+  /* Toplam fiyat kart */
   .toplam-kart {
     background: linear-gradient(135deg, rgba(62,207,142,0.08), rgba(62,207,142,0.02));
     border: 1px solid rgba(62,207,142,0.3);
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
     padding: 14px 20px;
     margin-bottom: 16px;
     display: flex;
@@ -206,7 +386,7 @@
   .filtre-bar {
     background: var(--bg-white);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
     padding: 12px 16px;
     margin-bottom: 12px;
     display: flex;
@@ -270,7 +450,7 @@
   .fason-kart {
     background: var(--bg-white);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
     padding: 14px 16px;
     box-shadow: var(--shadow-sm);
     cursor: pointer;
@@ -312,11 +492,22 @@
     font-family: 'JetBrains Mono', monospace;
     display: inline-flex; align-items: center; gap: 4px;
   }
-  .fason-kart .aciklama {
-    font-size: 12px;
-    color: var(--text2);
-    margin-bottom: 10px;
-    min-height: 14px;
+  .fason-kart .firma-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(99,102,241,0.15);
+    color: var(--blue);
+    margin-bottom: 8px;
+  }
+  .fason-kart .firma-badge.yok {
+    background: rgba(160,160,160,0.15);
+    color: var(--text3);
+    font-style: italic;
   }
   .fason-kart .durum-rozet {
     display: inline-flex;
@@ -327,6 +518,7 @@
     font-size: 11px;
     font-weight: 700;
     margin-bottom: 8px;
+    margin-left: 6px;
   }
   .fason-kart .durum-rozet.d-amber  { background: rgba(245,158,11,0.15);  color: var(--amber); }
   .fason-kart .durum-rozet.d-red    { background: rgba(220,38,38,0.15);   color: var(--red); }
@@ -396,19 +588,19 @@
   .fason-kart:hover .sil-btn { display: inline-flex; }
   .fason-kart .sil-btn:hover { color: var(--red); border-color: var(--red); }
 
-  /* ─── TABLO GÖRÜNÜMÜ ─── */
+  /* ─── TABLO ─── */
   .tablo-wrap {
     overflow-x: auto;
     background: var(--bg-white);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
     box-shadow: var(--shadow-sm);
   }
   .fason-tablo {
     width: 100%;
     border-collapse: collapse;
     font-size: 12px;
-    min-width: 1400px;
+    min-width: 1500px;
   }
   .fason-tablo th {
     background: var(--bg);
@@ -450,6 +642,11 @@
     font-weight: 700;
     white-space: nowrap;
   }
+  .fason-tablo .firma-cell {
+    color: var(--blue);
+    font-weight: 700;
+  }
+  .fason-tablo .firma-cell.yok { color: var(--text3); font-style: italic; font-weight: 400; }
   .fason-tablo .durum-rozet.d-amber  { background: rgba(245,158,11,0.15);  color: var(--amber); }
   .fason-tablo .durum-rozet.d-red    { background: rgba(220,38,38,0.15);   color: var(--red); }
   .fason-tablo .durum-rozet.d-purple { background: rgba(168,85,247,0.15);  color: var(--purple); }
@@ -506,7 +703,7 @@
     margin-top: 14px;
     margin-bottom: 6px;
   }
-  .modal-ic textarea, .modal-ic select, .modal-ic input[type=file] {
+  .modal-ic textarea, .modal-ic select, .modal-ic input[type=file], .modal-ic input[type=text] {
     width: 100%;
     padding: 9px 12px;
     background: var(--bg);
@@ -581,7 +778,7 @@
     color: var(--text3);
     background: var(--bg-white);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
   }
   .bos-durum i {
     font-size: 32px;
@@ -615,6 +812,7 @@
     <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
     <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
     <a href="/fason" class="nav-item active"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+    <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
     <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
     <div class="nav-section">Raporlama</div>
     <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
@@ -645,7 +843,7 @@
           <a href="/">Ana Sayfa</a> · <span class="bc-current">Fason Takip</span>
         </div>
         <div class="topbar-title">Fason Takip</div>
-        <div class="topbar-sub">İrsaliye girişleri · Çıkış durumu takibi</div>
+        <div class="topbar-sub">İrsaliye girişleri · Firma bazlı takip</div>
       </div>
       <div class="topbar-actions">
         <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()">
@@ -657,19 +855,26 @@
 
     <div class="content">
 
-      <!-- ═══════ EKLE FORMU (TEK VE ÇOKLU) ═══════ -->
-      <div class="ekle-kart" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:block;">
+      <!-- EKLE FORMU -->
+      <div class="ekle-kart" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px 20px; margin-bottom:16px; display:block !important; visibility:visible !important;">
         <div class="kart-baslik">
           <i class="fa-solid fa-plus-circle"></i> Yeni İrsaliye Ekle
         </div>
         <form class="ekle-form" onsubmit="event.preventDefault(); irsaliyeEkle()">
           <div class="form-grup">
             <label>İrsaliye No *</label>
-            <input type="text" id="yeniIrsNo" placeholder="Örn: D012026000000619" maxlength="50" autocomplete="off" required>
+            <input type="text" id="yeniIrsNo" placeholder="Örn: D012026000000619" maxlength="16" autocomplete="off" required>
           </div>
           <div class="form-grup buyuk">
-            <label>Açıklama (opsiyonel)</label>
-            <input type="text" id="yeniAciklama" placeholder="Örn: X projesinden geldi" maxlength="200" autocomplete="off">
+            <label>Firma *</label>
+            <div class="firma-input-wrap">
+              <select id="yeniFirma" required>
+                <option value="">— Firma seçiniz —</option>
+              </select>
+              <button type="button" class="firma-yeni-btn" onclick="yeniFirmaModalAc()" title="Yeni firma ekle">
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
           </div>
           <button type="submit" class="ekle-btn" id="ekleBtn">
             <i class="fa-solid fa-plus"></i> Ekle
@@ -680,7 +885,7 @@
         </form>
       </div>
 
-      <!-- ═══════ ARAÇ BAR (Export/Import) ═══════ -->
+      <!-- ARAÇ BAR -->
       <div class="arac-bar">
         <button class="arac-btn export" onclick="excelExport()">
           <i class="fa-solid fa-file-arrow-down"></i> Excel'e Aktar
@@ -692,13 +897,13 @@
         {% endif %}
       </div>
 
-      <!-- ═══════ TOPLAM ÖZET ═══════ -->
+      <!-- TOPLAM ÖZET -->
       <div class="toplam-kart" id="toplamKart" style="display:none">
         <div class="sol">
-          <div class="ikon"><i class="fa-solid fa-lira-sign"></i></div>
+          <div class="ikon"><i class="fa-solid fa-dollar-sign"></i></div>
           <div>
             <div class="baslik">Toplam İrsaliye Tutarı</div>
-            <div class="tutar" id="toplamFiyat">₺ 0</div>
+            <div class="tutar" id="toplamFiyat">$0.00</div>
           </div>
         </div>
         <div class="sag">
@@ -713,12 +918,24 @@
         </div>
       </div>
 
-      <!-- ═══════ ÖZET KARTLAR ═══════ -->
+      <!-- FİRMA STRIP -->
+      <div class="firma-strip-wrap" id="firmaStripWrap" style="display:none">
+        <div class="firma-strip-baslik">
+          <i class="fa-solid fa-building"></i> Firmalar (tıklayarak filtrele)
+        </div>
+        <div class="firma-strip" id="firmaStrip"></div>
+      </div>
+
+      <!-- DURUM ÖZET KARTLAR -->
       <div class="ozet-grid" id="ozetGrid"></div>
 
-      <!-- ═══════ FİLTRE BAR ═══════ -->
+      <!-- FİLTRE BAR -->
       <div class="filtre-bar">
         <input type="search" id="ara" placeholder="İrsaliye no veya açıklamada ara..." oninput="renderList()">
+
+        <select id="filtreFirma" onchange="renderList()">
+          <option value="">Tüm firmalar</option>
+        </select>
 
         <select id="filtreDurum" onchange="renderList()">
           <option value="">Tüm durumlar</option>
@@ -728,6 +945,7 @@
           <option value="yeni">🆕 En yeni önce</option>
           <option value="eski">📅 En eski önce</option>
           <option value="durum">🎨 Duruma göre</option>
+          <option value="firma">🏢 Firmaya göre</option>
           <option value="irs">🔢 İrsaliye no</option>
           <option value="fiyat-buyuk">💰 Fiyat (büyükten küçüğe)</option>
           <option value="fiyat-kucuk">💰 Fiyat (küçükten büyüğe)</option>
@@ -743,7 +961,7 @@
         </div>
       </div>
 
-      <!-- ═══════ LİSTE ═══════ -->
+      <!-- LİSTE -->
       <div id="listeAlan">
         <div class="bos-durum">
           <i class="fa-solid fa-spinner fa-spin"></i>
@@ -755,73 +973,65 @@
   </div>
 </div>
 
-<!-- ═════════════════════════════════════════════════
-  DURUM DEĞİŞTİRME MODAL
-═════════════════════════════════════════════════ -->
+<!-- DURUM MODAL -->
 <div class="modal-bg" id="durumModal" onclick="if(event.target===this)modalKapat()">
   <div class="modal-ic">
     <h3><i class="fa-solid fa-arrow-right-arrow-left"></i> İrsaliye: <span class="irs-mono" id="modalIrsNo"></span></h3>
     <div class="modal-alt" id="modalMeta"></div>
-
     <label>Durum</label>
-    <select id="modalDurum">
-      <option value="">— Seçilmedi —</option>
-    </select>
-
+    <select id="modalDurum"><option value="">— Seçilmedi —</option></select>
     <label>Not (opsiyonel)</label>
-    <textarea id="modalNot" placeholder="Örn: Yarın hazırlanacak, X hattından çıktı..." maxlength="500" rows="3"></textarea>
-
+    <textarea id="modalNot" placeholder="Örn: Yarın hazırlanacak..." maxlength="500" rows="3"></textarea>
     <div class="modal-actions">
       <button class="modal-iptal" onclick="modalKapat()">İptal</button>
-      <button class="modal-onayla" onclick="durumKaydet()" id="kaydetBtn">
-        <i class="fa-solid fa-save"></i> Kaydet
-      </button>
+      <button class="modal-onayla" onclick="durumKaydet()" id="kaydetBtn"><i class="fa-solid fa-save"></i> Kaydet</button>
     </div>
   </div>
 </div>
 
-<!-- ═════════════════════════════════════════════════
-  TOPLU EKLE MODAL (Basit)
-═════════════════════════════════════════════════ -->
+<!-- YENİ FİRMA MODAL -->
+<div class="modal-bg" id="yeniFirmaModal" onclick="if(event.target===this)yeniFirmaModalKapat()">
+  <div class="modal-ic" style="max-width:400px">
+    <h3><i class="fa-solid fa-building"></i> Yeni Firma Ekle</h3>
+    <div class="modal-alt">Sisteme yeni fasoncu firma tanımla</div>
+    <label>Firma Adı *</label>
+    <input type="text" id="yeniFirmaAd" placeholder="Örn: ABC Metal Ltd." maxlength="100" autocomplete="off">
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="yeniFirmaModalKapat()">İptal</button>
+      <button class="modal-onayla" onclick="yeniFirmaKaydet()" id="yeniFirmaBtn"><i class="fa-solid fa-save"></i> Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOPLU EKLE MODAL -->
 <div class="modal-bg" id="topluEkleModal" onclick="if(event.target===this)topluEkleModalKapat()">
   <div class="modal-ic">
     <h3><i class="fa-solid fa-file-arrow-up"></i> Excel'den Toplu Ekleme</h3>
-    <div class="modal-alt">Bir defada onlarca/yüzlerce irsaliye ekle</div>
-
+    <div class="modal-alt">Bir defada onlarca/yüzlerce irsaliye ekle · Tümü aynı firmaya atanır</div>
+    <label>Firma *</label>
+    <select id="topluFirma"><option value="">— Firma seçiniz —</option></select>
     <div class="import-info">
       <b><i class="fa-solid fa-circle-info"></i> Excel Formatı:</b>
       <ul>
         <li>1. sütun: <code>İrsaliye No</code> (zorunlu)</li>
         <li>2. sütun: <code>Açıklama</code> (opsiyonel)</li>
       </ul>
-      <div style="margin-top:8px">
-        <strong>Not:</strong> Aynı irsaliye numarası varsa yine de eklenir (uyarı gösterilir).<br>
-        Başlık satırı olmasa da çalışır — direkt numaralarla dolu Excel de kabul edilir.
-      </div>
     </div>
-
     <label>Excel Dosyası (.xlsx / .xls)</label>
     <input type="file" id="topluEkleDosya" accept=".xlsx,.xls">
-
     <div id="topluEkleSonucAlani"></div>
-
     <div class="modal-actions">
       <button class="modal-iptal" onclick="topluEkleModalKapat()">İptal</button>
-      <button class="modal-onayla" onclick="topluEkleGonder()" id="topluEkleBtn">
-        <i class="fa-solid fa-upload"></i> Yükle ve Ekle
-      </button>
+      <button class="modal-onayla" onclick="topluEkleGonder()" id="topluEkleBtn"><i class="fa-solid fa-upload"></i> Yükle ve Ekle</button>
     </div>
   </div>
 </div>
 
-<!-- ═════════════════════════════════════════════════
-  IMPORT MODAL (Güncelleme)
-═════════════════════════════════════════════════ -->
+<!-- IMPORT MODAL -->
 <div class="modal-bg" id="importModal" onclick="if(event.target===this)importModalKapat()">
   <div class="modal-ic">
     <h3><i class="fa-solid fa-file-pen"></i> Excel'den Güncelle</h3>
     <div class="modal-alt">Export ettiğin Excel'i düzenleyip yükleyebilirsin</div>
-
     <div class="import-info">
       <b><i class="fa-solid fa-circle-info"></i> Sadece bu 6 kolon güncellenir:</b>
       <ul>
@@ -830,19 +1040,13 @@
         <li>OTIS Stok / OTIS Giriş</li>
         <li>Toplam Fiyat</li>
       </ul>
-      <div style="margin-top:8px">Diğer kolonlar (irsaliye no, durum, not, tarih...) korunur.</div>
     </div>
-
     <label>Excel Dosyası (.xlsx)</label>
     <input type="file" id="importDosya" accept=".xlsx,.xls">
-
     <div id="importSonucAlani"></div>
-
     <div class="modal-actions">
       <button class="modal-iptal" onclick="importModalKapat()">İptal</button>
-      <button class="modal-onayla" onclick="importGonder()" id="importBtn">
-        <i class="fa-solid fa-upload"></i> Yükle ve Güncelle
-      </button>
+      <button class="modal-onayla" onclick="importGonder()" id="importBtn"><i class="fa-solid fa-upload"></i> Yükle ve Güncelle</button>
     </div>
   </div>
 </div>
@@ -850,12 +1054,35 @@
 <script>
 var TUM = []
 var DURUMLAR = []
+var FIRMALAR = []
 var FILTRE_DURUM = ""
+var FILTRE_FIRMA = ""
 var SIRALA = "yeni"
 var GORUNUM = "kart"
 var MEVCUT_KULLANICI = null
 var MEVCUT_ROL = null
 var SECILI_IRS = null
+
+// Firma renk paleti (isimden hash → sabit renk)
+var FIRMA_RENKLER = [
+  { c: '#6366f1', bg: 'rgba(99,102,241,0.15)',  glow: 'rgba(99,102,241,0.3)',  softBg: 'rgba(99,102,241,0.05)' },
+  { c: '#22c55e', bg: 'rgba(34,197,94,0.15)',   glow: 'rgba(34,197,94,0.3)',   softBg: 'rgba(34,197,94,0.05)' },
+  { c: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  glow: 'rgba(245,158,11,0.3)',  softBg: 'rgba(245,158,11,0.05)' },
+  { c: '#a855f7', bg: 'rgba(168,85,247,0.15)',  glow: 'rgba(168,85,247,0.3)',  softBg: 'rgba(168,85,247,0.05)' },
+  { c: '#ec4899', bg: 'rgba(236,72,153,0.15)',  glow: 'rgba(236,72,153,0.3)',  softBg: 'rgba(236,72,153,0.05)' },
+  { c: '#06b6d4', bg: 'rgba(6,182,212,0.15)',   glow: 'rgba(6,182,212,0.3)',   softBg: 'rgba(6,182,212,0.05)' },
+  { c: '#f97316', bg: 'rgba(249,115,22,0.15)',  glow: 'rgba(249,115,22,0.3)',  softBg: 'rgba(249,115,22,0.05)' },
+  { c: '#14b8a6', bg: 'rgba(20,184,166,0.15)',  glow: 'rgba(20,184,166,0.3)',  softBg: 'rgba(20,184,166,0.05)' }
+]
+
+function firmaRenkAl(firmaAd) {
+  var h = 0
+  for (var i = 0; i < firmaAd.length; i++) {
+    h = ((h << 5) - h) + firmaAd.charCodeAt(i)
+    h = h & h
+  }
+  return FIRMA_RENKLER[Math.abs(h) % FIRMA_RENKLER.length]
+}
 
 document.addEventListener("DOMContentLoaded", function() {
   topbarAvatarGuncelle()
@@ -869,6 +1096,7 @@ document.addEventListener("keydown", function(e) {
     modalKapat()
     importModalKapat()
     topluEkleModalKapat()
+    yeniFirmaModalKapat()
   }
 })
 
@@ -893,18 +1121,24 @@ function cikisYap() { window.location.href = "/logout" }
 async function veriYukle() {
   try {
     var r1 = await fetch("/api/fason/durumlar")
-    if (r1.ok) {
-      DURUMLAR = await r1.json()
-      durumSelectDoldur()
-    }
+    if (r1.ok) DURUMLAR = await r1.json()
   } catch(e) { console.error("Durumlar yüklenemedi:", e) }
 
   try {
-    var r2 = await fetch("/api/fason/liste")
-    if (!r2.ok) throw new Error("HTTP " + r2.status)
-    TUM = await r2.json()
+    var r2 = await fetch("/api/fason/firmalar")
+    if (r2.ok) FIRMALAR = await r2.json()
+  } catch(e) { console.error("Firmalar yüklenemedi:", e) }
+
+  durumSelectDoldur()
+  firmaSelectDoldur()
+
+  try {
+    var r3 = await fetch("/api/fason/liste")
+    if (!r3.ok) throw new Error("HTTP " + r3.status)
+    TUM = await r3.json()
     ozetGuncelle()
     toplamGuncelle()
+    firmaStripGuncelle()
     renderList()
   } catch(e) {
     console.error("Liste hatası:", e)
@@ -915,12 +1149,10 @@ async function veriYukle() {
 
 function durumSelectDoldur() {
   var fs = document.getElementById("filtreDurum")
-  fs.innerHTML = '<option value="">Tüm durumlar</option>' +
-    '<option value="__yok__">— Durum atanmamış —</option>'
+  fs.innerHTML = '<option value="">Tüm durumlar</option><option value="__yok__">— Durum atanmamış —</option>'
   DURUMLAR.forEach(function(d) {
     fs.innerHTML += '<option value="' + d.id + '">' + escHtml(d.ad) + '</option>'
   })
-
   var ms = document.getElementById("modalDurum")
   ms.innerHTML = '<option value="">— Durum yok —</option>'
   DURUMLAR.forEach(function(d) {
@@ -928,31 +1160,48 @@ function durumSelectDoldur() {
   })
 }
 
+function firmaSelectDoldur() {
+  var ff = document.getElementById("filtreFirma")
+  ff.innerHTML = '<option value="">Tüm firmalar</option><option value="__yok__">— Firma atanmamış —</option>'
+  FIRMALAR.forEach(function(f) {
+    ff.innerHTML += '<option value="' + f.id + '">' + escHtml(f.ad) + '</option>'
+  })
+  var yf = document.getElementById("yeniFirma")
+  yf.innerHTML = '<option value="">— Firma seçiniz —</option>'
+  FIRMALAR.forEach(function(f) {
+    yf.innerHTML += '<option value="' + f.id + '">' + escHtml(f.ad) + '</option>'
+  })
+  var tf = document.getElementById("topluFirma")
+  tf.innerHTML = '<option value="">— Firma seçiniz —</option>'
+  FIRMALAR.forEach(function(f) {
+    tf.innerHTML += '<option value="' + f.id + '">' + escHtml(f.ad) + '</option>'
+  })
+}
+
 async function irsaliyeEkle() {
   var irsNo = document.getElementById("yeniIrsNo").value.trim()
-  var aciklama = document.getElementById("yeniAciklama").value.trim()
-
+  var firmaId = document.getElementById("yeniFirma").value
   if (!irsNo) return
-
+  if (!firmaId) {
+    if (typeof bildirim === "function") bildirim("Firma seçin", "Uyarı", "uyari")
+    else alert("Firma seçin")
+    return
+  }
   var btn = document.getElementById("ekleBtn")
   var eski = btn.innerHTML
   btn.disabled = true
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'
-
   try {
     var r = await fetch("/api/fason/ekle", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ irsaliye_no: irsNo, aciklama: aciklama })
+      body: JSON.stringify({ irsaliye_no: irsNo, firma_id: firmaId })
     })
     var d = await r.json()
     if (d.durum === "ok") {
       if (typeof toast === "function") toast(d.mesaj, "basari")
-      if (d.uyari && typeof toast === "function") {
-        setTimeout(function() { toast(d.uyari, "uyari") }, 300)
-      }
+      if (d.uyari && typeof toast === "function") setTimeout(function() { toast(d.uyari, "uyari") }, 300)
       document.getElementById("yeniIrsNo").value = ""
-      document.getElementById("yeniAciklama").value = ""
       document.getElementById("yeniIrsNo").focus()
       veriYukle()
     } else {
@@ -968,47 +1217,77 @@ async function irsaliyeEkle() {
   }
 }
 
-// ═════════════════════════════════════════════════
-// TOPLU EKLEME
-// ═════════════════════════════════════════════════
+function yeniFirmaModalAc() {
+  document.getElementById("yeniFirmaAd").value = ""
+  document.getElementById("yeniFirmaModal").classList.add("goster")
+  setTimeout(function(){ document.getElementById("yeniFirmaAd").focus() }, 50)
+}
+function yeniFirmaModalKapat() { document.getElementById("yeniFirmaModal").classList.remove("goster") }
+
+async function yeniFirmaKaydet() {
+  var ad = document.getElementById("yeniFirmaAd").value.trim()
+  if (!ad) {
+    if (typeof bildirim === "function") bildirim("Firma adı zorunlu", "Uyarı", "uyari")
+    return
+  }
+  var btn = document.getElementById("yeniFirmaBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'
+  try {
+    var r = await fetch("/api/fason/firma-ekle", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ ad: ad })
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      FIRMALAR.push({ id: d.id, ad: d.ad, aktif: 1 })
+      FIRMALAR.sort(function(a, b) { return a.ad.localeCompare(b.ad, 'tr') })
+      firmaSelectDoldur()
+      document.getElementById("yeniFirma").value = d.id
+      yeniFirmaModalKapat()
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
+  }
+}
+
 function topluEkleModalAc() {
   document.getElementById("topluEkleDosya").value = ""
+  document.getElementById("topluFirma").value = ""
   document.getElementById("topluEkleSonucAlani").innerHTML = ""
   document.getElementById("topluEkleModal").classList.add("goster")
 }
-function topluEkleModalKapat() {
-  document.getElementById("topluEkleModal").classList.remove("goster")
-}
+function topluEkleModalKapat() { document.getElementById("topluEkleModal").classList.remove("goster") }
 
 async function topluEkleGonder() {
   var fInput = document.getElementById("topluEkleDosya")
-  if (!fInput.files.length) {
-    if (typeof bildirim === "function") bildirim("Dosya seçin", "Uyarı", "uyari")
-    return
-  }
-
+  var firmaId = document.getElementById("topluFirma").value
+  if (!firmaId) { if (typeof bildirim === "function") bildirim("Firma seçin", "Uyarı", "uyari"); return }
+  if (!fInput.files.length) { if (typeof bildirim === "function") bildirim("Dosya seçin", "Uyarı", "uyari"); return }
   var fd = new FormData()
   fd.append("dosya", fInput.files[0])
-
+  fd.append("firma_id", firmaId)
   var btn = document.getElementById("topluEkleBtn")
   var eski = btn.innerHTML
   btn.disabled = true
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...'
   document.getElementById("topluEkleSonucAlani").innerHTML = ""
-
   try {
     var r = await fetch("/api/fason/toplu-ekle", { method: "POST", body: fd })
     var d = await r.json()
-
     if (d.durum === "ok") {
-      var html = '<div class="import-sonuc">' +
-        '<b><i class="fa-solid fa-check-circle"></i> Başarılı!</b><br>' +
-        d.mesaj +
-        '<div style="margin-top:6px;font-size:11px;color:var(--text3)">' +
-        'Eklenen: <b>' + d.eklenen + '</b>' +
+      var html = '<div class="import-sonuc"><b><i class="fa-solid fa-check-circle"></i> Başarılı!</b><br>' +
+        d.mesaj + '<div style="margin-top:6px;font-size:11px;color:var(--text3)">Eklenen: <b>' + d.eklenen + '</b>' +
         (d.mukerrer ? ' · Mükerrer: <b>' + d.mukerrer + '</b>' : '') +
-        (d.atlanan ? ' · Atlanan: <b>' + d.atlanan + '</b>' : '') +
-        '</div></div>'
+        (d.atlanan ? ' · Atlanan: <b>' + d.atlanan + '</b>' : '') + '</div></div>'
       document.getElementById("topluEkleSonucAlani").innerHTML = html
       if (typeof toast === "function") toast(d.mesaj, "basari")
       setTimeout(function() { veriYukle() }, 500)
@@ -1029,27 +1308,17 @@ async function topluEkleGonder() {
 async function excelExport() {
   try {
     if (typeof toast === "function") toast("Excel hazırlanıyor...", "bilgi")
-
     var r = await fetch("/api/fason/export", { method: "GET" })
     var d = await r.json()
-
     if (d.durum === "ok") {
-      if (typeof toast === "function") {
-        toast(d.mesaj + " · Klasör açıldı", "basari")
-      }
+      if (typeof toast === "function") toast(d.mesaj + " · Klasör açıldı", "basari")
     } else {
-      if (typeof bildirim === "function") {
-        bildirim(d.mesaj, "Excel Hatası", "hata")
-      } else {
-        alert("Hata: " + d.mesaj)
-      }
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Excel Hatası", "hata")
+      else alert("Hata: " + d.mesaj)
     }
   } catch(e) {
-    if (typeof bildirim === "function") {
-      bildirim(e.message, "Bağlantı Hatası", "hata")
-    } else {
-      alert(e.message)
-    }
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+    else alert(e.message)
   }
 }
 
@@ -1058,39 +1327,26 @@ function importModalAc() {
   document.getElementById("importSonucAlani").innerHTML = ""
   document.getElementById("importModal").classList.add("goster")
 }
-function importModalKapat() {
-  document.getElementById("importModal").classList.remove("goster")
-}
+function importModalKapat() { document.getElementById("importModal").classList.remove("goster") }
 
 async function importGonder() {
   var fInput = document.getElementById("importDosya")
-  if (!fInput.files.length) {
-    if (typeof bildirim === "function") bildirim("Dosya seçin", "Uyarı", "uyari")
-    return
-  }
-
+  if (!fInput.files.length) { if (typeof bildirim === "function") bildirim("Dosya seçin", "Uyarı", "uyari"); return }
   var fd = new FormData()
   fd.append("dosya", fInput.files[0])
-
   var btn = document.getElementById("importBtn")
   var eski = btn.innerHTML
   btn.disabled = true
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...'
   document.getElementById("importSonucAlani").innerHTML = ""
-
   try {
     var r = await fetch("/api/fason/import", { method: "POST", body: fd })
     var d = await r.json()
-
     if (d.durum === "ok") {
-      var html = '<div class="import-sonuc">' +
-        '<b><i class="fa-solid fa-check-circle"></i> Başarılı!</b><br>' +
-        d.mesaj +
+      var html = '<div class="import-sonuc"><b><i class="fa-solid fa-check-circle"></i> Başarılı!</b><br>' + d.mesaj +
         '<div style="margin-top:6px;font-size:11px;color:var(--text3)">Güncellenen kolonlar: ' +
         (d.kolonlar ? d.kolonlar.join(", ") : "-") + '</div>'
-      if (d.hatalar && d.hatalar.length) {
-        html += '<div style="margin-top:8px;font-size:11px"><b>Not:</b> ' + d.hatalar.length + ' satır atlandı</div>'
-      }
+      if (d.hatalar && d.hatalar.length) html += '<div style="margin-top:8px;font-size:11px"><b>Not:</b> ' + d.hatalar.length + ' satır atlandı</div>'
       html += '</div>'
       document.getElementById("importSonucAlani").innerHTML = html
       if (typeof toast === "function") toast(d.mesaj, "basari")
@@ -1112,27 +1368,85 @@ async function importGonder() {
 function ozetGuncelle() {
   var grid = document.getElementById("ozetGrid")
   var sayilar = {}
+  var tutarlar = {}
   TUM.forEach(function(r) {
-    if (r.durum_id) sayilar[r.durum_id] = (sayilar[r.durum_id] || 0) + 1
+    if (r.durum_id) {
+      sayilar[r.durum_id] = (sayilar[r.durum_id] || 0) + 1
+      if (r.toplam_fiyat != null && !isNaN(r.toplam_fiyat)) {
+        tutarlar[r.durum_id] = (tutarlar[r.durum_id] || 0) + Number(r.toplam_fiyat)
+      }
+    }
   })
-
   var html = ""
   DURUMLAR.forEach(function(d) {
     var sayi = sayilar[d.id] || 0
+    var tutar = tutarlar[d.id] || 0
     var aktif = (String(FILTRE_DURUM) === String(d.id)) ? " aktif" : ""
+    var tutarStr = tutar > 0 ? "$" + tutar.toLocaleString("en-US", {maximumFractionDigits: 0}) : ""
     html += '<div class="ozet-kart ' + escHtml(d.renk) + aktif + '" onclick="durumFiltrele(' + d.id + ')">' +
-      '<div class="label"><i class="fa-solid ' + escHtml(d.ikon) + '"></i> ' + escHtml(d.ad) + '</div>' +
-      '<div class="deger">' + sayi + '</div>' +
-      '</div>'
+      '<div class="ozet-ikon"><i class="fa-solid ' + escHtml(d.ikon) + '"></i></div>' +
+      '<div class="ozet-ic">' +
+        '<div class="ozet-label">' + escHtml(d.ad) + '</div>' +
+        '<div class="ozet-deger">' + sayi + '</div>' +
+        (tutarStr ? '<div class="ozet-alt tutar">' + tutarStr + '</div>' : '<div class="ozet-alt">—</div>') +
+      '</div>' +
+    '</div>'
   })
   grid.innerHTML = html
 }
 
+function firmaStripGuncelle() {
+  var wrap = document.getElementById("firmaStripWrap")
+  var strip = document.getElementById("firmaStrip")
+
+  var cikisDurumId = null
+  DURUMLAR.forEach(function(d) { if (d.renk === "green") cikisDurumId = d.id })
+
+  var stats = {}
+  TUM.forEach(function(r) {
+    var fid = r.firma_id || "__yok__"
+    if (!stats[fid]) stats[fid] = { sayi: 0, cikis: 0, toplam: 0, ad: r.firma_ad || "— Firma yok —" }
+    stats[fid].sayi++
+    if (cikisDurumId && r.durum_id === cikisDurumId) stats[fid].cikis++
+    if (r.toplam_fiyat != null && !isNaN(r.toplam_fiyat)) stats[fid].toplam += Number(r.toplam_fiyat)
+  })
+
+  var keys = Object.keys(stats)
+  if (!keys.length) { wrap.style.display = "none"; return }
+  keys.sort(function(a, b) { return stats[b].sayi - stats[a].sayi })
+
+  wrap.style.display = "block"
+  var html = ""
+  keys.forEach(function(fid) {
+    var s = stats[fid]
+    var aktif = (String(FILTRE_FIRMA) === String(fid)) ? " aktif" : ""
+    var tutar = s.toplam > 0 ? "$" + s.toplam.toLocaleString("en-US", {maximumFractionDigits: 0}) : ""
+    var yuzde = s.sayi > 0 ? Math.round((s.cikis / s.sayi) * 100) : 0
+
+    var renk = fid === "__yok__"
+      ? { c: '#a0a0a0', bg: 'rgba(160,160,160,0.15)', glow: 'rgba(160,160,160,0.3)', softBg: 'rgba(160,160,160,0.05)' }
+      : firmaRenkAl(s.ad)
+
+    var styleVars = 'style="--fr-color:' + renk.c + '; --fr-bg:' + renk.bg + '; --fr-glow:' + renk.glow + '; --fr-softBg:' + renk.softBg + '"'
+
+    html += '<div class="firma-kart' + aktif + '" ' + styleVars + ' onclick="firmaFiltrele(\'' + fid + '\')">' +
+      '<div class="firma-kart-ust">' +
+        '<div class="ikon-kutu"><i class="fa-solid fa-building"></i></div>' +
+        '<div class="ad" title="' + escHtml(s.ad) + '">' + escHtml(s.ad) + '</div>' +
+      '</div>' +
+      '<div class="kartlar-alt">' +
+        '<div class="say-blok"><span class="num">' + s.sayi + '</span> irs.</div>' +
+        (tutar ? '<div class="tut-blok">' + tutar + '</div>' : '') +
+      '</div>' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + yuzde + '%"></div></div>' +
+      '<div class="progress-label">%' + yuzde + ' çıkış yapıldı</div>' +
+    '</div>'
+  })
+  strip.innerHTML = html
+}
+
 function toplamGuncelle() {
-  if (!TUM.length) {
-    document.getElementById("toplamKart").style.display = "none"
-    return
-  }
+  if (!TUM.length) { document.getElementById("toplamKart").style.display = "none"; return }
   var toplam = 0
   var fiyatli = 0
   TUM.forEach(function(r) {
@@ -1141,9 +1455,8 @@ function toplamGuncelle() {
       fiyatli++
     }
   })
-
   document.getElementById("toplamKart").style.display = "flex"
-  document.getElementById("toplamFiyat").textContent = "₺ " + toplam.toLocaleString("tr-TR", {minimumFractionDigits: 2, maximumFractionDigits: 2})
+  document.getElementById("toplamFiyat").textContent = "$" + toplam.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})
   document.getElementById("toplamKayit").textContent = TUM.length
   document.getElementById("fiyatliKayit").textContent = fiyatli
 }
@@ -1156,17 +1469,27 @@ function durumFiltrele(did) {
   renderList()
 }
 
+function firmaFiltrele(fid) {
+  if (String(FILTRE_FIRMA) === String(fid)) FILTRE_FIRMA = ""
+  else FILTRE_FIRMA = String(fid)
+  document.getElementById("filtreFirma").value = FILTRE_FIRMA
+  firmaStripGuncelle()
+  renderList()
+}
+
 function renderList() {
   FILTRE_DURUM = document.getElementById("filtreDurum").value
+  FILTRE_FIRMA = document.getElementById("filtreFirma").value
   SIRALA = document.getElementById("sirala").value
   var ara = document.getElementById("ara").value.toLowerCase().trim()
 
   var liste = TUM.filter(function(r) {
     if (FILTRE_DURUM === "__yok__") { if (r.durum_id) return false }
     else if (FILTRE_DURUM && String(r.durum_id) !== FILTRE_DURUM) return false
-
+    if (FILTRE_FIRMA === "__yok__") { if (r.firma_id) return false }
+    else if (FILTRE_FIRMA && String(r.firma_id) !== FILTRE_FIRMA) return false
     if (ara) {
-      var h = (r.irsaliye_no + " " + (r.aciklama || "")).toLowerCase()
+      var h = (r.irsaliye_no + " " + (r.aciklama || "") + " " + (r.firma_ad || "")).toLowerCase()
       if (h.indexOf(ara) === -1) return false
     }
     return true
@@ -1175,6 +1498,11 @@ function renderList() {
   if (SIRALA === "yeni") liste.sort(function(a,b){ return b.id - a.id })
   else if (SIRALA === "eski") liste.sort(function(a,b){ return a.id - b.id })
   else if (SIRALA === "irs") liste.sort(function(a,b){ return String(a.irsaliye_no).localeCompare(String(b.irsaliye_no), 'tr', {numeric:true}) })
+  else if (SIRALA === "firma") liste.sort(function(a,b){
+    var fa = a.firma_ad || "zzz"
+    var fb = b.firma_ad || "zzz"
+    return fa.localeCompare(fb, 'tr') || (b.id - a.id)
+  })
   else if (SIRALA === "fiyat-buyuk") liste.sort(function(a,b){ return (b.toplam_fiyat || 0) - (a.toplam_fiyat || 0) })
   else if (SIRALA === "fiyat-kucuk") liste.sort(function(a,b){ return (a.toplam_fiyat || 0) - (b.toplam_fiyat || 0) })
   else if (SIRALA === "durum") {
@@ -1188,6 +1516,7 @@ function renderList() {
   }
 
   ozetGuncelle()
+  firmaStripGuncelle()
 
   if (!liste.length) {
     document.getElementById("listeAlan").innerHTML =
@@ -1206,12 +1535,9 @@ function kartRender(liste) {
     var ikon = r.durum_ikon || "fa-circle"
     var durumAd = r.durum_ad || "— Belirlenmedi —"
     var canSil = (MEVCUT_KULLANICI === "admin" || MEVCUT_ROL === "admin" || r.giren_kullanici === MEVCUT_KULLANICI)
-
     var rakamHtml = ''
     var hasVeri = (r.stok_miktari != null || r.giris_miktari != null ||
-                   r.otis_stok != null || r.otis_giris != null ||
-                   r.toplam_fiyat != null)
-
+                   r.otis_stok != null || r.otis_giris != null || r.toplam_fiyat != null)
     if (hasVeri) {
       rakamHtml = '<div class="rakam-satir">' +
         '<div class="item"><span class="lbl">Stok:</span> <span class="val">' + fmtNum(r.stok_miktari) + '</span></div>' +
@@ -1219,10 +1545,13 @@ function kartRender(liste) {
         '<div class="item"><span class="lbl">OTIS Stok:</span> <span class="val">' + fmtNum(r.otis_stok) + '</span></div>' +
         '<div class="item"><span class="lbl">OTIS Giriş:</span> <span class="val">' + fmtNum(r.otis_giris) + '</span></div>'
       if (r.toplam_fiyat != null) {
-        rakamHtml += '<div class="item fiyat-satir"><span class="lbl">Toplam Fiyat:</span> <span class="val">' + fmtTL(r.toplam_fiyat) + '</span></div>'
+        rakamHtml += '<div class="item fiyat-satir"><span class="lbl">Toplam Fiyat:</span> <span class="val">' + fmtUSD(r.toplam_fiyat) + '</span></div>'
       }
       rakamHtml += '</div>'
     }
+    var firmaHtml = r.firma_ad
+      ? '<span class="firma-badge"><i class="fa-solid fa-building"></i> ' + escHtml(r.firma_ad) + '</span>'
+      : '<span class="firma-badge yok"><i class="fa-solid fa-question"></i> Firma yok</span>'
 
     html += '<div class="fason-kart d-' + escHtml(renk) + '" onclick="modalAc(' + r.id + ')">' +
       '<div class="durum-cizgi"></div>' +
@@ -1231,11 +1560,9 @@ function kartRender(liste) {
         '<div class="irs-no">' + escHtml(r.irsaliye_no) + '</div>' +
         (r.irsaliye_tarihi ? '<div class="irs-tarih"><i class="fa-solid fa-calendar"></i> ' + escHtml(r.irsaliye_tarihi) + '</div>' : '') +
       '</div>' +
-      (r.aciklama ? '<div class="aciklama">' + escHtml(r.aciklama) + '</div>' : '<div class="aciklama"></div>') +
-      '<div class="durum-rozet d-' + escHtml(renk) + '">' +
-        '<i class="fa-solid ' + escHtml(ikon) + '"></i> ' + escHtml(durumAd) +
-      '</div>' +
-      rakamHtml +
+      '<div style="margin-bottom:6px">' + firmaHtml +
+        '<span class="durum-rozet d-' + escHtml(renk) + '"><i class="fa-solid ' + escHtml(ikon) + '"></i> ' + escHtml(durumAd) + '</span>' +
+      '</div>' + rakamHtml +
       (r.durum_notu ? '<div class="not">' + escHtml(r.durum_notu) + '</div>' : '') +
       '<div class="meta">' +
         '<span><i class="fa-solid fa-user"></i> ' + escHtml(r.giren_kullanici) + '</span>' +
@@ -1249,40 +1576,30 @@ function kartRender(liste) {
 
 function tabloRender(liste) {
   var html = '<div class="tablo-wrap"><table class="fason-tablo"><thead><tr>' +
-    '<th>İrsaliye No</th>' +
-    '<th>İrs. Tarihi</th>' +
-    '<th>Açıklama</th>' +
-    '<th>Durum</th>' +
-    '<th class="num">Stok</th>' +
-    '<th class="num">Giriş</th>' +
-    '<th class="num">OTIS Stok</th>' +
-    '<th class="num">OTIS Giriş</th>' +
-    '<th class="num">Fiyat</th>' +
-    '<th>Not</th>' +
-    '<th>Giren</th>' +
-    '<th>Girilme</th>' +
+    '<th>İrsaliye No</th><th>Firma</th><th>İrs. Tarihi</th><th>Durum</th>' +
+    '<th class="num">Stok</th><th class="num">Giriş</th>' +
+    '<th class="num">OTIS Stok</th><th class="num">OTIS Giriş</th>' +
+    '<th class="num">Fiyat</th><th>Not</th><th>Giren</th><th>Girilme</th>' +
     '</tr></thead><tbody>'
-
   liste.forEach(function(r) {
     var renk = r.durum_renk || "text3"
     var ikon = r.durum_ikon || "fa-circle"
     var durumAd = r.durum_ad || "—"
     html += '<tr class="satir-' + escHtml(renk) + '" onclick="modalAc(' + r.id + ')">' +
       '<td class="irs-no">' + escHtml(r.irsaliye_no) + '</td>' +
+      '<td class="firma-cell' + (r.firma_ad ? '' : ' yok') + '">' + escHtml(r.firma_ad || "—") + '</td>' +
       '<td class="meta">' + escHtml(r.irsaliye_tarihi || "—") + '</td>' +
-      '<td>' + escHtml(r.aciklama || "") + '</td>' +
       '<td><span class="durum-rozet d-' + escHtml(renk) + '"><i class="fa-solid ' + escHtml(ikon) + '"></i> ' + escHtml(durumAd) + '</span></td>' +
       '<td class="num">' + fmtNum(r.stok_miktari) + '</td>' +
       '<td class="num">' + fmtNum(r.giris_miktari) + '</td>' +
       '<td class="num">' + fmtNum(r.otis_stok) + '</td>' +
       '<td class="num">' + fmtNum(r.otis_giris) + '</td>' +
-      '<td class="num fiyat">' + (r.toplam_fiyat != null ? fmtTL(r.toplam_fiyat) : '—') + '</td>' +
+      '<td class="num fiyat">' + (r.toplam_fiyat != null ? fmtUSD(r.toplam_fiyat) : '—') + '</td>' +
       '<td class="meta">' + escHtml(r.durum_notu || "") + '</td>' +
       '<td class="meta">' + escHtml(r.giren_kullanici) + '</td>' +
       '<td class="meta">' + trTarih(r.girilme_tarihi) + '</td>' +
     '</tr>'
   })
-
   html += '</tbody></table></div>'
   document.getElementById("listeAlan").innerHTML = html
 }
@@ -1299,49 +1616,36 @@ function modalAc(id) {
   var r = TUM.find(function(x){ return x.id === id })
   if (!r) return
   SECILI_IRS = r
-
   document.getElementById("modalIrsNo").textContent = r.irsaliye_no
-
   var meta = "Giren: " + r.giren_kullanici + " · " + trTarih(r.girilme_tarihi)
-  if (r.aciklama) meta += " · " + r.aciklama
-  if (r.durum_guncelleyen) {
-    meta += " · Son güncelleyen: " + r.durum_guncelleyen + " (" + trTarih(r.durum_guncelleme_tarihi) + ")"
-  }
+  if (r.firma_ad) meta += " · " + r.firma_ad
+  if (r.durum_guncelleyen) meta += " · Son güncelleyen: " + r.durum_guncelleyen + " (" + trTarih(r.durum_guncelleme_tarihi) + ")"
   document.getElementById("modalMeta").textContent = meta
-
   document.getElementById("modalDurum").value = r.durum_id || ""
   document.getElementById("modalNot").value = r.durum_notu || ""
-
   document.getElementById("durumModal").classList.add("goster")
   setTimeout(function(){ document.getElementById("modalDurum").focus() }, 50)
 }
 
-function modalKapat() {
-  document.getElementById("durumModal").classList.remove("goster")
-  SECILI_IRS = null
-}
+function modalKapat() { document.getElementById("durumModal").classList.remove("goster"); SECILI_IRS = null }
 
 async function durumKaydet() {
   if (!SECILI_IRS) return
   var durumId = document.getElementById("modalDurum").value
   var not = document.getElementById("modalNot").value.trim()
-
   var btn = document.getElementById("kaydetBtn")
   var eski = btn.innerHTML
   btn.disabled = true
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'
-
   try {
     var r = await fetch("/api/fason/durum-guncelle/" + SECILI_IRS.id, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
+      method: "POST", headers: {"Content-Type": "application/json"},
       body: JSON.stringify({ durum_id: durumId, durum_notu: not })
     })
     var d = await r.json()
     if (d.durum === "ok") {
       if (typeof toast === "function") toast("Durum güncellendi", "basari")
-      modalKapat()
-      veriYukle()
+      modalKapat(); veriYukle()
     } else {
       if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
     }
@@ -1356,19 +1660,14 @@ async function durumKaydet() {
 async function sil(id) {
   var r = TUM.find(function(x){ return x.id === id })
   if (!r) return
-
   var onay = false
   if (typeof onayla === "function") {
-    onay = await onayla(
-      r.irsaliye_no + " numaralı irsaliyeyi silmek istediğine emin misin?",
-      "İrsaliye Sil",
-      {tip:"uyari", onay:"Sil", iptal:"İptal"}
-    )
+    onay = await onayla(r.irsaliye_no + " numaralı irsaliyeyi silmek istediğine emin misin?",
+      "İrsaliye Sil", {tip:"uyari", onay:"Sil", iptal:"İptal"})
   } else {
     onay = confirm(r.irsaliye_no + " silinsin mi?")
   }
   if (!onay) return
-
   try {
     var res = await fetch("/api/fason/sil/" + id, {method: "DELETE"})
     var d = await res.json()
@@ -1385,28 +1684,18 @@ async function sil(id) {
 
 function escHtml(s) {
   if (s === null || s === undefined) return ""
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;")
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;")
 }
-
 function fmtNum(v) {
   if (v == null || v === "") return '—'
-  var n = Number(v)
-  if (isNaN(n)) return '—'
+  var n = Number(v); if (isNaN(n)) return '—'
   return n.toLocaleString("tr-TR", {maximumFractionDigits: 2})
 }
-
-function fmtTL(v) {
+function fmtUSD(v) {
   if (v == null) return '—'
-  var n = Number(v)
-  if (isNaN(n)) return '—'
-  return "₺ " + n.toLocaleString("tr-TR", {minimumFractionDigits: 2, maximumFractionDigits: 2})
+  var n = Number(v); if (isNaN(n)) return '—'
+  return "$" + n.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})
 }
-
 function trTarih(s) {
   if (!s) return ""
   var m = String(s).match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/)
