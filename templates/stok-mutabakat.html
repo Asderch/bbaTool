@@ -337,7 +337,9 @@
     <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
     <div class="nav-section">Araçlar</div>
     <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+    {% if personel_yetki %}
     <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+    {% endif %}
     <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
     <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
     <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>

@@ -384,9 +384,24 @@ def hesaplama():
 
 @app.route("/personel")
 def personel_sayfa():
-    if not giris_yapildi_mi(): return redirect(url_for("login"))
-    if kullanici_rol() == "sayim": return redirect(url_for("index"))
+    if not giris_yapildi_mi():
+        return redirect(url_for("login"))
+    if not personel_yetkisi_var(session.get("kullanici")):
+        return redirect(url_for("index"))
     return render_template("personel.html")
+
+# ─── Modül Yetkileri ───
+PERSONEL_YETKILI_KULLANICILAR = ["admin", "bkonyar"]
+
+def personel_yetkisi_var(kullanici):
+    return kullanici in PERSONEL_YETKILI_KULLANICILAR
+
+# Template'lerde {% if personel_yetki %} olarak erişilebilir
+@app.context_processor
+def inject_permissions():
+    return {
+        'personel_yetki': personel_yetkisi_var(session.get("kullanici", ""))
+    }
 
 @app.route("/islem-gecmisi")
 def islem_gecmisi_sayfa():
