@@ -487,14 +487,10 @@
   </style>
 </head>
 <body>
-<div class="shell">
 
+<div class="shell">
 <nav class="sidebar">
-  <div class="sidebar-logo">
-    <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
-    <h2>Warehouse Data</h2>
-    <span>v{{ APP_VERSION }}</span>
-  </div>
+  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>V{{ APP_VERSION }}</span></div>
   <div class="nav-section">Main Data</div>
   <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
   <div class="nav-section">Sevkiyat</div>
@@ -515,18 +511,11 @@
   <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
   <a href="/malzeme-kontrol" class="nav-item active"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
     {% if session.kullanici == "admin" %}
-  <div class="nav-section">Yönetim</div>
-  <a href="/kullanici-yonetimi" class="nav-item">
-    <i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi
-
-  <a href="/surum-yonetimi" class="nav-item">
-    <i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi
-    
-  <a href="/fason/durumlar" class="nav-item">
-    <i class="fa-solid fa-code-branch"></i> Fason Durumlar
-</a>
-  </a>
-  {% endif %}
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item active"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
+    <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
+    {% endif %}
   <div class="sidebar-footer">
     <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i> Açık Tema</button>
     <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>

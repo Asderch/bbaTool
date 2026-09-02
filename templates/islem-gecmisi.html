@@ -22,6 +22,7 @@
     .modul-rozet.sevkiyat{background:var(--blue-dim);color:var(--blue)}
     .modul-rozet.personel{background:var(--purple-dim);color:var(--purple)}
     .modul-rozet.sistem{background:var(--bg-hover);color:var(--text3)}
+    .modul-rozet.fason{background:var(--amber-dim);color:var(--amber)}
 
     .islem-rozet{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}
     .islem-rozet.ekleme{background:var(--green-dim);color:var(--green)}
@@ -65,18 +66,11 @@
   <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
   <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
     {% if session.kullanici == "admin" %}
-  <div class="nav-section">Yönetim</div>
-  <a href="/kullanici-yonetimi" class="nav-item">
-    <i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi
-
-  <a href="/surum-yonetimi" class="nav-item">
-    <i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi
-
-  <a href="/fason/durumlar" class="nav-item">
-    <i class="fa-solid fa-code-branch"></i> Fason Durumlar
-</a>
-  </a>
-  {% endif %}
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
+    <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
+    {% endif %}
   <div class="sidebar-footer">
         <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
   <i class="fa-solid fa-sun"></i> Açık Tema
@@ -110,6 +104,7 @@
           <option value="">Tümü</option>
           <option value="Sevkiyat">Sevkiyat</option>
           <option value="Personel">Personel</option>
+          <option value="Fason">Fason</option>
         </select>
       </div>
       <div class="filtre-grup">
@@ -182,12 +177,14 @@ function ozetGuncelle(){
 function modulClass(modul){
   if(modul === "Sevkiyat") return "sevkiyat"
   if(modul === "Personel") return "personel"
+  if(modul === "Fason") return "fason"
   return "sistem"
 }
 
 function modulIkon(modul){
   if(modul === "Sevkiyat") return "fa-solid fa-truck"
   if(modul === "Personel") return "fa-solid fa-users"
+  if(modul === "Fason") return "fa-solid fa-truck-ramp-box"
   return "fa-solid fa-gear"
 }
 

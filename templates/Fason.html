@@ -126,6 +126,53 @@
     margin-bottom: 16px;
     flex-wrap: wrap;
   }
+
+  .son-import-panel {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.sip-ust {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.sip-baslik {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sip-baslik i { color: var(--blue); }
+.sip-tarih {
+  font-size: 10.5px;
+  color: var(--text3);
+  font-weight: 600;
+  margin-left: 6px;
+}
+.sip-kapat {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  width: 22px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 4px;
+}
+.sip-kapat:hover { background: var(--bg-hover); color: var(--text); }
+.sip-icerik { max-height: 220px; overflow-y: auto; }
+.sip-satir {
+  font-size: 11px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.sip-satir:last-child { border-bottom: none; }
+
   .arac-btn {
     padding: 8px 14px;
     border-radius: 6px;
@@ -145,34 +192,26 @@
   .arac-btn.import:hover { color: var(--blue); }
 
   /* ─── FİRMA STRIP (YENİ TASARIM) ─── */
+
   .firma-strip-wrap {
-    margin-bottom: 16px;
-  }
-  .firma-strip-baslik {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: .3px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .firma-strip-baslik i { color: var(--blue); }
+    margin-bottom: 20px;
+}
   .firma-strip {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 8px;
   }
   .firma-kart {
     background: var(--bg-white);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 14px;
+    border-radius: 10px;
+    padding: 8px 10px;
     box-shadow: var(--shadow-sm);
     cursor: pointer;
     transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     position: relative;
     overflow: hidden;
   }
@@ -180,8 +219,39 @@
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    width: 4px;
+    width: 3px;
     background: var(--fr-color, #6366f1);
+  }
+  .firma-kart .ikon-kutu {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--fr-bg, rgba(99,102,241,0.15));
+    color: var(--fr-color, #6366f1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex: 0 0 auto;
+  }
+  .firma-kart .ad {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .firma-kart .kartlar-alt {
+    font-size: 10px;
+    color: var(--text2);
+    margin-top: 1px;
+  }
+  .firma-kart .kartlar-alt .num {
+    font-weight: 800;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .firma-kart .kartlar-alt .tut-blok {
+    color: var(--primary);
+    font-weight: 700;
   }
   .firma-kart:hover {
     transform: translateY(-2px);
@@ -193,37 +263,7 @@
     box-shadow: 0 0 0 2px var(--fr-glow, rgba(99,102,241,0.25)), 0 4px 12px rgba(0,0,0,0.15);
     background: var(--fr-softBg, rgba(99,102,241,0.05));
   }
-  .firma-kart-ust {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .firma-kart .ikon-kutu {
-    width: 36px; height: 36px;
-    border-radius: 9px;
-    background: var(--fr-bg, rgba(99,102,241,0.15));
-    color: var(--fr-color, #6366f1);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    flex: 0 0 auto;
-  }
-  .firma-kart .ad {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1;
-    min-width: 0;
-  }
-  .firma-kart .kartlar-alt {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    font-size: 11px;
-  }
+
   .firma-kart .say-blok {
     color: var(--text2);
   }
@@ -262,21 +302,21 @@
   /* ─── DURUM ÖZET KARTLARI (YENİ TASARIM) ─── */
   .ozet-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
   }
   .ozet-kart {
     background: var(--bg-white);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 16px;
+    border-radius: 10px;
+    padding: 8px 10px;
     box-shadow: var(--shadow-sm);
     cursor: pointer;
     transition: all .15s;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     position: relative;
     overflow: hidden;
   }
@@ -298,10 +338,10 @@
     box-shadow: 0 0 0 2px rgba(62,207,142,0.25), 0 4px 12px rgba(0,0,0,0.15);
   }
   .ozet-kart .ozet-ikon {
-    width: 44px; height: 44px;
-    border-radius: 10px;
+    width: 28px; height: 28px;
+    border-radius: 7px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
+    font-size: 12px;
     flex: 0 0 auto;
   }
   .ozet-kart.amber  .ozet-ikon { background: rgba(245,158,11,0.15);  color: var(--amber); }
@@ -312,21 +352,26 @@
   .ozet-kart.text3  .ozet-ikon { background: rgba(160,160,160,0.15); color: var(--text3); }
   .ozet-kart .ozet-ic { flex: 1; min-width: 0; }
   .ozet-kart .ozet-label {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: .4px;
     font-weight: 700;
-    margin-bottom: 3px;
+    margin-bottom: 1px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .ozet-kart .ozet-deger {
-    font-size: 24px;
+    font-size: 16px;
     font-weight: 800;
     font-family: 'JetBrains Mono', monospace;
-    line-height: 1;
+    line-height: 1.1;
+  }
+  .ozet-kart .ozet-alt {
+    font-size: 9px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    margin-top: 0;
   }
   .ozet-kart.amber  .ozet-deger { color: var(--amber); }
   .ozet-kart.red    .ozet-deger { color: var(--red); }
@@ -334,13 +379,7 @@
   .ozet-kart.green  .ozet-deger { color: var(--green); }
   .ozet-kart.blue   .ozet-deger { color: var(--blue); }
   .ozet-kart.text3  .ozet-deger { color: var(--text); }
-  .ozet-kart .ozet-alt {
-    font-size: 10.5px;
-    color: var(--text3);
-    margin-top: 4px;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 600;
-  }
+
   .ozet-kart .ozet-alt.tutar { color: var(--primary); }
 
   /* Toplam fiyat kart */
@@ -810,7 +849,9 @@
     <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
     <div class="nav-section">Araçlar</div>
     <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+    {% if personel_yetki %}
     <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+    {% endif %}
     <a href="/fason" class="nav-item active"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
     <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
     <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
@@ -897,6 +938,20 @@
         {% endif %}
       </div>
 
+      <!-- SON IMPORT ÖZETİ -->
+      <div class="son-import-panel" id="sonImportPanel" style="display:none">
+        <div class="sip-ust">
+          <div class="sip-baslik">
+            <i class="fa-solid fa-clock-rotate-left"></i> Son Import Özeti
+           <span class="sip-tarih" id="sipTarih"></span>
+         </div>
+         <button class="sip-kapat" onclick="sonImportPanelKapat()" title="Kapat">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+       <div class="sip-icerik" id="sipIcerik"></div>
+      </div>
+
       <!-- TOPLAM ÖZET -->
       <div class="toplam-kart" id="toplamKart" style="display:none">
         <div class="sol">
@@ -921,7 +976,6 @@
       <!-- FİRMA STRIP -->
       <div class="firma-strip-wrap" id="firmaStripWrap" style="display:none">
         <div class="firma-strip-baslik">
-          <i class="fa-solid fa-building"></i> Firmalar (tıklayarak filtrele)
         </div>
         <div class="firma-strip" id="firmaStrip"></div>
       </div>
@@ -942,13 +996,21 @@
         </select>
 
         <select id="sirala" onchange="renderList()">
-          <option value="yeni">🆕 En yeni önce</option>
-          <option value="eski">📅 En eski önce</option>
-          <option value="durum">🎨 Duruma göre</option>
-          <option value="firma">🏢 Firmaya göre</option>
-          <option value="irs">🔢 İrsaliye no</option>
-          <option value="fiyat-buyuk">💰 Fiyat (büyükten küçüğe)</option>
-          <option value="fiyat-kucuk">💰 Fiyat (küçükten büyüğe)</option>
+          <option value="yeni">En yeni önce</option>
+          <option value="eski">En eski önce</option>
+          <option value="durum">Duruma göre</option>
+          <option value="firma">Firmaya göre</option>
+          <option value="irs">İrsaliye no</option>
+          <option value="fiyat-buyuk">Fiyat (büyükten küçüğe)</option>
+          <option value="fiyat-kucuk">Fiyat (küçükten büyüğe)</option>
+          <option value="stok-artan">Stok (artan)</option>
+          <option value="stok-azalan">Stok (azalan)</option>
+          <option value="giris-artan">Giriş (artan)</option>
+          <option value="giris-azalan">Giriş (azalan)</option>
+          <option value="otis-stok-artan">OTIS Stok (artan)</option>
+          <option value="otis-stok-azalan">OTIS Stok (azalan)</option>
+          <option value="otis-giris-artan">OTIS Giriş (artan)</option>
+          <option value="otis-giris-azalan">OTIS Giriş (azalan)</option>
         </select>
 
         <div class="goster-toggle">
@@ -1065,16 +1127,15 @@ var SECILI_IRS = null
 
 // Firma renk paleti (isimden hash → sabit renk)
 var FIRMA_RENKLER = [
-  { c: '#6366f1', bg: 'rgba(99,102,241,0.15)',  glow: 'rgba(99,102,241,0.3)',  softBg: 'rgba(99,102,241,0.05)' },
-  { c: '#22c55e', bg: 'rgba(34,197,94,0.15)',   glow: 'rgba(34,197,94,0.3)',   softBg: 'rgba(34,197,94,0.05)' },
-  { c: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  glow: 'rgba(245,158,11,0.3)',  softBg: 'rgba(245,158,11,0.05)' },
-  { c: '#a855f7', bg: 'rgba(168,85,247,0.15)',  glow: 'rgba(168,85,247,0.3)',  softBg: 'rgba(168,85,247,0.05)' },
-  { c: '#ec4899', bg: 'rgba(236,72,153,0.15)',  glow: 'rgba(236,72,153,0.3)',  softBg: 'rgba(236,72,153,0.05)' },
-  { c: '#06b6d4', bg: 'rgba(6,182,212,0.15)',   glow: 'rgba(6,182,212,0.3)',   softBg: 'rgba(6,182,212,0.05)' },
-  { c: '#f97316', bg: 'rgba(249,115,22,0.15)',  glow: 'rgba(249,115,22,0.3)',  softBg: 'rgba(249,115,22,0.05)' },
-  { c: '#14b8a6', bg: 'rgba(20,184,166,0.15)',  glow: 'rgba(20,184,166,0.3)',  softBg: 'rgba(20,184,166,0.05)' }
+  { c: '#8183c9', bg: 'rgba(129,131,201,0.10)',  glow: 'rgba(129,131,201,0.18)',  softBg: 'rgba(129,131,201,0.04)' },
+  { c: '#6fae87', bg: 'rgba(111,174,135,0.10)',   glow: 'rgba(111,174,135,0.18)',   softBg: 'rgba(111,174,135,0.04)' },
+  { c: '#c9a06a', bg: 'rgba(201,160,106,0.10)',  glow: 'rgba(201,160,106,0.18)',  softBg: 'rgba(201,160,106,0.04)' },
+  { c: '#a48bc2', bg: 'rgba(164,139,194,0.10)',  glow: 'rgba(164,139,194,0.18)',  softBg: 'rgba(164,139,194,0.04)' },
+  { c: '#c98da8', bg: 'rgba(201,141,168,0.10)',  glow: 'rgba(201,141,168,0.18)',  softBg: 'rgba(201,141,168,0.04)' },
+  { c: '#6fa8b5', bg: 'rgba(111,168,181,0.10)',   glow: 'rgba(111,168,181,0.18)',   softBg: 'rgba(111,168,181,0.04)' },
+  { c: '#c98f6e', bg: 'rgba(201,143,110,0.10)',  glow: 'rgba(201,143,110,0.18)',  softBg: 'rgba(201,143,110,0.04)' },
+  { c: '#6fb0a3', bg: 'rgba(111,176,163,0.10)',  glow: 'rgba(111,176,163,0.18)',  softBg: 'rgba(111,176,163,0.04)' }
 ]
-
 function firmaRenkAl(firmaAd) {
   var h = 0
   for (var i = 0; i < firmaAd.length; i++) {
@@ -1087,6 +1148,7 @@ function firmaRenkAl(firmaAd) {
 document.addEventListener("DOMContentLoaded", function() {
   topbarAvatarGuncelle()
   veriYukle()
+  sonImportPanelYukle()
   var g = localStorage.getItem("fasonGorunum")
   if (g) gorunumSec(g)
 })
@@ -1149,10 +1211,13 @@ async function veriYukle() {
 
 function durumSelectDoldur() {
   var fs = document.getElementById("filtreDurum")
+  var mevcutSecim = fs.value
   fs.innerHTML = '<option value="">Tüm durumlar</option><option value="__yok__">— Durum atanmamış —</option>'
   DURUMLAR.forEach(function(d) {
     fs.innerHTML += '<option value="' + d.id + '">' + escHtml(d.ad) + '</option>'
   })
+  fs.value = mevcutSecim
+
   var ms = document.getElementById("modalDurum")
   ms.innerHTML = '<option value="">— Durum yok —</option>'
   DURUMLAR.forEach(function(d) {
@@ -1162,10 +1227,13 @@ function durumSelectDoldur() {
 
 function firmaSelectDoldur() {
   var ff = document.getElementById("filtreFirma")
+  var mevcutSecim = ff.value
   ff.innerHTML = '<option value="">Tüm firmalar</option><option value="__yok__">— Firma atanmamış —</option>'
   FIRMALAR.forEach(function(f) {
     ff.innerHTML += '<option value="' + f.id + '">' + escHtml(f.ad) + '</option>'
   })
+  ff.value = mevcutSecim
+
   var yf = document.getElementById("yeniFirma")
   yf.innerHTML = '<option value="">— Firma seçiniz —</option>'
   FIRMALAR.forEach(function(f) {
@@ -1176,6 +1244,22 @@ function firmaSelectDoldur() {
   FIRMALAR.forEach(function(f) {
     tf.innerHTML += '<option value="' + f.id + '">' + escHtml(f.ad) + '</option>'
   })
+}
+
+async function listeYenile() {
+  try {
+    var r3 = await fetch("/api/fason/liste")
+    if (!r3.ok) throw new Error("HTTP " + r3.status)
+    TUM = await r3.json()
+    ozetGuncelle()
+    toplamGuncelle()
+    firmaStripGuncelle()
+    renderList()
+  } catch(e) {
+    console.error("Liste hatası:", e)
+    document.getElementById("listeAlan").innerHTML =
+      '<div class="bos-durum"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i>Hata: ' + escHtml(e.message) + '</div>'
+  }
 }
 
 async function irsaliyeEkle() {
@@ -1200,6 +1284,16 @@ async function irsaliyeEkle() {
     var d = await r.json()
     if (d.durum === "ok") {
       if (typeof toast === "function") toast(d.mesaj, "basari")
+      if (d.degisiklikler && d.degisiklikler.length) {
+  var onemli = d.degisiklikler.filter(function(x){ return x.onemli })
+  onemli.forEach(function(deg, i) {
+    setTimeout(function() {
+      if (typeof toast === "function") {
+        toast(deg.irsaliye_no + ": " + deg.alan_etiket + " " + (deg.eski ?? "—") + " → " + deg.yeni, "uyari")
+      }
+    }, 400 + i * 350)
+  })
+}
       if (d.uyari && typeof toast === "function") setTimeout(function() { toast(d.uyari, "uyari") }, 300)
       document.getElementById("yeniIrsNo").value = ""
       document.getElementById("yeniIrsNo").focus()
@@ -1347,9 +1441,37 @@ async function importGonder() {
         '<div style="margin-top:6px;font-size:11px;color:var(--text3)">Güncellenen kolonlar: ' +
         (d.kolonlar ? d.kolonlar.join(", ") : "-") + '</div>'
       if (d.hatalar && d.hatalar.length) html += '<div style="margin-top:8px;font-size:11px"><b>Not:</b> ' + d.hatalar.length + ' satır atlandı</div>'
+
+      if (d.degisiklikler && d.degisiklikler.length) {
+        html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">' +
+          '<b style="font-size:11px">Değişen değerler (' + d.degisiklikler.length + '):</b>' +
+          '<div style="max-height:220px;overflow-y:auto;margin-top:6px">'
+        d.degisiklikler.forEach(function(deg) {
+          var vurgu = deg.onemli ? 'color:var(--amber);font-weight:700' : 'color:var(--text2)'
+          html += '<div style="font-size:11px;padding:4px 0;border-bottom:1px solid var(--border-light)">' +
+            '<span style="' + vurgu + '">' + escHtml(deg.irsaliye_no) + '</span> — ' + escHtml(deg.alan_etiket) + ': ' +
+            (deg.eski ?? '—') + ' → <b>' + deg.yeni + '</b>' +
+          '</div>'
+        })
+        html += '</div></div>'
+      }
+
       html += '</div>'
-      document.getElementById("importSonucAlani").innerHTML = html
-      if (typeof toast === "function") toast(d.mesaj, "basari")
+            document.getElementById("importSonucAlani").innerHTML = html
+                  if (typeof toast === "function") toast(d.mesaj, "basari")
+      sonImportKaydet(fInput.files[0].name, d.guncellenen, d.degisiklikler)
+
+      if (d.degisiklikler && d.degisiklikler.length) {
+        var onemli = d.degisiklikler.filter(function(x){ return x.onemli })
+        onemli.forEach(function(deg, i) {
+          setTimeout(function() {
+            if (typeof toast === "function") {
+              toast(deg.irsaliye_no + ": " + deg.alan_etiket + " " + (deg.eski ?? "—") + " → " + deg.yeni, "uyari")
+            }
+          }, 400 + i * 350)
+        })
+      }
+
       setTimeout(function() { veriYukle() }, 500)
     } else {
       document.getElementById("importSonucAlani").innerHTML =
@@ -1382,7 +1504,7 @@ function ozetGuncelle() {
     var sayi = sayilar[d.id] || 0
     var tutar = tutarlar[d.id] || 0
     var aktif = (String(FILTRE_DURUM) === String(d.id)) ? " aktif" : ""
-    var tutarStr = tutar > 0 ? "$" + tutar.toLocaleString("en-US", {maximumFractionDigits: 0}) : ""
+    var tutarStr = tutar > 0 ? "$" + tutar.toLocaleString("tr-TR", {maximumFractionDigits: 0}) : ""
     html += '<div class="ozet-kart ' + escHtml(d.renk) + aktif + '" onclick="durumFiltrele(' + d.id + ')">' +
       '<div class="ozet-ikon"><i class="fa-solid ' + escHtml(d.ikon) + '"></i></div>' +
       '<div class="ozet-ic">' +
@@ -1420,7 +1542,7 @@ function firmaStripGuncelle() {
   keys.forEach(function(fid) {
     var s = stats[fid]
     var aktif = (String(FILTRE_FIRMA) === String(fid)) ? " aktif" : ""
-    var tutar = s.toplam > 0 ? "$" + s.toplam.toLocaleString("en-US", {maximumFractionDigits: 0}) : ""
+    var tutar = s.toplam > 0 ? "$" + s.toplam.toLocaleString("tr-TR", {maximumFractionDigits: 0}) : ""
     var yuzde = s.sayi > 0 ? Math.round((s.cikis / s.sayi) * 100) : 0
 
     var renk = fid === "__yok__"
@@ -1430,17 +1552,14 @@ function firmaStripGuncelle() {
     var styleVars = 'style="--fr-color:' + renk.c + '; --fr-bg:' + renk.bg + '; --fr-glow:' + renk.glow + '; --fr-softBg:' + renk.softBg + '"'
 
     html += '<div class="firma-kart' + aktif + '" ' + styleVars + ' onclick="firmaFiltrele(\'' + fid + '\')">' +
-      '<div class="firma-kart-ust">' +
-        '<div class="ikon-kutu"><i class="fa-solid fa-building"></i></div>' +
-        '<div class="ad" title="' + escHtml(s.ad) + '">' + escHtml(s.ad) + '</div>' +
-      '</div>' +
-      '<div class="kartlar-alt">' +
-        '<div class="say-blok"><span class="num">' + s.sayi + '</span> irs.</div>' +
-        (tutar ? '<div class="tut-blok">' + tutar + '</div>' : '') +
-      '</div>' +
-      '<div class="progress-bar"><div class="progress-fill" style="width:' + yuzde + '%"></div></div>' +
-      '<div class="progress-label">%' + yuzde + ' çıkış yapıldı</div>' +
-    '</div>'
+  '<div class="ikon-kutu"><i class="fa-solid fa-building"></i></div>' +
+  '<div style="flex:1;min-width:0">' +
+    '<div class="ad" title="' + escHtml(s.ad) + '">' + escHtml(s.ad) + '</div>' +
+    '<div class="kartlar-alt"><span class="num">' + s.sayi + '</span> irs.' +
+      (tutar ? ' · <span class="tut-blok">' + tutar + '</span>' : '') +
+    '</div>' +
+  '</div>' +
+'</div>'
   })
   strip.innerHTML = html
 }
@@ -1456,7 +1575,7 @@ function toplamGuncelle() {
     }
   })
   document.getElementById("toplamKart").style.display = "flex"
-  document.getElementById("toplamFiyat").textContent = "$" + toplam.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})
+  document.getElementById("toplamFiyat").textContent = "$" + toplam.toLocaleString("tr-TR", {minimumFractionDigits: 2, maximumFractionDigits: 2})
   document.getElementById("toplamKayit").textContent = TUM.length
   document.getElementById("fiyatliKayit").textContent = fiyatli
 }
@@ -1505,6 +1624,15 @@ function renderList() {
   })
   else if (SIRALA === "fiyat-buyuk") liste.sort(function(a,b){ return (b.toplam_fiyat || 0) - (a.toplam_fiyat || 0) })
   else if (SIRALA === "fiyat-kucuk") liste.sort(function(a,b){ return (a.toplam_fiyat || 0) - (b.toplam_fiyat || 0) })
+  else if (SIRALA === "fiyat-kucuk") liste.sort(function(a,b){ return (a.toplam_fiyat || 0) - (b.toplam_fiyat || 0) })
+  else if (SIRALA === "stok-artan") liste.sort(function(a,b){ return (a.stok_miktari ?? Infinity) - (b.stok_miktari ?? Infinity) })
+  else if (SIRALA === "stok-azalan") liste.sort(function(a,b){ return (b.stok_miktari ?? -Infinity) - (a.stok_miktari ?? -Infinity) })
+  else if (SIRALA === "giris-artan") liste.sort(function(a,b){ return (a.giris_miktari ?? Infinity) - (b.giris_miktari ?? Infinity) })
+  else if (SIRALA === "giris-azalan") liste.sort(function(a,b){ return (b.giris_miktari ?? -Infinity) - (a.giris_miktari ?? -Infinity) })
+  else if (SIRALA === "otis-stok-artan") liste.sort(function(a,b){ return (a.otis_stok ?? Infinity) - (b.otis_stok ?? Infinity) })
+  else if (SIRALA === "otis-stok-azalan") liste.sort(function(a,b){ return (b.otis_stok ?? -Infinity) - (a.otis_stok ?? -Infinity) })
+  else if (SIRALA === "otis-giris-artan") liste.sort(function(a,b){ return (a.otis_giris ?? Infinity) - (b.otis_giris ?? Infinity) })
+  else if (SIRALA === "otis-giris-azalan") liste.sort(function(a,b){ return (b.otis_giris ?? -Infinity) - (a.otis_giris ?? -Infinity) })
   else if (SIRALA === "durum") {
     liste.sort(function(a,b){
       var da = DURUMLAR.find(function(x){ return x.id === a.durum_id })
@@ -1682,6 +1810,46 @@ async function sil(id) {
   }
 }
 
+function sonImportKaydet(dosyaAdi, guncellenen, degisiklikler) {
+  var veri = {
+    dosya: dosyaAdi,
+    tarih: new Date().toLocaleString("tr-TR"),
+    guncellenen: guncellenen,
+    degisiklikler: degisiklikler || []
+  }
+  localStorage.setItem("fasonSonImport", JSON.stringify(veri))
+  sonImportPanelGoster(veri)
+}
+
+function sonImportPanelGoster(veri) {
+  var panel = document.getElementById("sonImportPanel")
+  document.getElementById("sipTarih").textContent = "· " + veri.tarih + (veri.dosya ? " · " + veri.dosya : "")
+  var html = '<div class="sip-satir"><b>' + veri.guncellenen + '</b> kayıt güncellendi</div>'
+  if (veri.degisiklikler && veri.degisiklikler.length) {
+    veri.degisiklikler.forEach(function(deg) {
+      var vurgu = deg.onemli ? 'color:var(--amber);font-weight:700' : 'color:var(--text2)'
+      html += '<div class="sip-satir"><span style="' + vurgu + '">' + escHtml(deg.irsaliye_no) + '</span> — ' +
+        escHtml(deg.alan_etiket) + ': ' + (deg.eski ?? '—') + ' → <b>' + deg.yeni + '</b></div>'
+    })
+  }
+  document.getElementById("sipIcerik").innerHTML = html
+  panel.style.display = "block"
+}
+
+function sonImportPanelYukle() {
+  var raw = localStorage.getItem("fasonSonImport")
+  if (!raw) return
+  try {
+    sonImportPanelGoster(JSON.parse(raw))
+  } catch(e) {}
+}
+
+function sonImportPanelKapat() {
+  localStorage.removeItem("fasonSonImport")
+  document.getElementById("sonImportPanel").style.display = "none"
+}
+
+
 function escHtml(s) {
   if (s === null || s === undefined) return ""
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;")
@@ -1694,7 +1862,7 @@ function fmtNum(v) {
 function fmtUSD(v) {
   if (v == null) return '—'
   var n = Number(v); if (isNaN(n)) return '—'
-  return "$" + n.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})
+  return "$" + n.toLocaleString("tr-TR", {minimumFractionDigits: 2, maximumFractionDigits: 2})
 }
 function trTarih(s) {
   if (!s) return ""

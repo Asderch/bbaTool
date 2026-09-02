@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 fason_db.py — BBA Fason İrsaliye Takip Modülü
-Firma yönetimi dahil versiyon.
+Firma yönetimi + İşlem Geçmişi entegrasyonu dahil versiyon.
 """
 
 import os
@@ -25,6 +25,27 @@ def _db_klasor_bul():
 
 DB_KLASOR = _db_klasor_bul()
 DB_YOL = os.path.join(DB_KLASOR, "fason.db")
+
+# ═════════════════════════════════════════════════
+# İŞLEM GEÇMİŞİ ENTEGRASYONU (sevkiyat.db'deki ortak islem_log tablosu)
+# ═════════════════════════════════════════════════
+SEVKIYAT_DB_YOL = os.path.join(DB_KLASOR, "sevkiyat.db")
+
+
+def log_kaydet(islem, detay="", ilgili_id=None, ilgili_ad=""):
+    """Fason işlemlerini merkezi İşlem Geçmişi tablosuna (sevkiyat.db → islem_log) yazar."""
+    try:
+        conn = sqlite3.connect(SEVKIYAT_DB_YOL, timeout=10)
+        conn.execute(
+            "INSERT INTO islem_log (modul,islem,detay,ilgili_id,ilgili_ad,yapan,yapan_ad,tarih) VALUES (?,?,?,?,?,?,?,?)",
+            ("Fason", islem, detay, ilgili_id, ilgili_ad,
+             session.get("kullanici", "sistem"), session.get("ad", "Sistem"),
+             datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[Fason log] hata: {e}")
 
 
 def _fason_export_klasor():
@@ -256,7 +277,7 @@ def api_fason_ekle():
 
         conn = get_db()
         try:
-            fv = conn.execute("SELECT id FROM fason_firma WHERE id = ?", (firma_id,)).fetchone()
+            fv = conn.execute("SELECT id, ad FROM fason_firma WHERE id = ?", (firma_id,)).fetchone()
             if not fv:
                 return jsonify({"durum": "hata", "mesaj": "Firma bulunamadı"}), 400
 
@@ -271,6 +292,13 @@ def api_fason_ekle():
                 VALUES (?, ?, ?, ?)
             """, (irsaliye_no, aciklama, session.get("kullanici", "-"), firma_id))
             conn.commit()
+
+            log_kaydet(
+                "İrsaliye Ekleme",
+                f"{irsaliye_no} — {fv['ad']}" + (" (mükerrer no)" if mevcut else ""),
+                cur.lastrowid,
+                irsaliye_no
+            )
 
             return jsonify({
                 "durum": "ok",
@@ -303,6 +331,12 @@ def api_fason_durum_guncelle(irs_id):
 
         conn = get_db()
         try:
+            eski = conn.execute("""
+                SELECT i.irsaliye_no, d.ad AS eski_durum
+                FROM fason_irsaliye i LEFT JOIN fason_durum d ON i.durum_id = d.id
+                WHERE i.id = ?
+            """, (irs_id,)).fetchone()
+
             simdi = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             conn.execute("""
                 UPDATE fason_irsaliye
@@ -314,6 +348,20 @@ def api_fason_durum_guncelle(irs_id):
 
             if conn.total_changes == 0:
                 return jsonify({"durum": "hata", "mesaj": "İrsaliye bulunamadı"}), 404
+
+            yeni_durum_ad = "—"
+            if durum_id:
+                yd = conn.execute("SELECT ad FROM fason_durum WHERE id = ?", (durum_id,)).fetchone()
+                yeni_durum_ad = yd["ad"] if yd else "—"
+
+            if eski:
+                log_kaydet(
+                    "Durum Güncelleme",
+                    f"{eski['irsaliye_no']}: {eski['eski_durum'] or '—'} → {yeni_durum_ad}",
+                    irs_id,
+                    eski["irsaliye_no"]
+                )
+
             return jsonify({"durum": "ok", "mesaj": "Durum güncellendi"})
         finally:
             conn.close()
@@ -328,7 +376,7 @@ def api_fason_sil(irs_id):
     try:
         conn = get_db()
         try:
-            rec = conn.execute("SELECT giren_kullanici FROM fason_irsaliye WHERE id = ?", (irs_id,)).fetchone()
+            rec = conn.execute("SELECT irsaliye_no, giren_kullanici FROM fason_irsaliye WHERE id = ?", (irs_id,)).fetchone()
             if not rec:
                 return jsonify({"durum": "hata", "mesaj": "Bulunamadı"}), 404
             kullanici = session.get("kullanici")
@@ -337,6 +385,7 @@ def api_fason_sil(irs_id):
                 return jsonify({"durum": "hata", "mesaj": "Sadece admin veya kaydı giren silebilir"}), 403
             conn.execute("DELETE FROM fason_irsaliye WHERE id = ?", (irs_id,))
             conn.commit()
+            log_kaydet("İrsaliye Silme", f"{rec['irsaliye_no']} silindi", irs_id, rec["irsaliye_no"])
             return jsonify({"durum": "ok", "mesaj": "Silindi"})
         finally:
             conn.close()
@@ -490,24 +539,23 @@ def api_fason_export():
             bottom=Side(style="thin", color="D1D5DB")
         )
 
-        # 16 kolon (Firma eklendi)
         basliklar = [
-            ("ID",                    "kilit"),   # A
-            ("İrsaliye No",           "kilit"),   # B
-            ("Firma",                 "kilit"),   # C - YENİ
-            ("Açıklama",              "kilit"),   # D
-            ("Durum",                 "kilit"),   # E
-            ("Durum Notu",            "kilit"),   # F
-            ("Giren Kullanıcı",       "kilit"),   # G
-            ("Girilme Tarihi",        "kilit"),   # H
-            ("Durum Güncelleyen",     "kilit"),   # I
-            ("Durum Güncel. Tarihi",  "kilit"),   # J
-            ("İrsaliye Tarihi",       "edit"),    # K
-            ("Stok Miktarı",          "edit"),    # L
-            ("Giriş Miktarı",         "edit"),    # M
-            ("OTIS Stok",             "edit"),    # N
-            ("OTIS Giriş",            "edit"),    # O
-            ("Toplam Fiyat (USD)",    "edit"),    # P
+            ("ID",                    "kilit"),
+            ("İrsaliye No",           "kilit"),
+            ("Firma",                 "kilit"),
+            ("Açıklama",              "kilit"),
+            ("Durum",                 "kilit"),
+            ("Durum Notu",            "kilit"),
+            ("Giren Kullanıcı",       "kilit"),
+            ("Girilme Tarihi",        "kilit"),
+            ("Durum Güncelleyen",     "kilit"),
+            ("Durum Güncel. Tarihi",  "kilit"),
+            ("İrsaliye Tarihi",       "edit"),
+            ("Stok Miktarı",          "edit"),
+            ("Giriş Miktarı",         "edit"),
+            ("OTIS Stok",             "edit"),
+            ("OTIS Giriş",            "edit"),
+            ("Toplam Fiyat (USD)",    "edit"),
         ]
 
         ws.merge_cells("A1:J1")
@@ -604,7 +652,20 @@ def api_fason_export():
 
 # ═════════════════════════════════════════════════
 # EXCEL IMPORT — Sadece 6 kolon güncellenir
+# Değişiklik tespiti + İşlem Geçmişi + uyarı listesi
 # ═════════════════════════════════════════════════
+
+ALAN_ETIKET = {
+    "irsaliye_tarihi": "İrsaliye Tarihi",
+    "stok_miktari":    "Stok Miktarı",
+    "giris_miktari":   "Giriş Miktarı",
+    "otis_stok":       "OTIS Stok",
+    "otis_giris":      "OTIS Giriş",
+    "toplam_fiyat":    "Toplam Fiyat",
+}
+# Bu alanlarda değişiklik olursa frontend'e "önemli" (uyarı) olarak işaretlenir
+ONEMLI_ALANLAR = {"otis_stok", "otis_giris"}
+
 
 @fason_bp.route("/api/fason/import", methods=["POST"])
 def api_fason_import():
@@ -671,6 +732,7 @@ def api_fason_import():
         guncellenen = 0
         atlanan = 0
         hatalar = []
+        degisiklikler = []  # frontend'e dönecek: [{irsaliye_no, alan, alan_etiket, eski, yeni, onemli}]
         conn = get_db()
         try:
             for row_idx in range(h_row + 1, ws.max_row + 1):
@@ -683,8 +745,10 @@ def api_fason_import():
                     atlanan += 1
                     continue
 
-                var = conn.execute("SELECT id FROM fason_irsaliye WHERE id = ?", (irs_id,)).fetchone()
-                if not var:
+                mevcut_kayit = conn.execute(
+                    "SELECT * FROM fason_irsaliye WHERE id = ?", (irs_id,)
+                ).fetchone()
+                if not mevcut_kayit:
                     atlanan += 1
                     hatalar.append(f"Satır {row_idx}: ID {irs_id} bulunamadı")
                     continue
@@ -711,6 +775,26 @@ def api_fason_import():
                             except:
                                 degerler[kolon_ad] = None
 
+                # ─── Değişiklik tespiti (eski vs yeni) ───
+                for alan, yeni_val in degerler.items():
+                    eski_val = mevcut_kayit[alan]
+                    # Sayısal alanlarda küçük yuvarlama farklarını değişiklik sayma
+                    if alan != "irsaliye_tarihi" and eski_val is not None and yeni_val is not None:
+                        try:
+                            if abs(float(eski_val) - float(yeni_val)) < 0.005:
+                                continue
+                        except:
+                            pass
+                    if eski_val != yeni_val:
+                        degisiklikler.append({
+                            "irsaliye_no": mevcut_kayit["irsaliye_no"],
+                            "alan": alan,
+                            "alan_etiket": ALAN_ETIKET.get(alan, alan),
+                            "eski": eski_val,
+                            "yeni": yeni_val,
+                            "onemli": alan in ONEMLI_ALANLAR
+                        })
+
                 set_parts = []
                 vals = []
                 for k, val in degerler.items():
@@ -728,12 +812,30 @@ def api_fason_import():
         finally:
             conn.close()
 
+        # ─── İşlem Geçmişi'ne yaz ───
+        log_kaydet(
+            "Import Güncelleme",
+            f"{dosya.filename}: {guncellenen} kayıt güncellendi" + (f", {atlanan} atlandı" if atlanan else ""),
+            None,
+            dosya.filename
+        )
+        # Önemli (OTIS) değişiklikleri ayrıca tek tek logla ki İşlem Geçmişi'nde net görünsün
+        for deg in degisiklikler:
+            if deg["onemli"]:
+                log_kaydet(
+                    "Import — Önemli Değişiklik",
+                    f"{deg['irsaliye_no']}: {deg['alan_etiket']} {deg['eski']} → {deg['yeni']}",
+                    None,
+                    deg["irsaliye_no"]
+                )
+
         return jsonify({
             "durum": "ok",
             "guncellenen": guncellenen,
             "atlanan": atlanan,
             "kolonlar": bulunan_kolonlar,
             "hatalar": hatalar[:20],
+            "degisiklikler": degisiklikler[:100],
             "mesaj": f"{guncellenen} kayıt güncellendi" + (f", {atlanan} atlandı" if atlanan else "")
         })
     except Exception as e:
@@ -788,7 +890,7 @@ def api_fason_toplu_ekle():
                     break
 
         conn = get_db()
-        fv = conn.execute("SELECT id FROM fason_firma WHERE id = ?", (firma_id,)).fetchone()
+        fv = conn.execute("SELECT id, ad FROM fason_firma WHERE id = ?", (firma_id,)).fetchone()
         if not fv:
             conn.close()
             return jsonify({"durum": "hata", "mesaj": "Firma bulunamadı"}), 400
@@ -843,6 +945,13 @@ def api_fason_toplu_ekle():
             mesaj += f" ({mukerrer} tanesi daha önce vardı)"
         if atlanan:
             mesaj += f", {atlanan} satır atlandı"
+
+        log_kaydet(
+            "Toplu Ekleme",
+            f"{eklenen} irsaliye eklendi — Firma: {fv['ad']}" + (f" ({mukerrer} mükerrer)" if mukerrer else ""),
+            None,
+            fv["ad"]
+        )
 
         return jsonify({
             "durum": "ok",
