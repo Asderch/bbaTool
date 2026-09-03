@@ -9,6 +9,11 @@ import sys
 import sqlite3
 from datetime import datetime
 from flask import Blueprint, request, jsonify, session
+from kullanici_db import VARSAYILAN_ROLLER
+
+def _fason_yetki_var_mi(yetki):
+    rol = session.get("rol")
+    return VARSAYILAN_ROLLER.get(rol, {}).get(yetki, False)
 
 fason_bp = Blueprint("fason", __name__)
 
@@ -201,8 +206,8 @@ def api_fason_firma_ekle():
 
 @fason_bp.route("/api/fason/firma-sil/<int:fid>", methods=["DELETE"])
 def api_fason_firma_sil(fid):
-    if session.get("rol") != "admin" and session.get("kullanici") != "admin":
-        return jsonify({"durum": "hata", "mesaj": "Sadece admin"}), 403
+    if not _fason_yetki_var_mi("fason_duzenle"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     try:
         conn = get_db()
         try:
@@ -258,6 +263,8 @@ def api_fason_liste():
 def api_fason_ekle():
     if not session.get("kullanici"):
         return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if not _fason_yetki_var_mi("fason_ekle"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     try:
         d = request.get_json() or {}
         irsaliye_no = (d.get("irsaliye_no") or "").strip()
@@ -286,6 +293,12 @@ def api_fason_ekle():
                 (irsaliye_no,)
             ).fetchone()
 
+            if mevcut and not _fason_yetki_var_mi("fason_mukerrer"):
+                return jsonify({
+                    "durum": "hata",
+                    "mesaj": f"Bu irsaliye numarası zaten kayıtlı: {irsaliye_no}"
+                }), 400
+
             cur = conn.execute("""
                 INSERT INTO fason_irsaliye
                     (irsaliye_no, aciklama, giren_kullanici, firma_id)
@@ -295,7 +308,7 @@ def api_fason_ekle():
 
             log_kaydet(
                 "İrsaliye Ekleme",
-                f"{irsaliye_no} — {fv['ad']}" + (" (mükerrer no)" if mevcut else ""),
+                f"{irsaliye_no} — {fv['ad']}" + (" (mükerrer no — admin tarafından eklendi)" if mevcut else ""),
                 cur.lastrowid,
                 irsaliye_no
             )
@@ -304,7 +317,7 @@ def api_fason_ekle():
                 "durum": "ok",
                 "id": cur.lastrowid,
                 "mesaj": f"İrsaliye eklendi: {irsaliye_no}",
-                "uyari": ("Bu irsaliye numarası daha önce girilmiş" if mevcut else None)
+                "uyari": ("Bu irsaliye numarası daha önce girilmişti (admin olarak eklendi)" if mevcut else None)
             })
         finally:
             conn.close()
@@ -380,9 +393,8 @@ def api_fason_sil(irs_id):
             if not rec:
                 return jsonify({"durum": "hata", "mesaj": "Bulunamadı"}), 404
             kullanici = session.get("kullanici")
-            rol = session.get("rol")
-            if kullanici != "admin" and rol != "admin" and rec["giren_kullanici"] != kullanici:
-                return jsonify({"durum": "hata", "mesaj": "Sadece admin veya kaydı giren silebilir"}), 403
+            if not _fason_yetki_var_mi("fason_sil_tumu") and rec["giren_kullanici"] != kullanici:
+                return jsonify({"durum": "hata", "mesaj": "Sadece yetkili kullanıcı veya kaydı giren silebilir"}), 403
             conn.execute("DELETE FROM fason_irsaliye WHERE id = ?", (irs_id,))
             conn.commit()
             log_kaydet("İrsaliye Silme", f"{rec['irsaliye_no']} silindi", irs_id, rec["irsaliye_no"])
@@ -417,8 +429,8 @@ def api_fason_durumlar():
 
 @fason_bp.route("/api/fason/durum-ekle", methods=["POST"])
 def api_fason_durum_ekle():
-    if session.get("rol") != "admin" and session.get("kullanici") != "admin":
-        return jsonify({"durum": "hata", "mesaj": "Sadece admin"}), 403
+    if not _fason_yetki_var_mi("fason_duzenle"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     try:
         d = request.get_json() or {}
         ad = (d.get("ad") or "").strip()
@@ -446,8 +458,8 @@ def api_fason_durum_ekle():
 
 @fason_bp.route("/api/fason/durum-guncelle-tanim/<int:did>", methods=["POST"])
 def api_fason_durum_guncelle_tanim(did):
-    if session.get("rol") != "admin" and session.get("kullanici") != "admin":
-        return jsonify({"durum": "hata", "mesaj": "Sadece admin"}), 403
+    if not _fason_yetki_var_mi("fason_duzenle"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     try:
         d = request.get_json() or {}
         conn = get_db()
@@ -474,8 +486,8 @@ def api_fason_durum_guncelle_tanim(did):
 
 @fason_bp.route("/api/fason/durum-sil/<int:did>", methods=["DELETE"])
 def api_fason_durum_sil(did):
-    if session.get("rol") != "admin" and session.get("kullanici") != "admin":
-        return jsonify({"durum": "hata", "mesaj": "Sadece admin"}), 403
+    if not _fason_yetki_var_mi("fason_duzenle"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     try:
         conn = get_db()
         try:
@@ -671,8 +683,8 @@ ONEMLI_ALANLAR = {"otis_stok", "otis_giris"}
 def api_fason_import():
     if not session.get("kullanici"):
         return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
-    if session.get("kullanici") != "admin" and session.get("rol") != "admin":
-        return jsonify({"durum": "hata", "mesaj": "Sadece admin"}), 403
+    if not _fason_yetki_var_mi("fason_import"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     if "dosya" not in request.files:
         return jsonify({"durum": "hata", "mesaj": "Dosya yok"}), 400
     dosya = request.files["dosya"]
@@ -850,6 +862,8 @@ def api_fason_import():
 def api_fason_toplu_ekle():
     if not session.get("kullanici"):
         return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if not _fason_yetki_var_mi("fason_ekle"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     if "dosya" not in request.files:
         return jsonify({"durum": "hata", "mesaj": "Dosya yok"}), 400
     dosya = request.files["dosya"]
@@ -926,8 +940,14 @@ def api_fason_toplu_ekle():
                     "SELECT id FROM fason_irsaliye WHERE irsaliye_no = ?",
                     (irs_no,)
                 ).fetchone()
+
                 if var:
-                    mukerrer += 1
+                    if _fason_yetki_var_mi("fason_mukerrer"):
+                        mukerrer += 1
+                    else:
+                        atlanan += 1
+                        atlanan_sebep.append(f"Satır {row_idx}: {irs_no} zaten kayıtlı (mükerrer, atlandı)")
+                        continue
 
                 conn.execute("""
                     INSERT INTO fason_irsaliye
@@ -963,3 +983,145 @@ def api_fason_toplu_ekle():
         })
     except Exception as e:
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+
+
+# ═════════════════════════════════════════════════
+# IMPORT GEÇMİŞİ — sevkiyat.db'deki islem_log'dan okur
+# ═════════════════════════════════════════════════
+
+@fason_bp.route("/api/fason/import-log", methods=["GET"])
+def api_fason_import_log():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if not _fason_yetki_var_mi("fason_import_gecmisi"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
+    try:
+        conn = sqlite3.connect(SEVKIYAT_DB_YOL, timeout=10)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("""
+            SELECT * FROM islem_log
+            WHERE modul = 'Fason' AND islem IN ('Import Güncelleme', 'Import — Önemli Değişiklik')
+            ORDER BY id ASC
+        """).fetchall()
+        conn.close()
+
+        gruplar = []
+        aktif = None
+        for r in rows:
+            if r["islem"] == "Import Güncelleme":
+                if aktif:
+                    gruplar.append(aktif)
+                aktif = {
+                    "tarih": r["tarih"],
+                    "yapan_ad": r["yapan_ad"],
+                    "dosya": r["ilgili_ad"] or "",
+                    "ozet": r["detay"] or "",
+                    "degisiklikler": []
+                }
+            else:  # Import — Önemli Değişiklik
+                if aktif is None:
+                    aktif = {
+                        "tarih": r["tarih"], "yapan_ad": r["yapan_ad"],
+                        "dosya": "", "ozet": "", "degisiklikler": []
+                    }
+                aktif["degisiklikler"].append({
+                    "irsaliye_no": r["ilgili_ad"] or "",
+                    "detay": r["detay"] or ""
+                })
+        if aktif:
+            gruplar.append(aktif)
+
+        gruplar.reverse()  # en yeni en üstte
+        return jsonify(gruplar)
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500   
+
+# ═════════════════════════════════════════════════
+# KAYIT DÜZENLEME (tüm alanlar) — sadece admin kullanıcısı
+# ═════════════════════════════════════════════════
+
+@fason_bp.route("/api/fason/duzenle/<int:irs_id>", methods=["POST"])
+def api_fason_duzenle(irs_id):
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if not _fason_yetki_var_mi("fason_duzenle"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
+    try:
+        d = request.get_json() or {}
+        conn = get_db()
+        try:
+            eski = conn.execute("SELECT * FROM fason_irsaliye WHERE id = ?", (irs_id,)).fetchone()
+            if not eski:
+                return jsonify({"durum": "hata", "mesaj": "Bulunamadı"}), 404
+
+            irsaliye_no = (d.get("irsaliye_no") or eski["irsaliye_no"]).strip()
+            if not irsaliye_no:
+                return jsonify({"durum": "hata", "mesaj": "İrsaliye No zorunlu"}), 400
+
+            firma_id = eski["firma_id"]
+            if d.get("firma_id") not in (None, ""):
+                try:
+                    firma_id = int(d.get("firma_id"))
+                    fv = conn.execute("SELECT id FROM fason_firma WHERE id = ?", (firma_id,)).fetchone()
+                    if not fv:
+                        return jsonify({"durum": "hata", "mesaj": "Firma bulunamadı"}), 400
+                except:
+                    return jsonify({"durum": "hata", "mesaj": "Geçersiz firma"}), 400
+
+            aciklama = d.get("aciklama", eski["aciklama"] or "")
+
+            def sayi_al(anahtar):
+                if anahtar not in d:
+                    return eski[anahtar]
+                v = d.get(anahtar)
+                if v is None or v == "":
+                    return None
+                try:
+                    return float(v)
+                except:
+                    return eski[anahtar]
+
+            irsaliye_tarihi = d.get("irsaliye_tarihi", eski["irsaliye_tarihi"]) or None
+            stok_miktari    = sayi_al("stok_miktari")
+            giris_miktari   = sayi_al("giris_miktari")
+            otis_stok       = sayi_al("otis_stok")
+            otis_giris      = sayi_al("otis_giris")
+            toplam_fiyat    = sayi_al("toplam_fiyat")
+
+            conn.execute("""
+                UPDATE fason_irsaliye
+                SET irsaliye_no = ?, firma_id = ?, aciklama = ?,
+                    irsaliye_tarihi = ?, stok_miktari = ?, giris_miktari = ?,
+                    otis_stok = ?, otis_giris = ?, toplam_fiyat = ?
+                WHERE id = ?
+            """, (irsaliye_no, firma_id, aciklama, irsaliye_tarihi,
+                  stok_miktari, giris_miktari, otis_stok, otis_giris, toplam_fiyat, irs_id))
+            conn.commit()
+
+            alanlar = [
+                ("İrsaliye No", eski["irsaliye_no"], irsaliye_no),
+                ("Açıklama", eski["aciklama"], aciklama),
+                ("İrsaliye Tarihi", eski["irsaliye_tarihi"], irsaliye_tarihi),
+                ("Stok Miktarı", eski["stok_miktari"], stok_miktari),
+                ("Giriş Miktarı", eski["giris_miktari"], giris_miktari),
+                ("OTIS Stok", eski["otis_stok"], otis_stok),
+                ("OTIS Giriş", eski["otis_giris"], otis_giris),
+                ("Toplam Fiyat", eski["toplam_fiyat"], toplam_fiyat),
+            ]
+            degisenler = [f"{ad}: {ev if ev is not None else '—'} → {yv if yv is not None else '—'}"
+                          for ad, ev, yv in alanlar if ev != yv]
+            if eski["firma_id"] != firma_id:
+                degisenler.append("Firma değişti")
+
+            log_kaydet(
+                "Kayıt Düzenleme",
+                f"{irsaliye_no}" + (": " + ", ".join(degisenler) if degisenler else " (değişiklik yok)"),
+                irs_id,
+                irsaliye_no
+            )
+
+            return jsonify({"durum": "ok", "mesaj": "Kayıt güncellendi"})
+        finally:
+            conn.close()
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500 

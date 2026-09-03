@@ -10,19 +10,21 @@
   <script src="/assets/js/popup.js" defer></script>
   <style>
     /* ---- HOŞGELDİN BANNER ---- */
-    .hosgeldin-kart{background:#111111;border:0.5px solid #2a2a2a;border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden}
-    .hosgeldin-kart::after{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(91,141,239,.06)}
-    .hosgeldin-kart .sol{color:white;z-index:1}
-    .hosgeldin-kart .sol .ust{font-size:11px;opacity:.5;margin-bottom:2px}
-    .hosgeldin-kart .sol h1{font-size:20px;font-weight:800;margin:0}
-    .hosgeldin-kart .sol .rol{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:5px;font-size:10px;font-weight:600;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75)}
-    .hosgeldin-kart .sol .tarih-bilgi{font-size:11px;opacity:.45;margin-top:6px}
-    .hosgeldin-kart .sag{z-index:1;display:flex;gap:10px;align-items:center}
-    .hosgeldin-kart .sag img{height:48px;width:auto;opacity:.7}
+.hosgeldin-kart{background:#111111;border:0.5px solid #2a2a2a;border-radius:var(--radius-lg);padding:16px 22px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden}
+.hosgeldin-kart::after{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(91,141,239,.06)}
+.hosgeldin-kart .sol{color:white;z-index:1}
+.hosgeldin-kart .sol h1{font-size:16px;font-weight:700;margin:0;display:flex;align-items:baseline;gap:6px}
+.hosgeldin-kart .sol h1 .ust{font-size:12px;font-weight:400;opacity:.55}
+.hosgeldin-kart .sol .alt-satir{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:10.5px}
+.hosgeldin-kart .sol .rol{padding:2px 8px;border-radius:5px;font-weight:700;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);letter-spacing:.3px}
+.hosgeldin-kart .sol .ayrac{opacity:.3}
+.hosgeldin-kart .sol .tarih-bilgi{opacity:.45}
+.hosgeldin-kart .sag{z-index:1;display:flex;gap:10px;align-items:center}
+.hosgeldin-kart .sag img{height:34px;width:auto;opacity:.7}
 
     /* ---- GENEL ÖZET KPI ---- */
     .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:20px}
-    .kpi-kart{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;box-shadow:var(--shadow-sm);transition:all var(--transition);cursor:default}
+    .kpi-kart{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;box-shadow:var(--shadow-sm);transition:all var(--transition);cursor:default}
     .kpi-kart:hover{border-color:var(--blue);box-shadow:var(--shadow)}
     .kpi-kart .kpi-ust{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
     .kpi-kart .kpi-ikon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px}
@@ -42,12 +44,12 @@
 
     /* ---- KART PANELLERİ ---- */
     .idx-panel{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm)}
-    .idx-panel-header{padding:14px 18px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+    .idx-panel-header{padding:11px 16px 8px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
     .idx-panel-header .baslik{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px}
     .idx-panel-header .baslik i{font-size:12px;color:var(--text3)}
     .idx-panel-header .tum-link{font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;display:flex;align-items:center;gap:3px}
     .idx-panel-header .tum-link:hover{opacity:.8}
-    .idx-panel-body{padding:12px 18px 16px}
+    .idx-panel-body{padding:10px 16px 12px}
 
     /* ---- AKTİF PLANLAR LİSTESİ ---- */
     .aktif-plan-satir{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-light);cursor:pointer;transition:all var(--transition)}
@@ -108,6 +110,13 @@
     /* ---- BOŞ DURUM ---- */
     .idx-bos{text-align:center;padding:24px 12px;color:var(--text3);font-size:11px}
     .idx-bos i{font-size:20px;margin-bottom:6px;display:block;opacity:.3}
+.idx-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 16px}
+.idx-empty .ie-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:8px}
+.idx-empty .ie-icon.ok{background:var(--green-dim);color:var(--green)}
+.idx-empty .ie-icon.muted{background:var(--bg-hover);color:var(--text3)}
+.idx-empty .ie-icon.warn{background:var(--red-dim);color:var(--red)}
+.idx-empty .ie-title{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px}
+.idx-empty .ie-sub{font-size:10.5px;color:var(--text3);max-width:230px;line-height:1.4}
 
     /* ---- FOOTER ---- */
     .footer-bar{margin-top:20px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
@@ -119,7 +128,85 @@
     /* ---- SKELETON LOADING ---- */
     @keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
     .skeleton{background:linear-gradient(90deg,var(--bg-hover) 25%,var(--border-light) 50%,var(--bg-hover) 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;border-radius:4px}
-  </style>
+
+/* ---- DİKKAT GEREKTİRENLER ---- */
+.attention-strip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.att-chip{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:20px;font-size:11.5px;font-weight:700;cursor:pointer;transition:all var(--transition);border:1px solid transparent;text-decoration:none}
+.att-chip:hover{transform:translateY(-1px)}
+.att-chip .ac-dot{width:7px;height:7px;border-radius:50%}
+.att-chip.red{background:var(--red-dim);color:var(--red);border-color:rgba(220,38,38,.25)}
+.att-chip.red .ac-dot{background:var(--red)}
+.att-chip.amber{background:var(--amber-dim);color:var(--amber);border-color:rgba(245,158,11,.25)}
+.att-chip.amber .ac-dot{background:var(--amber)}
+.att-chip.purple{background:var(--purple-dim);color:var(--purple);border-color:rgba(139,92,246,.25)}
+.att-chip.purple .ac-dot{background:var(--purple)}
+.att-chip.ok{background:var(--green-dim);color:var(--green);border-color:rgba(34,197,94,.25)}
+.att-chip.ok .ac-dot{background:var(--green)}
+
+/* ---- OPERASYON MERKEZİ (plan satırları) ---- */
+.op-satir{display:flex;align-items:center;gap:12px;padding:11px 10px;margin:0 -10px;border-radius:8px;border-left:3px solid transparent;cursor:pointer;transition:all var(--transition)}
+.op-satir:hover{background:var(--bg-hover)}
+.op-satir.gecikmis{border-left-color:var(--red)}
+.op-satir.yaklasan{border-left-color:var(--amber)}
+.op-satir.normal{border-left-color:var(--border-light)}
+.op-satir .op-info{flex:1;min-width:0}
+.op-satir .op-ad{font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.op-satir .op-detay{font-size:10px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.op-satir .op-tarih-uyari{color:var(--red);font-weight:700}
+.op-satir .op-tarih-yaklasan{color:var(--amber);font-weight:700}
+.op-satir .op-sag{text-align:right;flex-shrink:0}
+.op-satir .op-kalan{font-size:12px;font-weight:800;color:var(--text);font-family:monospace}
+.op-satir .op-kalan-et{font-size:8.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
+.op-satir .mini-prog{width:50px;height:4px;background:var(--bg);border-radius:2px;overflow:hidden;margin-top:5px;margin-left:auto}
+.op-satir .mini-prog-fill{height:100%;border-radius:2px}
+
+/* ---- SON İŞLEMLER (zaman çizelgesi) ---- */
+.timeline{position:relative;padding-left:6px}
+.timeline::before{content:'';position:absolute;left:12px;top:4px;bottom:4px;width:1px;background:var(--border)}
+.tl-gun-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 8px 30px}
+.tl-gun-label:first-child{margin-top:0}
+.tl-item{position:relative;display:flex;gap:12px;padding:7px 0}
+.tl-dot-wrap{position:relative;width:24px;flex-shrink:0;display:flex;justify-content:center}
+.tl-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;border:2px solid var(--bg-white);box-shadow:0 0 0 1px var(--border)}
+.tl-dot.sevk{background:var(--blue)}
+.tl-dot.pers{background:var(--purple)}
+.tl-dot.fason{background:var(--teal)}
+.tl-dot.sistem{background:var(--text3)}
+.tl-content{flex:1;min-width:0}
+.tl-row-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.tl-baslik{font-size:12px;font-weight:700;color:var(--text)}
+.tl-baslik .tl-yapan{font-weight:600;color:var(--blue);font-size:10.5px}
+.tl-detay{font-size:10.5px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-zaman{font-size:9px;color:var(--text3);opacity:.65;white-space:nowrap;flex-shrink:0;margin-left:8px}
+
+/* ---- KPI VURGU ---- */
+.kpi-kart.kpi-emphasis{background:linear-gradient(135deg, var(--green-dim), var(--bg-white) 65%);border-color:rgba(34,197,94,.35)}
+.kpi-kart.kpi-emphasis .kpi-sayi{font-size:28px}
+.kpi-kart.kpi-emphasis .kpi-etiket{color:var(--green)}
+
+/* ---- FASON TAKİP ÖZETİ ---- */
+.fason-toplam{display:flex;align-items:baseline;gap:10px;padding-bottom:10px;margin-bottom:8px;border-bottom:1px solid var(--border-light)}
+.fason-toplam .ft-sayi{font-size:22px;font-weight:800;color:var(--text)}
+.fason-toplam .ft-et{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.fason-toplam .ft-tutar{margin-left:auto;font-size:14px;font-weight:800;color:var(--primary);font-family:monospace}
+.fason-durum-liste{display:flex;flex-direction:column;gap:2px}
+.fd-satir{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:11.5px}
+.fd-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.fd-ad{color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fd-sayi{font-weight:700;color:var(--text);font-family:monospace}
+
+/* ---- HAMMADDE TAKİP ÖZETİ ---- */
+.hammadde-toplam{display:flex;align-items:baseline;gap:10px;padding-bottom:10px;margin-bottom:8px;border-bottom:1px solid var(--border-light)}
+.hammadde-toplam .ht-sayi{font-size:22px;font-weight:800;color:var(--text)}
+.hammadde-toplam .ht-et{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.hammadde-toplam .ht-uyari{margin-left:auto;font-size:11px;font-weight:700;color:var(--red);background:var(--red-dim);padding:3px 9px;border-radius:10px}
+.hammadde-durum-liste{display:flex;flex-direction:column;gap:2px}
+.hd-satir{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:11.5px}
+.hd-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hd-ad{color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd-sayi{font-weight:700;color:var(--text);font-family:monospace}
+
+    </style>
 </head>
 <body>
 
@@ -136,7 +223,12 @@
   {% if personel_yetki %}
   <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
   {% endif %}
+  {% if fason_gor_yetki %}
   <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+  {% endif %}
+  {% if hammadde_gor_yetki %}
+  <a href="/hammadde" class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
+  {% endif %}
   <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
   <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
   <div class="nav-section">Raporlama</div>
@@ -175,29 +267,30 @@
   <!-- HOŞGELDİN -->
   <div class="hosgeldin-kart">
     <div class="sol">
-      <div class="ust">Hoş geldin,</div>
-      <h1 id="kullaniciAdi">Kullanıcı</h1>
-      <div class="rol" id="rolEtiket">-</div>
-      <div class="tarih-bilgi" id="tarihBilgi"></div>
+      <h1><span class="ust">Hoş geldin,</span> <span id="kullaniciAdi">Kullanıcı</span></h1>
+      <div class="alt-satir"><span class="rol" id="rolEtiket">-</span><span class="ayrac">·</span><span class="tarih-bilgi" id="tarihBilgi"></span></div>
     </div>
     <div class="sag">
       <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
     </div>
   </div>
 
+  <!-- DİKKAT GEREKTİRENLER -->
+  <div class="attention-strip" id="attentionStrip"></div>
+
   <!-- KPI KARTLARI -->
   <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi-kart kpi-emphasis">
+      <div class="kpi-ust"><div class="kpi-ikon green"><i class="fa-solid fa-truck"></i></div></div>
+      <div class="kpi-sayi" id="kpiGonderilen">-</div>
+      <div class="kpi-etiket">Gönderilen</div>
+      <div class="kpi-trend up" id="kpiGonderilenAlt"></div>
+    </div>
     <div class="kpi-kart">
       <div class="kpi-ust"><div class="kpi-ikon blue"><i class="fa-solid fa-boxes-stacked"></i></div></div>
       <div class="kpi-sayi" id="kpiAktifPlan">-</div>
       <div class="kpi-etiket">Aktif Plan</div>
       <div class="kpi-trend neutral" id="kpiAktifPlanTrend"></div>
-    </div>
-    <div class="kpi-kart">
-      <div class="kpi-ust"><div class="kpi-ikon green"><i class="fa-solid fa-truck"></i></div></div>
-      <div class="kpi-sayi" id="kpiGonderilen">-</div>
-      <div class="kpi-etiket">Gönderilen</div>
-      <div class="kpi-trend up" id="kpiGonderilenAlt"></div>
     </div>
     <div class="kpi-kart">
       <div class="kpi-ust"><div class="kpi-ikon amber"><i class="fa-solid fa-clock"></i></div></div>
@@ -206,32 +299,20 @@
       <div class="kpi-trend neutral" id="kpiBekleyenTrend"></div>
     </div>
     <div class="kpi-kart">
-      <div class="kpi-ust"><div class="kpi-ikon purple"><i class="fa-solid fa-users"></i></div></div>
+      <div class="kpi-ust"><div class="kpi-ikon blue"><i class="fa-solid fa-users"></i></div></div>
       <div class="kpi-sayi" id="kpiPersonel">-</div>
       <div class="kpi-etiket">Aktif Personel</div>
       <div class="kpi-trend neutral" id="kpiPersonelAlt"></div>
-    </div>
-    <div class="kpi-kart">
-      <div class="kpi-ust"><div class="kpi-ikon red"><i class="fa-solid fa-triangle-exclamation"></i></div></div>
-      <div class="kpi-sayi" id="kpiGeciken">-</div>
-      <div class="kpi-etiket">Geciken Kalem</div>
-      <div class="kpi-trend down" id="kpiGecikenTrend"></div>
-    </div>
-    <div class="kpi-kart">
-      <div class="kpi-ust"><div class="kpi-ikon teal"><i class="fa-solid fa-calendar-check"></i></div></div>
-      <div class="kpi-sayi" id="kpiIzinde">-</div>
-      <div class="kpi-etiket">İzinde</div>
-      <div class="kpi-trend neutral" id="kpiIzindeTrend"></div>
     </div>
   </div>
 
   <!-- ANA İÇERİK -->
   <div class="ana-grid">
 
-    <!-- SOL: AKTİF PLANLAR -->
+    <!-- SOL: OPERASYON MERKEZİ -->
     <div class="idx-panel">
       <div class="idx-panel-header">
-        <div class="baslik"><i class="fa-solid fa-boxes-stacked"></i> Aktif Planlar</div>
+        <div class="baslik"><i class="fa-solid fa-diagram-project"></i> Operasyon Merkezi</div>
         <a href="/sevkiyat-planlar" class="tum-link">Tümünü Gör <i class="fa-solid fa-chevron-right" style="font-size:8px"></i></a>
       </div>
       <div class="idx-panel-body" id="aktifPlanlarAlani">
@@ -239,7 +320,29 @@
       </div>
     </div>
 
-    <!-- SAĞ: SON İŞLEMLER -->
+    <!-- SAĞ: FASON TAKİP ÖZETİ -->
+    <div class="idx-panel">
+      <div class="idx-panel-header">
+        <div class="baslik"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</div>
+        <a href="/fason" class="tum-link">Tümünü Gör <i class="fa-solid fa-chevron-right" style="font-size:8px"></i></a>
+      </div>
+      <div class="idx-panel-body" id="fasonOzetAlani">
+        <div class="idx-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>
+      </div>
+    </div>
+
+    <!-- SOL ALT: HAMMADDE TAKİP ÖZETİ -->
+    <div class="idx-panel">
+      <div class="idx-panel-header">
+        <div class="baslik"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</div>
+        <a href="/hammadde" class="tum-link">Tümünü Gör <i class="fa-solid fa-chevron-right" style="font-size:8px"></i></a>
+      </div>
+      <div class="idx-panel-body" id="hammaddeOzetAlani">
+        <div class="idx-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>
+      </div>
+    </div>
+
+    <!-- SAĞ ALT: SON İŞLEMLER -->
     <div class="idx-panel">
       <div class="idx-panel-header">
         <div class="baslik"><i class="fa-solid fa-clock-rotate-left"></i> Son İşlemler</div>
@@ -250,71 +353,6 @@
       </div>
     </div>
 
-    <!-- SOL ALT: PERSONEL DURUMU -->
-    <div class="idx-panel">
-      <div class="idx-panel-header">
-        <div class="baslik"><i class="fa-solid fa-users"></i> Personel Durumu</div>
-        <a href="/personel" class="tum-link">Detaylara Git <i class="fa-solid fa-chevron-right" style="font-size:8px"></i></a>
-      </div>
-      <div class="idx-panel-body" id="personelAlani">
-        <div class="idx-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>
-      </div>
-    </div>
-
-    <!-- SAĞ ALT: GECİKEN KALEMLER -->
-    <div class="idx-panel">
-      <div class="idx-panel-header">
-        <div class="baslik"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> Geciken Kalemler</div>
-        <a href="/sevkiyat-dashboard" class="tum-link">Dashboard <i class="fa-solid fa-chevron-right" style="font-size:8px"></i></a>
-      </div>
-      <div class="idx-panel-body" id="gecikenAlani">
-        <div class="idx-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- HIZLI ERİŞİM -->
-  <div class="section-label">Hızlı Erişim</div>
-  <div class="hizli-grid" id="hizliErisim">
-    <a href="/sevkiyat-planlar" class="hizli-item" id="menuSevkPlanlar">
-      <div class="hi-icon blue"><i class="fa-solid fa-boxes-stacked"></i></div>
-      <div class="hi-ad">Sevkiyat Planları</div>
-    </a>
-    <a href="/sevkiyat-dashboard" class="hizli-item" id="menuDashboard" style="display:none">
-      <div class="hi-icon green"><i class="fa-solid fa-chart-pie"></i></div>
-      <div class="hi-ad">Dashboard</div>
-    </a>
-    <a href="/agirlik-hesaplama" class="hizli-item">
-      <div class="hi-icon amber"><i class="fa-solid fa-weight-scale"></i></div>
-      <div class="hi-ad">Ağırlık Hesaplama</div>
-    </a>
-    <a href="/fason" class="hizli-item">
-      <div class="hi-icon amber"><i class="fa-solid fa-truck-ramp-box"></i></div>
-      <div class="hi-ad">Fason Takip</div>
-    </a>
-    <a href="/personel" class="hizli-item">
-      <div class="hi-icon purple"><i class="fa-solid fa-users"></i></div>
-      <div class="hi-ad">Personel</div>
-    </a>
-    <a href="/islem-gecmisi" class="hizli-item" id="menuIslemGecmisi" style="display:none">
-      <div class="hi-icon teal"><i class="fa-solid fa-clock-rotate-left"></i></div>
-      <div class="hi-ad">İşlem Geçmişi</div>
-    </a>
-    <a href="/nakil-dashboard" class="hizli-item">
-      <div class="hi-icon blue"><i class="fa-solid fa-right-left"></i></div>
-      <div class="hi-ad">Analytics</div>   
-    </a>
-    <a href="/mutabakat" class="hizli-item">
-      <div class="hi-icon blue"><i class="fa-solid fa-code-compare"></i></div>
-      <div class="hi-ad">Mutabakat</div>
-    </a>
-    </a>
-    <a href="/kullanici_yonetimi" class="hizli-item">
-      <div class="hi-icon blue"><i class="fa-solid fa-right-left"></i></div>
-      <div class="hi-ad">Kullanici Yönetimi</div>   
-    </a>    
-    
   </div>
 
   <div class="footer-bar">
@@ -326,8 +364,32 @@
 </div><!-- /main-area -->
 </div><!-- /shell -->
 
+
+
 <script>
-const ROL_ADLARI = {admin:"Admin", hazirlayan:"Hazırlayan", goruntuleyici:"Görüntüleyici"};
+let ATT = { gecikmis: 0 };
+
+function renderAttentionStrip(){
+  const el = document.getElementById("attentionStrip");
+  if (ATT.gecikmis > 0) {
+    el.innerHTML = `<a href="/sevkiyat-dashboard" class="att-chip red"><span class="ac-dot"></span>${ATT.gecikmis} kalem gecikti — dikkat gerekiyor</a>`;
+    el.style.display = "";
+  } else {
+    el.innerHTML = "";
+    el.style.display = "none";
+  }
+}
+
+const ROL_ADLARI = {
+  admin: "ADMIN",
+  yonetici: "COMMANDER",
+  sevkiyatci: "DISPATCHER",
+  fasoncu: "FABRICATOR",
+  hammaddeci: "MATERIALIST",
+  goruntuleyici: "OBSERVER",
+  sayim: "AUDITOR",
+  yasakli: "RESTRICTED"
+};
 
 // Tarih formatlama
 function tarihGunAy(){
@@ -358,6 +420,17 @@ function zamanOnce(tarihStr){
 }
 
 window.addEventListener("load", async ()=>{
+  // Yetkisiz erişim uyarısı
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("erisim_hata")) {
+    if (typeof bildirim === "function") {
+      bildirim("Bu sayfaya erişim yetkiniz yok.", "Yetkisiz Erişim", "hata");
+    } else if (typeof toast === "function") {
+      toast("Bu sayfaya erişim yetkiniz yok.", "hata");
+    }
+    window.history.replaceState({}, document.title, "/");
+  }
+
   // Tarih bilgisi
   document.getElementById("tarihBilgi").innerText = tarihGunAy();
 
@@ -377,10 +450,6 @@ window.addEventListener("load", async ()=>{
       avatar.innerText = initials;
     }
 
-    if(yetkiler.panel_gor){
-      document.getElementById("menuDashboard").style.display = "";
-      document.getElementById("menuIslemGecmisi").style.display = "";
-    }
   }catch(e){}
 
   // Paralel veri yükleme
@@ -388,11 +457,30 @@ window.addEventListener("load", async ()=>{
     yuklePlanlar(),
     yuklePersonel(),
     yetkiler.panel_gor ? yukleLoglar() : Promise.resolve(),
-    yetkiler.panel_gor ? yukleDashboard() : Promise.resolve()
-  ]);
+    yetkiler.panel_gor ? yukleDashboard() : Promise.resolve(),
+    yetkiler.fason_gor ? yukleFasonOzeti() : Promise.resolve(fasonErisimYok()),
+    yetkiler.hammadde_gor ? yukleHammaddeOzeti() : Promise.resolve(hammaddeErisimYok())
+  ]).then(renderAttentionStrip);
 });
 
-// ---- AKTİF PLANLAR ----
+function hammaddeErisimYok(){
+  document.getElementById("hammaddeOzetAlani").innerHTML = `
+    <div class="idx-empty">
+      <div class="ie-icon muted"><i class="fa-solid fa-lock"></i></div>
+      <div class="ie-title">Erişim yetkiniz yok</div>
+      <div class="ie-sub">Hammadde Takip'i görüntülemek için yetkin bulunmuyor.</div>
+    </div>`;
+}
+
+function fasonErisimYok(){
+  document.getElementById("fasonOzetAlani").innerHTML = `
+    <div class="idx-empty">
+      <div class="ie-icon muted"><i class="fa-solid fa-lock"></i></div>
+      <div class="ie-title">Erişim yetkiniz yok</div>
+      <div class="ie-sub">Fason Takip'i görüntülemek için yetkin bulunmuyor.</div>
+    </div>`;
+}
+
 async function yuklePlanlar(){
   try{
     const r = await fetch("/api/sevkiyat/plan-liste");
@@ -422,6 +510,7 @@ async function yuklePlanlar(){
       topBekleyen += (p.ozet?.["Kısmi"]?.adet)||0;
     });
     document.getElementById("kpiBekleyen").innerText = topBekleyen;
+    ATT.bekleyen = topBekleyen;
     if(topBekleyen>0){
       const bt = document.getElementById("kpiBekleyenTrend");
       bt.className = "kpi-trend down";
@@ -444,22 +533,46 @@ async function yuklePlanlar(){
     const goster = aktifler.slice(0,5);
 
     if(goster.length===0){
-      document.getElementById("aktifPlanlarAlani").innerHTML = '<div class="idx-bos"><i class="fa-solid fa-check-circle"></i> Tüm planlar tamamlandı</div>';
+      document.getElementById("aktifPlanlarAlani").innerHTML = `
+        <div class="idx-empty">
+          <div class="ie-icon ok"><i class="fa-solid fa-check"></i></div>
+          <div class="ie-title">Tüm planlar tamamlandı</div>
+          <div class="ie-sub">Şu anda takip edilmesi gereken açık bir sevkiyat planı yok.</div>
+        </div>`;
       return;
     }
+
+    const bugun0 = new Date(); bugun0.setHours(0,0,0,0);
 
     let h="";
     goster.forEach(p=>{
       const y = Number(p.yuzde||0);
-      const yc = y<30?"du":y<70?"or":"iy";
       const pc = y<30?"var(--amber)":y<70?"var(--blue)":"var(--green)";
-      h+=`<div class="aktif-plan-satir" onclick="location.href='/sevkiyat-detay/${p.id}'">
-        <div class="plan-info">
-          <div class="plan-ad">${p.plan_adi}</div>
-          <div class="plan-detay">${p.toplam_kalem} kalem · ${p.plan_tipi} · ${p.bitis}</div>
+      const kalan = p.kalan_miktar||0;
+
+      let sinif = "normal", tarihHtml = p.bitis || "-";
+      if(p.bitis){
+        const bitisD = new Date(p.bitis);
+        const farkGun = Math.floor((bitisD-bugun0)/(1000*60*60*24));
+        if(farkGun < 0){
+          sinif = "gecikmis";
+          tarihHtml = `<span class="op-tarih-uyari">${Math.abs(farkGun)} gün gecikti</span>`;
+        } else if(farkGun <= 3){
+          sinif = "yaklasan";
+          tarihHtml = `<span class="op-tarih-yaklasan">${farkGun===0?"Bugün bitiyor":farkGun+" gün kaldı"}</span>`;
+        }
+      }
+
+      h+=`<div class="op-satir ${sinif}" onclick="location.href='/sevkiyat-detay/${p.id}'">
+        <div class="op-info">
+          <div class="op-ad">${p.plan_adi}</div>
+          <div class="op-detay"><span>${p.toplam_kalem} kalem</span><span>·</span><span>${p.plan_tipi}</span><span>·</span>${tarihHtml}</div>
         </div>
-        <div class="mini-prog"><div class="mini-prog-fill" style="width:${y}%;background:${pc}"></div></div>
-        <div class="plan-yuzde ${yc}">%${y}</div>
+        <div class="op-sag">
+          <div class="op-kalan">${fKg(kalan)}</div>
+          <div class="op-kalan-et">Kalan</div>
+          <div class="mini-prog"><div class="mini-prog-fill" style="width:${y}%;background:${pc}"></div></div>
+        </div>
       </div>`;
     });
 
@@ -487,112 +600,177 @@ async function yuklePersonel(){
     const persAlt = document.getElementById("kpiPersonelAlt");
     persAlt.className = izindekiler.length > 0 ? "kpi-trend down" : "kpi-trend up";
     persAlt.innerHTML = izindekiler.length > 0 ? `<i class="fa-solid fa-arrow-down"></i> ${izindekiler.length} kişi izinde` : `<i class="fa-solid fa-check"></i> Herkes aktif`;
-    document.getElementById("kpiIzinde").innerText = izindekiler.length;
-
-    let h='<div class="personel-ozet-grid">';
-    h+=`<div class="pers-mini aktif-mini"><div class="pm-sayi">${aktifler.length}</div><div class="pm-et">Aktif Personel</div></div>`;
-    h+=`<div class="pers-mini izinde-mini"><div class="pm-sayi">${izindekiler.length}</div><div class="pm-et">İzinde</div></div>`;
-    h+='</div>';
-
-    if(izindekiler.length>0){
-      h+='<div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px">İzindeki Personel</div>';
-      izindekiler.slice(0,5).forEach(p=>{
-        const bas = p.aktif_izin?.baslangic||"";
-        const bit = p.aktif_izin?.bitis||"";
-        const initials = (p.ad_soyad||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-        h+=`<div class="izindeki-kisi">
-          <div class="iz-avatar">${initials}</div>
-          <div class="iz-ad">${p.ad_soyad}</div>
-          <div class="iz-tarih">${bas} → ${bit}</div>
-        </div>`;
-      });
-      if(izindekiler.length>5){
-        h+=`<div style="text-align:center;padding:6px 0"><a href="/personel" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none">+${izindekiler.length-5} kişi daha</a></div>`;
-      }
-    } else {
-      h+='<div style="font-size:11px;color:var(--text3);text-align:center;padding:8px 0"><i class="fa-solid fa-check" style="color:var(--green);margin-right:4px"></i>Şu an izinde kimse yok</div>';
-    }
-
-    document.getElementById("personelAlani").innerHTML = h;
   }catch(e){
-    document.getElementById("personelAlani").innerHTML = '<div class="idx-bos"><i class="fa-solid fa-circle-exclamation"></i> Yüklenemedi</div>';
     document.getElementById("kpiPersonel").innerText = "-";
-    document.getElementById("kpiIzinde").innerText = "-";
   }
 }
 
 // ---- SON İŞLEMLER ----
 async function yukleLoglar(){
   try{
-    const r = await fetch("/api/islem-log/liste?limit=8");
+    const r = await fetch("/api/islem-log/liste?limit=5");
     const loglar = await r.json();
     if(!Array.isArray(loglar) || loglar.length===0){
-      document.getElementById("sonIslemlerAlani").innerHTML = '<div class="idx-bos"><i class="fa-solid fa-clock-rotate-left"></i> Henüz işlem kaydı yok</div>';
+      document.getElementById("sonIslemlerAlani").innerHTML = `
+        <div class="idx-empty">
+          <div class="ie-icon muted"><i class="fa-solid fa-clock-rotate-left"></i></div>
+          <div class="ie-title">Henüz işlem kaydı yok</div>
+          <div class="ie-sub">Sistemde bir işlem yapıldığında burada görünecek.</div>
+        </div>`;
       return;
     }
 
+    const bugun0 = new Date(); bugun0.setHours(0,0,0,0);
+    const dun0 = new Date(bugun0); dun0.setDate(dun0.getDate()-1);
+
+    function gunEtiket(tarihStr){
+      try{
+        const t = new Date(tarihStr.replace(" ","T"));
+        const tGun = new Date(t); tGun.setHours(0,0,0,0);
+        if(tGun.getTime()===bugun0.getTime()) return "Bugün";
+        if(tGun.getTime()===dun0.getTime()) return "Dün";
+        return tGun.toLocaleDateString("tr-TR",{day:"numeric",month:"long"});
+      }catch(e){ return ""; }
+    }
+
     let h="";
+    let sonGunEtiket = null;
     loglar.forEach(l=>{
-      const sinif = l.modul==="Sevkiyat"?"sevk":l.modul==="Personel"?"pers":"sistem";
-      const ikon = l.modul==="Sevkiyat"?"fa-solid fa-truck":l.modul==="Personel"?"fa-solid fa-users":"fa-solid fa-gear";
-      h+=`<div class="son-islem-satir">
-        <div class="son-islem-ikon ${sinif}"><i class="${ikon}"></i></div>
-        <div class="son-islem-icerik">
-          <div class="islem-baslik">${l.islem} <span style="font-weight:400;color:var(--text3)">— ${l.yapan_ad||""}</span></div>
-          <div class="islem-detay">${l.detay||l.ilgili_ad||""}</div>
+      const sinif = l.modul==="Sevkiyat"?"sevk":l.modul==="Personel"?"pers":l.modul==="Fason"?"fason":"sistem";
+      const gunEt = gunEtiket(l.tarih);
+      if(gunEt !== sonGunEtiket){
+        h += `<div class="tl-gun-label">${gunEt}</div>`;
+        sonGunEtiket = gunEt;
+      }
+      h+=`<div class="tl-item">
+        <div class="tl-dot-wrap"><div class="tl-dot ${sinif}"></div></div>
+        <div class="tl-content">
+          <div class="tl-row-top">
+            <div class="tl-baslik">${l.islem} <span class="tl-yapan">— ${l.yapan_ad||""}</span></div>
+            <div class="tl-zaman">${zamanOnce(l.tarih)}</div>
+          </div>
+          <div class="tl-detay">${l.detay||l.ilgili_ad||""}</div>
         </div>
-        <div class="son-islem-tarih">${zamanOnce(l.tarih)}</div>
       </div>`;
     });
 
-    document.getElementById("sonIslemlerAlani").innerHTML = h;
+    document.getElementById("sonIslemlerAlani").innerHTML = `<div class="timeline">${h}</div>`;
   }catch(e){
-    document.getElementById("sonIslemlerAlani").innerHTML = '<div class="idx-bos"><i class="fa-solid fa-lock"></i> Erişim yok</div>';
+    document.getElementById("sonIslemlerAlani").innerHTML = `
+      <div class="idx-empty">
+        <div class="ie-icon muted"><i class="fa-solid fa-lock"></i></div>
+        <div class="ie-title">Erişim yetkiniz yok</div>
+        <div class="ie-sub">İşlem geçmişini görüntülemek için yetkin bulunmuyor.</div>
+      </div>`;
   }
 }
 
-// ---- GECİKEN KALEMLER (Dashboard API) ----
+// ---- DİKKAT SAYACI (Dashboard API'den sadece geciken sayısı) ----
 async function yukleDashboard(){
   try{
     const r = await fetch("/api/sevkiyat/dashboard");
     const d = await r.json();
+    ATT.gecikmis = (d.geciken||[]).length;
+  }catch(e){
+    // erişim yoksa geciken sayacı 0 kalır, attention şeridi görünmez
+  }
+}
 
-    const geciken = d.geciken||[];
-    document.getElementById("kpiGeciken").innerText = geciken.length;
-    const gecTrend = document.getElementById("kpiGecikenTrend");
-    if(geciken.length>0){
-      gecTrend.className = "kpi-trend down";
-      gecTrend.innerHTML = `<i class="fa-solid fa-arrow-down"></i> ${geciken.length} kalem gecikmiş`;
-    } else {
-      gecTrend.className = "kpi-trend up";
-      gecTrend.innerHTML = `<i class="fa-solid fa-check"></i> Geciken yok`;
-    }
+// ---- FASON TAKİP ÖZETİ ----
+async function yukleFasonOzeti(){
+  try{
+    const [r1, r2] = await Promise.all([
+      fetch("/api/fason/liste"),
+      fetch("/api/fason/durumlar")
+    ]);
+    const liste = await r1.json();
+    const durumlar = await r2.json();
+    if(!Array.isArray(liste) || !Array.isArray(durumlar)){throw new Error()}
 
-    if(geciken.length===0){
-      document.getElementById("gecikenAlani").innerHTML = '<div class="idx-bos"><i class="fa-solid fa-check-circle" style="color:var(--green)"></i> Geciken kalem yok</div>';
+    if(liste.length===0){
+      document.getElementById("fasonOzetAlani").innerHTML = `
+        <div class="idx-empty">
+          <div class="ie-icon muted"><i class="fa-solid fa-inbox"></i></div>
+          <div class="ie-title">Henüz irsaliye yok</div>
+          <div class="ie-sub">Fason Takip'te kayıtlı irsaliye bulunmuyor.</div>
+        </div>`;
       return;
     }
 
-    let h='<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr><th style="text-align:left;padding:6px 8px;font-size:9px;background:var(--red-dim);color:var(--red);border-radius:4px 0 0 0">Malzeme</th><th style="padding:6px 8px;font-size:9px;background:var(--red-dim);color:var(--red)">Kalan</th><th style="padding:6px 8px;font-size:9px;background:var(--red-dim);color:var(--red);border-radius:0 4px 0 0">Plan</th></tr></thead><tbody>';
-
-    geciken.slice(0,6).forEach(g=>{
-      h+=`<tr style="border-bottom:1px solid var(--border-light)">
-        <td style="padding:6px 8px;font-size:11px;color:var(--text);font-weight:500">${(g.malzeme_tanimi||"").slice(0,35)}${(g.malzeme_tanimi||"").length>35?"...":""}</td>
-        <td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--red);font-size:11px">${fKg(g.kalan)}</td>
-        <td style="padding:6px 8px;text-align:center;font-size:10px;color:var(--text3)">${(g.plan_adi||"").slice(0,20)}</td>
-      </tr>`;
+    const sayilar = {};
+    let toplamTutar = 0;
+    liste.forEach(r=>{
+      if(r.durum_id) sayilar[r.durum_id] = (sayilar[r.durum_id]||0)+1;
+      if(r.toplam_fiyat!=null && !isNaN(r.toplam_fiyat)) toplamTutar += Number(r.toplam_fiyat);
     });
 
-    h+='</tbody></table>';
+    let h = `<div class="fason-toplam">
+      <div class="ft-sayi">${liste.length}</div>
+      <div class="ft-et">Toplam İrsaliye</div>
+      ${toplamTutar>0 ? `<div class="ft-tutar">$${toplamTutar.toLocaleString("tr-TR",{maximumFractionDigits:0})}</div>` : ""}
+    </div><div class="fason-durum-liste">`;
 
-    if(geciken.length>6){
-      h+=`<div style="text-align:center;padding:8px 0"><a href="/sevkiyat-dashboard" style="font-size:10px;color:var(--red);font-weight:600;text-decoration:none">+${geciken.length-6} kalem daha →</a></div>`;
+    durumlar.forEach(d=>{
+      const sayi = sayilar[d.id]||0;
+      h += `<div class="fd-satir">
+        <span class="fd-dot" style="background:var(--${d.renk})"></span>
+        <span class="fd-ad">${d.ad}</span>
+        <span class="fd-sayi">${sayi}</span>
+      </div>`;
+    });
+
+    h += `</div>`;
+    document.getElementById("fasonOzetAlani").innerHTML = h;
+  }catch(e){
+    document.getElementById("fasonOzetAlani").innerHTML = '<div class="idx-bos"><i class="fa-solid fa-circle-exclamation"></i> Yüklenemedi</div>';
+  }
+}
+
+// ---- HAMMADDE TAKİP ÖZETİ ----
+async function yukleHammaddeOzeti(){
+  try{
+    const r = await fetch("/api/hammadde/irsaliyeler");
+    const liste = await r.json();
+    if(!Array.isArray(liste)){throw new Error()}
+
+    if(liste.length===0){
+      document.getElementById("hammaddeOzetAlani").innerHTML = `
+        <div class="idx-empty">
+          <div class="ie-icon muted"><i class="fa-solid fa-inbox"></i></div>
+          <div class="ie-title">Henüz irsaliye yok</div>
+          <div class="ie-sub">Hammadde Takip'te kayıtlı irsaliye bulunmuyor.</div>
+        </div>`;
+      return;
     }
 
-    document.getElementById("gecikenAlani").innerHTML = h;
+    let stoktaToplam = 0;
+    let girisYapilmadiSayisi = 0;
+    liste.forEach(i=>{
+      stoktaToplam += (i.stokta_kalan||0);
+      if(i.son_durum === "Girişi Yapılmadı") girisYapilmadiSayisi++;
+    });
+
+    let h = `<div class="hammadde-toplam">
+      <div class="ht-sayi">${liste.length}</div>
+      <div class="ht-et">Toplam İrsaliye</div>
+      ${girisYapilmadiSayisi>0 ? `<div class="ht-uyari">${girisYapilmadiSayisi} girişi yapılmadı</div>` : ""}
+    </div><div class="hammadde-durum-liste">`;
+
+    h += `<div class="hd-satir">
+      <span class="hd-dot" style="background:var(--amber)"></span>
+      <span class="hd-ad">Stokta bekleyen kalem</span>
+      <span class="hd-sayi">${stoktaToplam}</span>
+    </div>`;
+    h += `<div class="hd-satir">
+      <span class="hd-dot" style="background:var(--red)"></span>
+      <span class="hd-ad">Girişi yapılmadı</span>
+      <span class="hd-sayi">${girisYapilmadiSayisi}</span>
+    </div>`;
+
+    h += `</div>`;
+    document.getElementById("hammaddeOzetAlani").innerHTML = h;
   }catch(e){
-    document.getElementById("gecikenAlani").innerHTML = '<div class="idx-bos"><i class="fa-solid fa-lock"></i> Erişim yok</div>';
-    document.getElementById("kpiGeciken").innerText = "-";
+    document.getElementById("hammaddeOzetAlani").innerHTML = '<div class="idx-bos"><i class="fa-solid fa-circle-exclamation"></i> Yüklenemedi</div>';
   }
 }
 

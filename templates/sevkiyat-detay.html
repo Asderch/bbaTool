@@ -54,7 +54,12 @@
   {% if personel_yetki %}
   <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
   {% endif %}
+  {% if fason_gor_yetki %}
   <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+  {% endif %}
+  {% if hammadde_gor_yetki %}
+  <a href="/hammadde" class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
+  {% endif %}
   <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
   <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
   <div class="nav-section">Raporlama</div>

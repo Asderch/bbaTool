@@ -111,9 +111,13 @@
     font-family: 'JetBrains Mono', monospace;
   }
   .rol-rozet.admin         { background: rgba(220,38,38,0.15);  color: var(--red); }
-  .rol-rozet.hazirlayan    { background: rgba(62,207,142,0.15); color: var(--primary); }
+  .rol-rozet.yonetici      { background: rgba(62,207,142,0.15); color: var(--primary); }
+  .rol-rozet.sevkiyatci    { background: rgba(6,182,212,0.15);  color: #06b6d4; }
+  .rol-rozet.fasoncu       { background: rgba(249,115,22,0.15); color: #f97316; }
+  .rol-rozet.hammaddeci    { background: rgba(168,85,247,0.15); color: #a855f7; }
   .rol-rozet.goruntuleyici { background: rgba(99,102,241,0.15); color: var(--blue); }
   .rol-rozet.sayim         { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .rol-rozet.yasakli       { background: rgba(160,160,160,0.15); color: var(--text3); }
 
   .aksiyon-grup {
     display: inline-flex; gap: 4px;
@@ -280,48 +284,45 @@
 <div class="shell">
   
 <nav class="sidebar">
-  <div class="sidebar-logo">
-    <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
-    <h2>Warehouse Data</h2>
-    <span>v{{ APP_VERSION }}</span>
-  </div>
-
-    <nav>
-
-        <div class="nav-section">Main Data</div>
-    <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
-
-    <div class="nav-section">Sevkiyat</div>
-    <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
-    <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
-
-    <div class="nav-section">Araçlar</div>
-    <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
-    {% if personel_yetki %}
-    <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
-    {% endif %}
-    <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
-    <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
-    <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
-
-    <div class="nav-section">Raporlama</div>
-    <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
-    <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
-    <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
-    <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
-    <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
-
+  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>V{{ APP_VERSION }}</span></div>
+  <div class="nav-section">Main Data</div>
+  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+  <div class="nav-section">Sevkiyat</div>
+  <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+  <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+  <div class="nav-section">Araçlar</div>
+  <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+  {% if personel_yetki %}
+  <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+  {% endif %}
+  {% if fason_gor_yetki %}
+  <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+  {% endif %}
+  {% if hammadde_gor_yetki %}
+  <a href="/hammadde" class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
+  {% endif %}
+  <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+  <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+  <div class="nav-section">Raporlama</div>
+  <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+  <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+  <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+  <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
+  <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
     {% if session.kullanici == "admin" %}
     <div class="nav-section">Yönetim</div>
     <a href="/kullanici-yonetimi" class="nav-item active"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
     <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
     <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
     {% endif %}
-    <div class="sidebar-footer">
-      <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i> Açık Tema</button>
-      <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>
-   </div>
-  </nav>
+  <div class="sidebar-footer">
+        <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+  <i class="fa-solid fa-sun"></i> Açık Tema
+    <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>
+
+</button>
+  </div>
+</nav>
 
   <!-- MAIN AREA -->
  </nav>
@@ -415,10 +416,13 @@
     <label>Rol</label>
   <select id="modalRol">
     <option value="admin">Admin — Tam yetki, kullanıcı yönetimi</option>
-    <option value="hazirlayan" selected>Hazırlayan — Plan/kalem işlemleri</option>
-    <option value="goruntuleyici">Görüntüleyici — Sadece görme + export</option>
-    <option value="sayim">Sayım — Ağırlık hesaplama modülü</option>
-    <option value="yasakli">🎉 Sürpriz Rolü (test için)</option>
+    <option value="yonetici" selected>Commander — Tüm modüller, kullanıcı yönetimi hariç</option>
+    <option value="sevkiyatci">Dispatcher — Sadece Sevkiyat modülü</option>
+    <option value="fasoncu">Fabricator — Sadece Fason Takip</option>
+    <option value="hammaddeci">Materialist — Sadece Hammadde modülü</option>
+    <option value="goruntuleyici">Observer — Sadece görme + export</option>
+    <option value="sayim">Auditor — Erişim yok</option>
+    <option value="yasakli">Restricted — Erişim yok, yasaklı</option>
 </select>
 
     <div class="modal-actions">
@@ -435,6 +439,17 @@
 // STATE
 // ═════════════════════════════════════════════════
 var tumKullanicilar = []
+var ROL_ETIKET = {
+  "admin": "ADMIN",
+  "yonetici": "COMMANDER",
+  "sevkiyatci": "DISPATCHER",
+  "fasoncu": "FABRICATOR",
+  "hammaddeci": "MATERIALIST",
+  "goruntuleyici": "OBSERVER",
+  "sayim": "AUDITOR",
+  "yasakli": "RESTRICTED"
+}
+function rolEtiket(r) { return ROL_ETIKET[r] || r.toUpperCase() }
 var tumRoller = {}
 var duzenlemeMode = null   // null = yeni, "username" = düzenleme
 var mevcutUser = null      // giriş yapan kullanıcı (kendini silmesin diye)
@@ -511,7 +526,7 @@ function tabloCiz() {
     html += '<tr>' +
       '<td><span class="username">' + escHtml(k.username) + '</span>' + selfMark + '</td>' +
       '<td>' + escHtml(k.ad) + '</td>' +
-      '<td><span class="rol-rozet ' + k.rol + '">' + k.rol.toUpperCase() + '</span></td>' +
+      '<td><span class="rol-rozet ' + k.rol + '">' + rolEtiket(k.rol) + '</span></td>' +
       '<td style="text-align:right">' +
         '<div class="aksiyon-grup">' +
           '<button class="aksiyon-btn duz" title="Düzenle" onclick="duzenle(\'' + k.username + '\')">' +
@@ -537,7 +552,7 @@ function yetkiMatrixCiz() {
   var html = '<table class="yetki-matrix"><thead><tr>' +
     '<th style="text-align:left; padding-left:14px">Yetki</th>'
   roller.forEach(function(r) {
-    html += '<th><span class="rol-rozet ' + r + '">' + r.toUpperCase() + '</span></th>'
+    html += '<th><span class="rol-rozet ' + r + '">' + rolEtiket(r) + '</span></th>'
   })
   html += '</tr></thead><tbody>'
 

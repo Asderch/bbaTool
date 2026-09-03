@@ -484,6 +484,48 @@
     }
     .ham-sql-kart.bulundu { border-left: 2px solid var(--green); }
     .ham-sql-kart.bos     { border-left: 2px solid var(--red); }
+
+  /* ─── Özellik önizleme paneli ─── */
+.ozellik-onizleme {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.oo-baslik {
+  font-size: 11.5px; font-weight: 700; color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px;
+}
+.oo-baslik i { color: var(--primary); }
+.oo-baslik .oo-not { font-weight: 400; color: var(--text3); font-size: 10.5px; }
+.oo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+.oo-alan label {
+  display: block; font-size: 9.5px; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600;
+  margin-bottom: 3px;
+}
+.oo-alan input, .oo-alan select {
+  width: 100%; box-sizing: border-box;
+  padding: 6px 8px; font-size: 12px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-white);
+  color: var(--text);
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+}
+.oo-alan input:focus, .oo-alan select:focus {
+  outline: none; border-color: var(--primary);
+}
+.oo-alan.duzeltildi input, .oo-alan.duzeltildi select {
+  border-color: var(--amber);
+  background: var(--amber-dim);
+}
   </style>
 </head>
 <body>
@@ -501,7 +543,12 @@
   {% if personel_yetki %}
   <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
   {% endif %}
+  {% if fason_gor_yetki %}
   <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+  {% endif %}
+  {% if hammadde_gor_yetki %}
+  <a href="/hammadde" class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
+  {% endif %}
   <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
   <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
   <div class="nav-section">Raporlama</div>
@@ -512,7 +559,7 @@
   <a href="/malzeme-kontrol" class="nav-item active"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
     {% if session.kullanici == "admin" %}
     <div class="nav-section">Yönetim</div>
-    <a href="/kullanici-yonetimi" class="nav-item active"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
     <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
     <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
     {% endif %}
@@ -579,6 +626,33 @@
         </button>
       </div>
     </div>
+
+    <div class="ozellik-onizleme" id="ozellikOnizleme" style="display:none">
+      <div class="oo-baslik"><i class="fa-solid fa-wand-magic-sparkles"></i> Algılanan Özellikler <span class="oo-not">— yanlışsa düzelt, arama buna göre de yapılır</span></div>
+      <div class="oo-grid">
+        <div class="oo-alan"><label>Tip</label>
+          <select id="ooTip" onchange="ooDuzenlendi('tip')">
+            <option value="diger">Belirsiz</option>
+            <option value="sac">Sac</option>
+            <option value="profil">Profil</option>
+            <option value="boru">Boru</option>
+            <option value="fitting">Fitting (Dirsek/Redüksiyon/Bağlantı)</option>
+            <option value="demir_duz">Demir Düz</option>
+            <option value="lama">Lama</option>
+            <option value="kose_bent">Köşebent</option>
+          </select>
+        </div>
+        <div class="oo-alan"><label>Kalınlık</label><input type="text" id="ooKalinlik" placeholder="—" oninput="ooDuzenlendi('kalinlik')"></div>
+        <div class="oo-alan"><label>En</label><input type="text" id="ooEn" placeholder="—" oninput="ooDuzenlendi('en')"></div>
+        <div class="oo-alan"><label>Boy</label><input type="text" id="ooBoy" placeholder="—" oninput="ooDuzenlendi('boy')"></div>
+        <div class="oo-alan"><label>Çap</label><input type="text" id="ooCap" placeholder="—" oninput="ooDuzenlendi('cap')"></div>
+        <div class="oo-alan"><label>Profil Tipi</label><input type="text" id="ooProfilTipi" placeholder="—" oninput="ooDuzenlendi('profil_tipi')"></div>
+        <div class="oo-alan"><label>Profil Ölçü</label><input type="text" id="ooProfilOlcu" placeholder="—" oninput="ooDuzenlendi('profil_olcu')"></div>
+        <div class="oo-alan"><label>Kalite</label><input type="text" id="ooKalite" placeholder="—" oninput="ooDuzenlendi('kalite')"></div>
+        <div class="oo-alan"><label>Standart</label><input type="text" id="ooStandart" placeholder="—" oninput="ooDuzenlendi('standart')"></div>
+        <div class="oo-alan"><label>Kaplama</label><input type="text" id="ooKaplama" placeholder="—" oninput="ooDuzenlendi('kaplama')"></div>
+      </div>
+    </div>
   </div>
 
   <!-- SONUÇLAR -->
@@ -616,6 +690,8 @@
 
 <script>
 var secilenDosya = null
+var ooDebounceTimer = null
+var ooDuzenlendiMi = {}
 var sonSorgu = ""
 var sonResponse = null
 var sonTopluSonuc = null
@@ -675,6 +751,73 @@ function satirSayisiGuncelle() {
   var txt = document.getElementById("sorguTextarea").value
   var satirlar = txt.split("\n").map(function(s){ return s.trim() }).filter(function(s){ return s.length > 0 })
   document.getElementById("satirSayisi").innerText = satirlar.length + " satır"
+
+  clearTimeout(ooDebounceTimer)
+  if (satirlar.length !== 1 || satirlar[0].length < 3) {
+    document.getElementById("ozellikOnizleme").style.display = "none"
+    return
+  }
+  ooDebounceTimer = setTimeout(function() { ooOnizlemeGetir(satirlar[0]) }, 400)
+}
+
+async function ooOnizlemeGetir(metin) {
+  try {
+    var r = await fetch("/api/malzeme/ozellik-onizleme", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({metin: metin})
+    })
+    var d = await r.json()
+    if (d.durum !== "ok" || !d.ozellikler) {
+      document.getElementById("ozellikOnizleme").style.display = "none"
+      return
+    }
+    ooDuzenlendiMi = {}
+    ooAlanlariDoldur(d.ozellikler)
+    document.getElementById("ozellikOnizleme").style.display = "block"
+  } catch(e) {
+    document.getElementById("ozellikOnizleme").style.display = "none"
+  }
+}
+
+function ooAlanlariDoldur(o) {
+  document.getElementById("ooTip").value = o.tip || "diger"
+  document.getElementById("ooKalinlik").value = o.kalinlik ?? ""
+  document.getElementById("ooEn").value = o.en ?? ""
+  document.getElementById("ooBoy").value = o.boy ?? ""
+  document.getElementById("ooCap").value = o.cap ?? ""
+  document.getElementById("ooProfilTipi").value = o.profil_tipi || ""
+  document.getElementById("ooProfilOlcu").value = o.profil_olcu ?? ""
+  document.getElementById("ooKalite").value = o.kalite || ""
+  document.getElementById("ooStandart").value = o.standart || ""
+  document.getElementById("ooKaplama").value = o.kaplama || ""
+  document.querySelectorAll(".oo-alan").forEach(function(el){ el.classList.remove("duzeltildi") })
+}
+
+function ooDuzenlendi(alan) {
+  ooDuzenlendiMi[alan] = true
+  var idMap = {tip:"ooTip", kalinlik:"ooKalinlik", en:"ooEn", boy:"ooBoy", cap:"ooCap",
+    profil_tipi:"ooProfilTipi", profil_olcu:"ooProfilOlcu", kalite:"ooKalite",
+    standart:"ooStandart", kaplama:"ooKaplama"}
+  var el = document.getElementById(idMap[alan])
+  if (el) el.closest(".oo-alan").classList.add("duzeltildi")
+}
+
+function ooOverrideAl() {
+  var panel = document.getElementById("ozellikOnizleme")
+  if (panel.style.display === "none") return null
+  return {
+    tip: document.getElementById("ooTip").value,
+    kalinlik: document.getElementById("ooKalinlik").value,
+    en: document.getElementById("ooEn").value,
+    boy: document.getElementById("ooBoy").value,
+    cap: document.getElementById("ooCap").value,
+    profil_tipi: document.getElementById("ooProfilTipi").value,
+    profil_olcu: document.getElementById("ooProfilOlcu").value,
+    kalite: document.getElementById("ooKalite").value,
+    standart: document.getElementById("ooStandart").value,
+    kaplama: document.getElementById("ooKaplama").value
+  }
 }
 function formTemizle() {
   document.getElementById("sorguTextarea").value = ""
@@ -715,10 +858,11 @@ function sureRozet(d) {
 
 /* ───── Tek satır kontrol ───── */
 async function tekKontrol(metin) {
+  var override = ooOverrideAl()
   var r = await fetch("/api/malzeme/kontrol", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({metin: metin})
+    body: JSON.stringify({metin: metin, ozellik_override: override})
   })
   var d = await r.json()
   if (d.durum !== "ok") {

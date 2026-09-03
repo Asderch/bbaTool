@@ -852,7 +852,12 @@
     {% if personel_yetki %}
     <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
     {% endif %}
+    {% if fason_gor_yetki %}
     <a href="/fason" class="nav-item active"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+    {% endif %}
+    {% if hammadde_gor_yetki %}
+    <a href="/hammadde" class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
+    {% endif %}
     <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
     <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
     <div class="nav-section">Raporlama</div>
@@ -920,9 +925,11 @@
           <button type="submit" class="ekle-btn" id="ekleBtn">
             <i class="fa-solid fa-plus"></i> Ekle
           </button>
+          {% if fason_ekle_yetki %}
           <button type="button" class="ekle-btn toplu" onclick="topluEkleModalAc()">
             <i class="fa-solid fa-file-arrow-up"></i> Toplu Ekle (Excel)
           </button>
+          {% endif %}
         </form>
       </div>
 
@@ -931,9 +938,15 @@
         <button class="arac-btn export" onclick="excelExport()">
           <i class="fa-solid fa-file-arrow-down"></i> Excel'e Aktar
         </button>
-        {% if session.kullanici == "admin" or session.rol == "admin" %}
+        
+        {% if fason_import_yetki %}
         <button class="arac-btn import" onclick="importModalAc()">
           <i class="fa-solid fa-file-pen"></i> Excel'den Güncelle
+        </button>
+        {% endif %}
+        {% if fason_import_gecmisi_yetki %}
+        <button class="arac-btn" onclick="window.location.href='/fason/import-gecmisi'">
+          <i class="fa-solid fa-clock-rotate-left"></i> İçe Aktarma Geçmişi
         </button>
         {% endif %}
       </div>
@@ -1113,6 +1126,46 @@
   </div>
 </div>
 
+<!-- DÜZENLE MODAL (sadece admin) -->
+<div class="modal-bg" id="duzenleModal" onclick="if(event.target===this)duzenleModalKapat()">
+  <div class="modal-ic">
+    <h3><i class="fa-solid fa-pen"></i> Kaydı Düzenle: <span class="irs-mono" id="duzIrsNoBaslik"></span></h3>
+    <div class="modal-alt">Tüm alanlar doğrudan düzenlenebilir</div>
+
+    <label>İrsaliye No *</label>
+    <input type="text" id="duzIrsNo" maxlength="50">
+
+    <label>Firma *</label>
+    <select id="duzFirma"></select>
+
+    <label>Açıklama</label>
+    <input type="text" id="duzAciklama" maxlength="200">
+
+    <label>İrsaliye Tarihi</label>
+    <input type="text" id="duzIrsTarihi" placeholder="GG.AA.YYYY">
+
+    <label>Stok Miktarı</label>
+    <input type="text" id="duzStok" placeholder="Örn: 1234.56">
+
+    <label>Giriş Miktarı</label>
+    <input type="text" id="duzGiris" placeholder="Örn: 1234.56">
+
+    <label>OTIS Stok</label>
+    <input type="text" id="duzOtisStok" placeholder="Örn: 1234.56">
+
+    <label>OTIS Giriş</label>
+    <input type="text" id="duzOtisGiris" placeholder="Örn: 1234.56">
+
+    <label>Toplam Fiyat (USD)</label>
+    <input type="text" id="duzFiyat" placeholder="Örn: 1234.56">
+
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="duzenleModalKapat()">İptal</button>
+      <button class="modal-onayla" onclick="duzenleKaydet()" id="duzenleBtn"><i class="fa-solid fa-save"></i> Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <script>
 var TUM = []
 var DURUMLAR = []
@@ -1124,6 +1177,7 @@ var GORUNUM = "kart"
 var MEVCUT_KULLANICI = null
 var MEVCUT_ROL = null
 var SECILI_IRS = null
+var MEVCUT_YETKI = {}
 
 // Firma renk paleti (isimden hash → sabit renk)
 var FIRMA_RENKLER = [
@@ -1145,12 +1199,19 @@ function firmaRenkAl(firmaAd) {
   return FIRMA_RENKLER[Math.abs(h) % FIRMA_RENKLER.length]
 }
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
   topbarAvatarGuncelle()
-  veriYukle()
+  await veriYukle()
   sonImportPanelYukle()
   var g = localStorage.getItem("fasonGorunum")
   if (g) gorunumSec(g)
+
+  var params = new URLSearchParams(window.location.search)
+  var araParam = params.get("ara")
+  if (araParam) {
+    document.getElementById("ara").value = araParam
+    renderList()
+  }
 })
 
 document.addEventListener("keydown", function(e) {
@@ -1159,6 +1220,7 @@ document.addEventListener("keydown", function(e) {
     importModalKapat()
     topluEkleModalKapat()
     yeniFirmaModalKapat()
+    duzenleModalKapat()
   }
 })
 
@@ -1175,6 +1237,7 @@ async function topbarAvatarGuncelle() {
     }
     MEVCUT_KULLANICI = b.kullanici || null
     MEVCUT_ROL = b.rol || null
+    MEVCUT_YETKI = b.yetkiler || {}
   } catch(e) {}
 }
 
@@ -1662,7 +1725,7 @@ function kartRender(liste) {
     var renk = r.durum_renk || "text3"
     var ikon = r.durum_ikon || "fa-circle"
     var durumAd = r.durum_ad || "— Belirlenmedi —"
-    var canSil = (MEVCUT_KULLANICI === "admin" || MEVCUT_ROL === "admin" || r.giren_kullanici === MEVCUT_KULLANICI)
+    var canSil = (MEVCUT_YETKI.fason_sil_tumu || r.giren_kullanici === MEVCUT_KULLANICI)
     var rakamHtml = ''
     var hasVeri = (r.stok_miktari != null || r.giris_miktari != null ||
                    r.otis_stok != null || r.otis_giris != null || r.toplam_fiyat != null)
@@ -1684,6 +1747,7 @@ function kartRender(liste) {
     html += '<div class="fason-kart d-' + escHtml(renk) + '" onclick="modalAc(' + r.id + ')">' +
       '<div class="durum-cizgi"></div>' +
       (canSil ? '<button class="sil-btn" onclick="event.stopPropagation();sil(' + r.id + ')" title="Sil"><i class="fa-solid fa-trash"></i></button>' : '') +
+      (MEVCUT_YETKI.fason_duzenle ? '<button class="sil-btn" style="right:40px" onclick="event.stopPropagation();duzenleModalAc(' + r.id + ')" title="Düzenle"><i class="fa-solid fa-pen"></i></button>' : '') +
       '<div class="irs-basik">' +
         '<div class="irs-no">' + escHtml(r.irsaliye_no) + '</div>' +
         (r.irsaliye_tarihi ? '<div class="irs-tarih"><i class="fa-solid fa-calendar"></i> ' + escHtml(r.irsaliye_tarihi) + '</div>' : '') +
@@ -1716,7 +1780,9 @@ function tabloRender(liste) {
     html += '<tr class="satir-' + escHtml(renk) + '" onclick="modalAc(' + r.id + ')">' +
       '<td class="irs-no">' + escHtml(r.irsaliye_no) + '</td>' +
       '<td class="firma-cell' + (r.firma_ad ? '' : ' yok') + '">' + escHtml(r.firma_ad || "—") + '</td>' +
-      '<td class="meta">' + escHtml(r.irsaliye_tarihi || "—") + '</td>' +
+      '<td class="meta">' + escHtml(r.giren_kullanici) +
+        (MEVCUT_YETKI.fason_duzenle ? ' <i class="fa-solid fa-pen" style="cursor:pointer;color:var(--blue);margin-left:4px" onclick="event.stopPropagation();duzenleModalAc(' + r.id + ')" title="Düzenle"></i>' : '') +
+      '</td>' +
       '<td><span class="durum-rozet d-' + escHtml(renk) + '"><i class="fa-solid ' + escHtml(ikon) + '"></i> ' + escHtml(durumAd) + '</span></td>' +
       '<td class="num">' + fmtNum(r.stok_miktari) + '</td>' +
       '<td class="num">' + fmtNum(r.giris_miktari) + '</td>' +
@@ -1807,6 +1873,80 @@ async function sil(id) {
     }
   } catch(e) {
     if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+  }
+}
+
+var DUZENLENEN_ID = null
+
+function duzenleModalAc(id) {
+  var r = TUM.find(function(x){ return x.id === id })
+  if (!r) return
+  DUZENLENEN_ID = id
+  document.getElementById("duzIrsNoBaslik").textContent = r.irsaliye_no
+  document.getElementById("duzIrsNo").value = r.irsaliye_no || ""
+  document.getElementById("duzAciklama").value = r.aciklama || ""
+  document.getElementById("duzIrsTarihi").value = r.irsaliye_tarihi || ""
+  document.getElementById("duzStok").value = r.stok_miktari ?? ""
+  document.getElementById("duzGiris").value = r.giris_miktari ?? ""
+  document.getElementById("duzOtisStok").value = r.otis_stok ?? ""
+  document.getElementById("duzOtisGiris").value = r.otis_giris ?? ""
+  document.getElementById("duzFiyat").value = r.toplam_fiyat ?? ""
+
+  var fs = document.getElementById("duzFirma")
+  fs.innerHTML = ""
+  FIRMALAR.forEach(function(f) {
+    fs.innerHTML += '<option value="' + f.id + '">' + escHtml(f.ad) + '</option>'
+  })
+  fs.value = r.firma_id || ""
+
+  document.getElementById("duzenleModal").classList.add("goster")
+}
+
+function duzenleModalKapat() {
+  document.getElementById("duzenleModal").classList.remove("goster")
+  DUZENLENEN_ID = null
+}
+
+async function duzenleKaydet() {
+  if (!DUZENLENEN_ID) return
+  var irsNo = document.getElementById("duzIrsNo").value.trim()
+  if (!irsNo) {
+    if (typeof bildirim === "function") bildirim("İrsaliye No zorunlu", "Uyarı", "uyari")
+    return
+  }
+  var btn = document.getElementById("duzenleBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'
+  try {
+    var r = await fetch("/api/fason/duzenle/" + DUZENLENEN_ID, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        irsaliye_no: irsNo,
+        firma_id: document.getElementById("duzFirma").value,
+        aciklama: document.getElementById("duzAciklama").value.trim(),
+        irsaliye_tarihi: document.getElementById("duzIrsTarihi").value.trim(),
+        stok_miktari: document.getElementById("duzStok").value.trim(),
+        giris_miktari: document.getElementById("duzGiris").value.trim(),
+        otis_stok: document.getElementById("duzOtisStok").value.trim(),
+        otis_giris: document.getElementById("duzOtisGiris").value.trim(),
+        toplam_fiyat: document.getElementById("duzFiyat").value.trim()
+      })
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      duzenleModalKapat()
+      veriYukle()
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
   }
 }
 

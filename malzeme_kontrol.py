@@ -66,6 +66,26 @@ def init_malzeme_db():
         except: pass
         try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN guncelleme_tarihi TIMESTAMP")
         except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN tip TEXT DEFAULT ''")
+        except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN kalinlik REAL")
+        except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN en_olcu REAL")
+        except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN boy REAL")
+        except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN cap REAL")
+        except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN profil_tipi TEXT DEFAULT ''")
+        except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN profil_olcu REAL")
+        except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN kalite TEXT DEFAULT ''")
+        except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN standart TEXT DEFAULT ''")
+        except: pass
+        try: conn.execute("ALTER TABLE malzeme_katalog ADD COLUMN kaplama TEXT DEFAULT ''")
+        except: pass
         conn.commit()
     finally:
         conn.close()
@@ -88,6 +108,176 @@ _KISALTMA = {
     "tor": "torbalı", "torb": "torbalı",
     "pls": "plastik", "alm": "alüminyum", "alum": "alüminyum",
 }
+
+# ───────────────────────────────────────────────────────────────────────────
+# TEKNİK ÖZELLİK ÇIKARMA (V2) — Sac/Profil/Boru/Demir Düz
+# ───────────────────────────────────────────────────────────────────────────
+
+_TIP_ANAHTAR = [
+    ("sac",       ["sac", "levha"]),
+    ("profil",    ["profil", "upe", "ipe", "hea", "heb", "npu", "npi", "ipn"]),
+    ("kose_bent", ["kose bent", "kosebent", "esit kenar", "esitkenar"]),
+    ("fitting",   ["dirsek", "reduksiyon", "baglanti", "flans", "kapak", "ek parca", "manson"]),
+    ("boru",      ["boru"]),
+    ("lama",      ["lama"]),
+    ("demir_duz", ["demir duz", "yuvarlak demir", "yuvarlak"]),
+]
+
+_PROFIL_TIP_RE  = re.compile(r'\b(upe|ipe|hea|heb|npu|npi|ipn)\b')
+_PROFIL_OLCU_RE = re.compile(r'\b(?:upe|ipe|hea|heb|npu|npi|ipn)\s*(\d{2,4})\b')
+_SAC_RE         = re.compile(r'\b(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\b')
+_CAP_RE         = re.compile(r'(?:ø|çap|cap)\s*(\d+(?:[.,]\d+)?)')
+_BORU_OLCU_RE   = re.compile(r'\b(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\b')
+_BOY_RE         = re.compile(r'\bl\s*[=:]\s*(\d+(?:[.,]\d+)?)')
+_KALITE_RE      = re.compile(r'\b[a-z]\d{3}[a-z0-9]{0,4}\b')
+_KIRIL_RE       = re.compile(r'[а-яё]', re.IGNORECASE)
+_STANDART_RE    = re.compile(r'\b(en|din|gost|iso|astm|tu|sto|gost r)\s*-?\s*([a-z0-9][a-z0-9\-\.]{2,20})\b')
+_KAPLAMA_KELIME = ["galvaniz", "paslanmaz", "siyah", "krom"]
+
+
+def _sayi(s):
+    try: return float(s.replace(",", "."))
+    except: return None
+
+
+def _boyut_temizle(s):
+    """normalize()'dan farklı olarak 'x' bağlarını ve 'ø' işaretini korur —
+    boyut/çap regex'lerinin çalışabilmesi için."""
+    if not s: return ""
+    s = str(s).translate(_TR_BUYUK).lower().translate(_TR_KUCUK)
+    s = re.sub(r'[×*]', 'x', s)
+    s = re.sub(r'\s+', ' ', s)
+    return s.strip()
+
+
+def ozellik_cikar(metin):
+    """Sac/profil/boru/demir düz metninden yapısal özellik çıkarır."""
+    ham = _boyut_temizle(metin)
+    norm = normalize(metin)
+
+    tip = "diger"
+    for t, kelimeler in _TIP_ANAHTAR:
+        if any(k in norm for k in kelimeler):
+            tip = t
+            break
+
+    ozellik = {
+        "tip": tip, "kalinlik": None, "en": None, "boy": None, "cap": None,
+        "profil_tipi": None, "profil_olcu": None, "kalite": None,
+        "standart": None, "kaplama": None,
+    }
+
+
+    if tip == "sac":
+        m = _SAC_RE.search(ham)
+        if m:
+            ozellik["kalinlik"] = _sayi(m.group(1))
+            ozellik["en"]       = _sayi(m.group(2))
+            ozellik["boy"]      = _sayi(m.group(3))
+    elif tip == "profil":
+        pm = _PROFIL_TIP_RE.search(ham)
+        if pm: ozellik["profil_tipi"] = pm.group(1).upper()
+        om = _PROFIL_OLCU_RE.search(ham)
+        if om: ozellik["profil_olcu"] = _sayi(om.group(1))
+    elif tip in ("boru", "demir_duz", "lama"):
+        cm = _CAP_RE.search(ham)
+        if cm:
+            ozellik["cap"] = _sayi(cm.group(1))
+            # Çap sonrası "Xkalınlık" var mı? (örn. Ø325X8)
+            sonrasi = ham[cm.end():]
+            xm = re.match(r'\s*x\s*(\d+(?:[.,]\d+)?)', sonrasi)
+            if xm: ozellik["kalinlik"] = _sayi(xm.group(1))
+        elif tip == "boru":
+            # Boru genelde "169X16" (dış çap x et kalınlığı) şeklinde, "çap" kelimesi yazılmaz
+            om = _BORU_OLCU_RE.search(ham)
+            if om:
+                ozellik["cap"] = _sayi(om.group(1))
+                ozellik["kalinlik"] = _sayi(om.group(2))
+        bm = _BOY_RE.search(ham)
+        if bm: ozellik["boy"] = _sayi(bm.group(1))
+
+    km = _KALITE_RE.search(norm)
+    if km:
+        ozellik["kalite"] = km.group(0).upper()
+    else:
+        # Avrupa formatı bulunamadıysa, Rus/GOST kalite kodunu dene
+        # (Kiril harfi + rakam birlikte geçen token — örn. 09Г2С, 17Г1С, 3СП)
+        for t in norm.split():
+            if _KIRIL_RE.search(t) and any(c.isdigit() for c in t):
+                ozellik["kalite"] = t.upper()
+                break
+
+    sm = _STANDART_RE.search(norm)
+    if sm: ozellik["standart"] = (sm.group(1) + sm.group(2)).upper()
+
+    for k in _KAPLAMA_KELIME:
+        if k in norm:
+            ozellik["kaplama"] = k
+            break
+
+    return ozellik
+
+def _override_normalize(ov):
+    """Kullanıcının düzelttiği özellik dict'ini temizler/tipe çevirir."""
+    if not ov: return None
+    out = {}
+    for k in ("kalinlik", "en", "boy", "cap", "profil_olcu"):
+        v = ov.get(k)
+        if v in (None, ""):
+            out[k] = None
+        else:
+            try: out[k] = float(str(v).replace(",", "."))
+            except: out[k] = None
+    for k in ("tip", "profil_tipi", "kalite", "standart", "kaplama"):
+        v = ov.get(k)
+        v = str(v).strip() if v not in (None, "") else None
+        out[k] = v.upper() if (v and k in ("profil_tipi", "kalite", "standart")) else v
+    if not out.get("tip"):
+        out["tip"] = "diger"
+    return out
+
+@malzeme_bp.route("/api/malzeme/ozellik-onizleme", methods=["POST"])
+def malzeme_ozellik_onizleme():
+    """Katalog taramadan, sadece metinden hızlıca özellik çıkarır (canlı önizleme için)."""
+    d = request.get_json(silent=True) or {}
+    metin = (d.get("metin") or "").strip()
+    if not metin or len(metin) < 3:
+        return jsonify({"durum": "ok", "ozellikler": None})
+    return jsonify({"durum": "ok", "ozellikler": ozellik_cikar(metin)})
+
+def _ozellik_puan(qf, cf):
+    """İki özellik dict'i arasında 0-100 arası eşleşme puanı."""
+    if qf["tip"] == "diger" or cf["tip"] == "diger":
+        return None  # tip belirlenemeyen kayıtlarda özellik puanı hesaplanmaz
+    if qf["tip"] != cf["tip"]:
+        return 0  # farklı tip → kesin uyuşmazlık
+
+    puan, agirlik_toplam = 0, 0
+
+    def karsilastir(qv, cv, agirlik, tolerans=0.02):
+        nonlocal puan, agirlik_toplam
+        if qv is None or cv is None:
+            return
+        agirlik_toplam += agirlik
+        if isinstance(qv, str):
+            if qv == cv: puan += agirlik
+        else:
+            if cv != 0 and abs(qv - cv) / max(cv, 1) <= tolerans:
+                puan += agirlik
+
+    karsilastir(qf["kalinlik"], cf["kalinlik"], 25)
+    karsilastir(qf["en"], cf["en"], 20)
+    karsilastir(qf["boy"], cf["boy"], 20)
+    karsilastir(qf["cap"], cf["cap"], 25)
+    karsilastir(qf["profil_tipi"], cf["profil_tipi"], 20)
+    karsilastir(qf["profil_olcu"], cf["profil_olcu"], 20)
+    karsilastir(qf["kalite"], cf["kalite"], 20)
+    karsilastir(qf["standart"], cf["standart"], 15)
+    karsilastir(qf["kaplama"], cf["kaplama"], 10)
+
+    if agirlik_toplam == 0:
+        return None  # karşılaştırılabilir hiçbir alan yok
+    return round(100 * puan / agirlik_toplam)
 
 
 def normalize(s):
@@ -154,6 +344,7 @@ def benzerlik(sorgu, hedef):
 
 _KATALOG_CACHE = None
 _KATALOG_YUKLENME_SURE = 0
+_KATALOG_BUCKETS = {}
 
 
 def _katalog_cache_yukle():
@@ -169,12 +360,14 @@ def _katalog_cache_yukle():
             FROM malzeme_katalog
         """).fetchall()
         cache = []
+        buckets = {}
         for r in rows:
             kisa = r["kisa_metin_tr"] or ""
             uzun = r["uzun_metin_tr"] or ""
             kt = tokenize(kisa)
             ut = tokenize(uzun)
-            cache.append({
+            ozf = ozellik_cikar((kisa + " " + uzun).strip())
+            kayit = {
                 "malzeme_no":        r["malzeme_no"],
                 "kisa_metin":        kisa,
                 "uzun_metin":        uzun,
@@ -187,8 +380,12 @@ def _katalog_cache_yukle():
                 "kisa_sayilar":      {t for t in kt if any(c.isdigit() for c in t)},
                 "uzun_set":          set(ut),
                 "uzun_sayilar":      {t for t in ut if any(c.isdigit() for c in t)},
-            })
+                "ozellik":           ozf,
+            }
+            cache.append(kayit)
+            buckets.setdefault(ozf["tip"], []).append(kayit)
         _KATALOG_CACHE = cache
+        _KATALOG_BUCKETS = buckets
     finally:
         conn.close()
     _KATALOG_YUKLENME_SURE = round(time.time() - bas, 2)
@@ -202,8 +399,9 @@ def _katalog_cache_al():
 
 
 def _katalog_cache_temizle():
-    global _KATALOG_CACHE
+    global _KATALOG_CACHE, _KATALOG_BUCKETS
     _KATALOG_CACHE = None
+    _KATALOG_BUCKETS = {}
 
 
 # ───────────────────────────────────────────────────────────────────────────
@@ -217,22 +415,34 @@ MAKSIMUM_YAKIN     = 20
 MAKSIMUM_OLASI     = 8
 
 
-def _ara(sorgu, min_puan=OLASI_ESLESME_ESIK, max_aday=200):
+def _ara(sorgu, min_puan=OLASI_ESLESME_ESIK, max_aday=200, ozellik_override=None):
     qt = tokenize(sorgu)
     if not qt: return []
     qset = set(qt)
     qsayilar = {t for t in qt if any(c.isdigit() for c in t)}
+    qozellik = ozellik_override if ozellik_override else ozellik_cikar(sorgu)
 
     katalog = _katalog_cache_al()
     if not katalog: return []
 
+    # Tip belirlenebiliyorsa aday havuzunu daralt (performans)
+    if qozellik["tip"] != "diger" and _KATALOG_BUCKETS:
+        adaylar = _KATALOG_BUCKETS.get(qozellik["tip"], []) + _KATALOG_BUCKETS.get("diger", [])
+    else:
+        adaylar = katalog
+
     sonuclar = []
-    for c in katalog:
-        # Hem kısa hem uzun metinde benzerlik hesapla
-        # NOT: Uzun metin daha detaylı bilgi içerdiği için biraz daha öncelikli
+    for c in adaylar:
         p_kisa = _benzerlik_set(qset, qsayilar, c["kisa_set"], c["kisa_sayilar"]) if c["kisa_set"] else 0
         p_uzun = _benzerlik_set(qset, qsayilar, c["uzun_set"], c["uzun_sayilar"]) if c["uzun_set"] else 0
-        en_iyi = max(p_kisa, p_uzun)
+        token_puan = max(p_kisa, p_uzun)
+
+        oz_puan = _ozellik_puan(qozellik, c["ozellik"])
+        if oz_puan is None:
+            en_iyi = token_puan
+        else:
+            en_iyi = round(0.5 * token_puan + 0.5 * oz_puan)
+
         if en_iyi >= min_puan:
             sonuclar.append({
                 "malzeme_no":       c["malzeme_no"],
@@ -244,7 +454,9 @@ def _ara(sorgu, min_puan=OLASI_ESLESME_ESIK, max_aday=200):
                 "malzeme_turu":     c["malzeme_turu"],
                 "puan":             en_iyi,
                 "puan_kisa":        p_kisa,
-                "puan_uzun":        p_uzun
+                "puan_uzun":        p_uzun,
+                "puan_ozellik":     oz_puan,
+                "ozellikler":       c["ozellik"],
             })
 
     sonuclar.sort(key=lambda x: x["puan"], reverse=True)
@@ -298,6 +510,7 @@ def malzeme_katalog_bilgi():
 def malzeme_kontrol():
     d = request.get_json(silent=True) or {}
     sorgu = (d.get("metin") or "").strip()
+    ozellik_override = _override_normalize(d.get("ozellik_override"))
 
     if not sorgu:
         return jsonify({"durum": "hata", "mesaj": "Sorgu boş"}), 400
@@ -318,7 +531,7 @@ def malzeme_kontrol():
             "olasi_eslesmeler": []
         })
 
-    sonuclar = _ara(sorgu, min_puan=OLASI_ESLESME_ESIK, max_aday=200)
+    sonuclar = _ara(sorgu, min_puan=OLASI_ESLESME_ESIK, max_aday=200, ozellik_override=ozellik_override)
     kategori = _kategori_belirle(sonuclar)
 
     tam_list   = [s for s in sonuclar if s["puan"] >= TAM_ESLESME_ESIK]
@@ -336,9 +549,10 @@ def malzeme_kontrol():
         "tam_eslesmeler":   tam_list,
         "yakin_eslesmeler": yakin_list,
         "olasi_eslesmeler": olasi_list,
-        "tokens_test":      tokenize(sorgu)
+        "tokens_test":      tokenize(sorgu),
+        "ozellikler_test":  ozellik_override if ozellik_override else ozellik_cikar(sorgu),
+        "ozellik_duzeltildi_mi": ozellik_override is not None
     })
-
 
 # ───────────────────────────────────────────────────────────────────────────
 # TOPLU KONTROL

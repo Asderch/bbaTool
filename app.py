@@ -3,6 +3,7 @@ from agirlik_db import agirlik_bp, init_agirlik_db
 from fason_db import fason_bp, init_fason_db
 from mb52_backend import mb52_bp, mb52_init_db
 from malzeme_kontrol import malzeme_bp, init_malzeme_db
+from hammadde_db import hammadde_bp, init_hammadde_db
 
 # ═══ KULLANICI YÖNETİMİ ═══
 from kullanici_db import (
@@ -65,6 +66,8 @@ app.register_blueprint(malzeme_bp)
 app.register_blueprint(kullanici_bp)
 app.register_blueprint(fason_bp)
 init_fason_db()
+app.register_blueprint(hammadde_bp)
+init_hammadde_db()
 app.register_blueprint(versiyon_bp)
 versiyon_dosyasini_hazirla()
 
@@ -73,7 +76,7 @@ kullanici_dosyasini_hazirla()
 
 from functools import wraps
 
-APP_VERSION = "5.2"
+APP_VERSION = "5.3"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -403,10 +406,21 @@ def inject_permissions():
         'personel_yetki': personel_yetkisi_var(session.get("kullanici", ""))
     }
 
+@app.context_processor
+def inject_fason_permissions():
+    return {
+        'fason_gor_yetki': yetki_var_mi("fason_gor"),
+        'hammadde_gor_yetki': yetki_var_mi("hammadde_gor"),
+        'fason_ekle_yetki': yetki_var_mi("fason_ekle"),
+        'fason_duzenle_yetki': yetki_var_mi("fason_duzenle"),
+        'fason_import_yetki': yetki_var_mi("fason_import"),
+        'fason_import_gecmisi_yetki': yetki_var_mi("fason_import_gecmisi"),
+    }
+
 @app.route("/islem-gecmisi")
 def islem_gecmisi_sayfa():
     if not giris_yapildi_mi(): return redirect(url_for("login"))
-    if not yetki_var_mi("panel_gor"): return redirect(url_for("index"))
+    if not yetki_var_mi("islem_gecmisi_gor"): return redirect(url_for("index", erisim_hata="1"))
     return render_template("islem-gecmisi.html")
 
 @app.route("/nakil-dashboard")
@@ -527,7 +541,7 @@ function onayla(){{return Promise.resolve(true)}}'''
         return jsonify({"durum":"hata","mesaj":str(e)}), 500
 
 @app.route("/api/islem-log/liste")
-@yetki_gerekli("panel_gor")
+@yetki_gerekli("islem_gecmisi_gor")
 def islem_log_liste():
     try:
         modul = request.args.get("modul")
@@ -864,6 +878,8 @@ def api_raporlar():
 @app.route("/sevkiyat-planlar")
 def sevkiyat_planlar():
     if not giris_yapildi_mi(): return redirect(url_for("login"))
+    if not yetki_var_mi("plan_gor"):
+        return redirect(url_for("index", erisim_hata="1"))
     return render_template("sevkiyat-planlar.html")
 
 @app.route("/sevkiyat-detay/<int:plan_id>")
@@ -877,7 +893,7 @@ def sevkiyat_dashboard():
         return redirect(url_for("login"))
 
     if not yetki_var_mi("panel_gor"):
-        return redirect(url_for("index"))
+        return redirect(url_for("index", erisim_hata="1"))
 
     return render_template("sevkiyat-dashboard.html")
 
@@ -963,23 +979,42 @@ def sevkiyat_plan_yeni():
     except Exception as e:
         return jsonify({"durum":"hata","mesaj":str(e)}), 500
 
+
+# Hammadde Modülü
+
+@app.route("/hammadde")
+def hammadde_sayfa():
+    if not giris_yapildi_mi():
+        return redirect(url_for("login"))
+    if not yetki_var_mi("hammadde_gor"):
+        return redirect(url_for("index", erisim_hata="1"))
+    return render_template("hammadde.html")
+
+
 # ─── FASON TAKİP SAYFALARI ───
 @app.route("/fason")
 def fason_sayfa():
     if not giris_yapildi_mi():
         return redirect(url_for("login"))
+    if not yetki_var_mi("fason_gor"):
+        return redirect(url_for("index"))
     return render_template("fason.html")
-
 
 @app.route("/fason/durumlar")
 def fason_durumlar_sayfa():
     if not giris_yapildi_mi():
         return redirect(url_for("login"))
-    # Sadece admin
-    if session.get("kullanici") != "admin" and session.get("rol") != "admin":
+    if not yetki_var_mi("fason_duzenle"):
         return redirect(url_for("fason_sayfa"))
     return render_template("fason-durumlar.html")
 
+@app.route("/fason/import-gecmisi")
+def fason_import_gecmisi_sayfa():
+    if not giris_yapildi_mi():
+        return redirect(url_for("login"))
+    if not yetki_var_mi("fason_import_gecmisi"):
+        return redirect(url_for("fason_sayfa"))
+    return render_template("fason-import-gecmisi.html")
 
 @app.route("/api/sevkiyat/plan-liste")
 def sevkiyat_plan_liste():

@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Hammadde Takip</title>
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/popup.js" defer></script>
+<style>
+  .ham-top {
+    background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px 18px; margin-bottom: 16px; display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: var(--shadow-sm);
+  }
+  .ham-top-info { font-size: 12px; color: var(--text2) }
+  .ham-top-info strong { color: var(--text); font-weight: 700 }
+  .ham-top-info i { color: var(--blue); margin-right: 6px }
+  .ham-btn {
+    padding: 9px 16px; border-radius: var(--radius); border: 1px solid var(--border);
+    background: var(--bg-white); color: var(--text); font-size: 12.5px; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
+  }
+  .ham-btn:hover { background: var(--bg-hover) }
+  .ham-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary) }
+
+  .ham-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border) }
+  .ham-tab {
+    padding: 10px 16px; font-size: 12.5px; font-weight: 700; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .ham-tab.aktif { color: var(--primary); border-bottom-color: var(--primary) }
+
+  .ham-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px }
+  .ham-kart {
+    background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px 16px; cursor: pointer; transition: all .15s; box-shadow: var(--shadow-sm);
+  }
+  .ham-kart:hover { border-color: var(--primary); transform: translateY(-1px) }
+  .ham-kart-ust { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px }
+  .ham-kart-no { font-size: 13.5px; font-weight: 800; color: var(--text); font-family: monospace }
+  .ham-kart-tarih { font-size: 10.5px; color: var(--text3); margin-top: 2px }
+  .ham-badge {
+    font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px;
+    background: var(--green-dim); color: var(--green); white-space: nowrap;
+  }
+  .ham-badge.stokta { background: var(--amber-dim); color: var(--amber) }
+  .ham-kart-alt { font-size: 11px; color: var(--text2); margin-top: 6px }
+  .ham-kart-alt strong { color: var(--text) }
+  .ham-ak-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px }
+  .ham-ak-chip {
+    font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 8px;
+    background: var(--blue-dim, rgba(59,130,246,.12)); color: var(--blue);
+  }
+
+  .ham-detay-baslik { display: flex; align-items: center; gap: 10px; margin-bottom: 14px }
+  .ham-geri-btn {
+    background: transparent; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 7px 12px; font-size: 12px; color: var(--text2); cursor: pointer;
+  }
+  .ham-geri-btn:hover { background: var(--bg-hover) }
+  .ham-detay-baslik h2 { font-size: 16px; font-weight: 800; color: var(--text); margin: 0 }
+  .ham-detay-meta { font-size: 11.5px; color: var(--text3); margin-top: 2px }
+
+  .ham-kalem-tablo { width: 100%; border-collapse: collapse; font-size: 11.5px }
+  .ham-kalem-tablo th {
+    text-align: left; padding: 8px 10px; font-size: 9.5px; text-transform: uppercase;
+    color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 700;
+  }
+  .ham-kalem-tablo td { padding: 8px 10px; border-bottom: 1px solid var(--border-light); vertical-align: top }
+  .ham-kalem-tablo tr:hover td { background: var(--bg-hover) }
+  .ham-tanim { font-weight: 600; color: var(--text); max-width: 320px }
+  .ham-mono { font-family: monospace; color: var(--text2) }
+  .ham-stok-var { color: var(--amber); font-weight: 700 }
+  .ham-stok-yok { color: var(--text3) }
+  .ham-durum-btn {
+    background: transparent; border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 8px; font-size: 10.5px; color: var(--primary); cursor: pointer; white-space: nowrap;
+  }
+  .ham-durum-btn:hover { background: var(--bg-hover) }
+
+  .ham-bos { text-align: center; padding: 40px 16px; color: var(--text3); font-size: 12.5px }
+  .ham-bos i { font-size: 22px; margin-bottom: 8px; display: block; opacity: .5 }
+
+  /* Import modal */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 999; align-items: center; justify-content: center }
+  .modal-bg.goster { display: flex }
+  .modal-ic { background: var(--bg-white); border-radius: var(--radius-lg); padding: 22px 24px; width: 440px; max-width: 92vw; box-shadow: var(--shadow-lg, 0 10px 40px rgba(0,0,0,.3)) }
+  .modal-ic h3 { font-size: 15px; font-weight: 800; color: var(--text); margin: 0 0 4px }
+  .modal-alt { font-size: 11.5px; color: var(--text3); margin-bottom: 16px }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px }
+  .modal-iptal { padding: 8px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; font-size: 12px }
+  .modal-onayla { padding: 8px 16px; border-radius: var(--radius); border: none; background: var(--primary); color: #fff; cursor: pointer; font-size: 12px; font-weight: 700 }
+  .dosya-input { width: 100%; box-sizing: border-box; padding: 10px; border: 1px dashed var(--border); border-radius: var(--radius); background: var(--bg); font-size: 12px; color: var(--text2); margin-bottom: 8px }
+  .import-sonuc { margin-top: 12px; font-size: 11.5px; background: var(--green-dim); color: var(--green); padding: 10px 12px; border-radius: var(--radius) }
+  .import-sonuc.hata { background: var(--red-dim); color: var(--red) }
+
+  .durum-gecmis-satir { display: flex; justify-content: space-between; font-size: 11px; padding: 6px 0; border-bottom: 1px solid var(--border-light) }
+  .durum-gecmis-satir:last-child { border-bottom: none }
+  .durum-gecmis-ad { font-weight: 700; color: var(--text) }
+  .durum-gecmis-alt { color: var(--text3); font-size: 10px }
+    .filtre-bar {
+    display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;
+    background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 12px 16px; margin-bottom: 14px;
+  }
+  .filtre-alan label { display: block; font-size: 9.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 4px }
+  .filtre-alan select, .filtre-alan input {
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg); color: var(--text); font-size: 12px; min-width: 140px;
+  }
+  .filtre-spacer { flex: 1 }
+
+  .kalem-tablo-wrap { overflow-x: auto; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg) }
+  .kalem-tablo { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1000px }
+  .kalem-tablo th {
+    text-align: left; padding: 8px 10px; font-size: 9.5px; text-transform: uppercase;
+    color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 700;
+    position: sticky; top: 0; background: var(--bg-white); white-space: nowrap;
+  }
+  .kalem-tablo th.grup-otis { background: rgba(107,114,128,.1) }
+  .kalem-tablo th.grup-sap { background: var(--green-dim) }
+  .kalem-tablo td { padding: 7px 10px; border-bottom: 1px solid var(--border-light); white-space: nowrap }
+  .kalem-tablo td.grup-otis { background: rgba(107,114,128,.04) }
+  .kalem-tablo td.grup-sap { background: rgba(34,197,94,.04) }
+  .kalem-tablo tr:hover td { background: var(--bg-hover) }
+  .fark-uyari { color: var(--red); font-weight: 800 }
+  .fark-yok { color: var(--text2) }
+  .sap-bos { color: var(--text3); font-style: italic }
+  .ham-link { color: var(--primary); cursor: pointer; text-decoration: none }
+  .ham-link:hover { text-decoration: underline }
+  .ham-badge.durum { background: var(--blue-dim, rgba(59,130,246,.12)); color: var(--blue) }
+  .akis-hucre { text-align: center; font-size: 10px; white-space: nowrap }
+  .akis-tarih { color: var(--green); font-weight: 700 }
+  .akis-bos { color: var(--text3) }  
+  .sap-input {
+    width: 90px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg); color: var(--text); font-size: 11px; font-family: monospace;
+  }
+  .sap-not-input {
+    width: 130px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg); color: var(--text); font-size: 11px;
+  }
+  .sap-input:focus, .sap-not-input:focus { outline: none; border-color: var(--primary) }
+  .mini-kopyala {
+    background: transparent; border: none; color: var(--text3); cursor: pointer;
+    padding: 2px 4px; font-size: 10px; margin-left: 4px;
+  }
+  .mini-kopyala:hover { color: var(--primary) }
+  .ham-detay-baslik { justify-content: space-between }
+  .ham-detay-sol { display: flex; align-items: center; gap: 10px }
+  .ham-detay-sag { display: flex; gap: 8px; align-items: center }
+  .ham-copy-btn {
+    background: transparent; border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 8px; font-size: 10.5px; color: var(--text2); cursor: pointer;
+  }
+  .ham-copy-btn:hover { background: var(--bg-hover); color: var(--text) }  
+
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
+      <h2>Warehouse Data</h2>
+      <span>V{{ APP_VERSION }}</span>
+    </div>
+    <div class="nav-section">Main Data</div>
+    <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+    <div class="nav-section">Sevkiyat</div>
+    <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+    <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+    <div class="nav-section">Araçlar</div>
+    <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+    {% if personel_yetki %}
+    <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+    {% endif %}
+    {% if fason_gor_yetki %}
+    <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+    {% endif %}
+    {% if hammadde_gor_yetki %}
+    <a href="/hammadde" class="nav-item active"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
+    {% endif %}
+    <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+    <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+    <div class="nav-section">Raporlama</div>
+    <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+    <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+    <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+    <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
+    <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+    {% if session.kullanici == "admin" %}
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
+    <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
+    {% endif %}
+    <div class="sidebar-footer">
+      <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+        <i class="fa-solid fa-sun"></i> Açık Tema
+      </button>
+      <button class="cikis-btn" onclick="cikisYap()">
+        <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+      </button>
+    </div>
+  </nav>
+<div class="main-area">
+<div class="topbar">
+  <div>
+    <div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span><span class="bc-current">Hammadde Takip</span></div>
+    <div class="topbar-title">Hammadde Takip</div>
+    <div class="topbar-sub">OTIS'ten gelen hammaddeleri irsaliye ve AK bazında takip et</div>
+  </div>
+</div>
+<div class="content">
+
+  <div class="ham-top">
+    <div class="ham-top-info">
+      <i class="fa-solid fa-database"></i>
+      <strong id="topIrsSayisi">-</strong> irsaliye ·
+      <strong id="topKalemSayisi">-</strong> kalem ·
+      Son import: <strong id="topSonImport">-</strong>
+    </div>
+    <div style="display:flex;gap:8px">
+      {% if session.kullanici == "admin" %}
+      <button class="ham-btn" style="color:var(--red);border-color:var(--red)" onclick="temizleModalAc()"><i class="fa-solid fa-trash"></i> Verileri Temizle</button>
+      {% endif %}
+      <button class="ham-btn primary" onclick="importModalAc()"><i class="fa-solid fa-file-arrow-up"></i> OTIS Export Yükle</button>
+    </div>
+  </div>
+
+  <div class="ham-tabs">
+    <div class="ham-tab aktif" id="tabIrs" onclick="sekmeSec('irsaliye')">İrsaliyeler</div>
+    <div class="ham-tab" id="tabAk" onclick="sekmeSec('ak')">AK Numaraları</div>
+    <div class="ham-tab" id="tabKalem" onclick="sekmeSec('kalem')">Tüm Kalemler</div>
+  </div>
+
+  <div id="listeAlan"><div class="ham-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div></div>
+
+</div>
+</div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-bg" id="importModal" onclick="if(event.target===this)importModalKapat()">
+  <div class="modal-ic">
+    <h3><i class="fa-solid fa-file-arrow-up"></i> OTIS Export Yükle</h3>
+    <div class="modal-alt">"Tüm Gelen Malzemeler" export dosyasını (.xlsx) seç — sistem otomatik olarak hammadde mal gruplarını filtreler.</div>
+    <input type="file" id="importDosya" class="dosya-input" accept=".xlsx">
+    <div id="importSonucAlani"></div>
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="importModalKapat()">Kapat</button>
+      <button class="modal-onayla" id="importBtn" onclick="importGonder()"><i class="fa-solid fa-upload"></i> Yükle</button>
+    </div>
+  </div>
+</div>
+
+<!-- DURUM EKLE MODAL -->
+<div class="modal-bg" id="durumModal" onclick="if(event.target===this)durumModalKapat()">
+  <div class="modal-ic">
+    <h3><i class="fa-solid fa-flag"></i> Durum Ekle</h3>
+    <div class="modal-alt" id="durumKalemAdi"></div>
+
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px">Durum</label>
+    <select id="durumSecim" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-white);color:var(--text);font-size:12.5px;margin-bottom:10px">
+      <option value="Girişi Yapılmadı">Girişi Yapılmadı</option>
+      <option value="SAT Bekleniyor">SAT Bekleniyor</option>
+      <option value="SAS'a Döndü">SAS'a Döndü</option>
+      <option value="SAP'a İşlendi">SAP'a İşlendi</option>
+      <option value="Nakil Yapıldı">Nakil Yapıldı</option>
+      <option value="Diğer">Diğer</option>
+    </select>
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px">Not (opsiyonel)</label>
+    <input type="text" id="durumNot" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-white);color:var(--text);font-size:12.5px">
+
+    <div style="margin-top:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px">Geçmiş</div>
+      <div id="durumGecmisAlan" style="max-height:160px;overflow-y:auto"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="durumModalKapat()">Kapat</button>
+      <button class="modal-onayla" onclick="durumKaydet()"><i class="fa-solid fa-plus"></i> Ekle</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAP IMPORT MODAL -->
+<div class="modal-bg" id="sapImportModal" onclick="if(event.target===this)sapImportModalKapat()">
+  <div class="modal-ic">
+    <h3><i class="fa-solid fa-file-import"></i> SAP Kontrolünü Yükle</h3>
+    <div class="modal-alt">Excel'e Aktar ile indirdiğin dosyayı, SAP Giriş/Stok/Not sütunlarını doldurduktan sonra buradan geri yükle.</div>
+    <input type="file" id="sapImportDosya" class="dosya-input" accept=".xlsx">
+    <div id="sapImportSonucAlani"></div>
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="sapImportModalKapat()">Kapat</button>
+      <button class="modal-onayla" id="sapImportBtn" onclick="sapImportGonder()"><i class="fa-solid fa-upload"></i> Yükle</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMİZLEME ONAY MODAL -->
+<div class="modal-bg" id="temizleModal" onclick="if(event.target===this)temizleModalKapat()">
+  <div class="modal-ic">
+    <h3 style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> Tüm Veriyi Temizle</h3>
+    <div class="modal-alt">Bu işlem <b>tüm irsaliyeleri, kalemleri, SAP kontrol verilerini ve durum geçmişini kalıcı olarak siler</b>. Geri alınamaz. Temiz bir OTIS export'u yüklemeden önce onaylıyor musun?</div>
+    <input type="text" id="temizleOnayMetni" class="dosya-input" placeholder="Onaylamak için TEMİZLE yaz">
+    <div id="temizleSonucAlani"></div>
+    <div class="modal-actions">
+      <button class="modal-iptal" onclick="temizleModalKapat()">İptal</button>
+      <button class="modal-onayla" style="background:var(--red)" onclick="temizleOnayla()"><i class="fa-solid fa-trash"></i> Kalıcı Olarak Sil</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var AKTIF_SEKME = "irsaliye"
+var IRSALIYELER = []
+var AKLAR = []
+var KALEMLER = []
+var TEDARIKCILER = []
+var GORUNUM = "liste" // liste | detay
+var IRS_GORUNUM = "kart" // kart | tablo
+var DURUM_IRSALIYE_ID = null
+
+// Paylaşılan filtre durumu — sekme/sayfa değiştirince kaybolmasın diye global tutuluyor
+var FILTRE_TEDARIKCI = ""
+var FILTRE_TARIH_BAS = ""
+var FILTRE_TARIH_BIT = ""
+
+function escHtml(s) {
+  if (s === null || s === undefined) return ""
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+}
+function fSayi(v) {
+  if (v === null || v === undefined || v === "") return "—"
+  return Number(v).toLocaleString("tr-TR", {maximumFractionDigits: 2})
+}
+function fTarih(v) {
+  if (!v) return "—"
+  return v
+}
+function kopyala(metin) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(metin).then(function(){
+      if (typeof toast === "function") toast("Kopyalandı: " + metin, "basari")
+    })
+  }
+}
+
+var DETAY_KALEMLER = []
+
+function kopyalaTumSapKodlari() {
+  var kodlar = DETAY_KALEMLER
+    .map(function(k){ return k.sap_kodu })
+    .filter(function(v){ return v && v.trim() !== "" })
+  var essiz = Array.from(new Set(kodlar))
+  if (essiz.length === 0) {
+    if (typeof bildirim === "function") bildirim("Bu irsaliyede SAP kodu yok", "Uyarı", "uyari")
+    return
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(essiz.join("\n")).then(function(){
+      if (typeof toast === "function") toast(essiz.length + " SAP kodu kopyalandı", "basari")
+    })
+  }
+}
+
+async function kalemSapKaydet(kalemId, alan, deger) {
+  var body = {}
+  body[alan] = deger
+  try {
+    var r = await fetch("/api/hammadde/kalem-sap-guncelle/" + kalemId, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast("Kaydedildi", "basari")
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+  }
+}
+
+async function ustBilgiYukle() {
+  try {
+    var r = await fetch("/api/hammadde/irsaliyeler")
+    var d = await r.json()
+    if (!Array.isArray(d)) return
+    var kalemToplam = d.reduce(function(a, x){ return a + (x.kalem_sayisi || 0) }, 0)
+    document.getElementById("topIrsSayisi").innerText = d.length
+    document.getElementById("topKalemSayisi").innerText = kalemToplam
+    var sonTarih = d.reduce(function(a, x){ return (x.son_guncelleme_tarihi > a) ? x.son_guncelleme_tarihi : a }, "")
+    document.getElementById("topSonImport").innerText = sonTarih ? sonTarih.split(" ")[0] : "—"
+  } catch(e) {}
+}
+
+function sekmeSec(sekme) {
+  AKTIF_SEKME = sekme
+  GORUNUM = "liste"
+  document.getElementById("tabIrs").classList.toggle("aktif", sekme === "irsaliye")
+  document.getElementById("tabAk").classList.toggle("aktif", sekme === "ak")
+  document.getElementById("tabKalem").classList.toggle("aktif", sekme === "kalem")
+  listeYukle()
+}
+
+async function tedarikcilerYukle() {
+  if (TEDARIKCILER.length === 0) {
+    try {
+      var rt = await fetch("/api/hammadde/tedarikciler")
+      TEDARIKCILER = await rt.json()
+    } catch(e) { TEDARIKCILER = [] }
+  }
+}
+
+async function listeYukle() {
+  document.getElementById("listeAlan").innerHTML = '<div class="ham-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>'
+  try {
+    if (AKTIF_SEKME === "irsaliye") {
+      await irsaliyeSekmesiYukle()
+    } else if (AKTIF_SEKME === "ak") {
+      var r2 = await fetch("/api/hammadde/ak-listesi")
+      AKLAR = await r2.json()
+      akListesiCiz()
+    } else {
+      await kalemSekmesiYukle()
+    }
+  } catch(e) {
+    document.getElementById("listeAlan").innerHTML = '<div class="ham-bos"><i class="fa-solid fa-circle-exclamation"></i> Yüklenemedi</div>'
+  }
+}
+
+// ═════════════ FİLTRE ÇUBUĞU (İrsaliyeler + Tüm Kalemler ortak) ═════════════
+
+function filtreBariHtml(sagButonlar) {
+  return '<div class="filtre-bar">' +
+    '<div class="filtre-alan"><label>Tedarikçi</label><select id="fTedarikci" onchange="filtreDegisti()">' +
+      '<option value="">Tümü</option>' +
+      TEDARIKCILER.map(function(t){ return '<option value="' + escHtml(t) + '"' + (t === FILTRE_TEDARIKCI ? ' selected' : '') + '>' + escHtml(t) + '</option>' }).join('') +
+    '</select></div>' +
+    '<div class="filtre-alan"><label>Başlangıç Tarihi</label><input type="date" id="fTarihBas" value="' + FILTRE_TARIH_BAS + '" onchange="filtreDegisti()"></div>' +
+    '<div class="filtre-alan"><label>Bitiş Tarihi</label><input type="date" id="fTarihBit" value="' + FILTRE_TARIH_BIT + '" onchange="filtreDegisti()"></div>' +
+    '<div class="filtre-spacer"></div>' +
+    sagButonlar +
+  '</div>'
+}
+
+function filtreDegerleriOku() {
+  var td = document.getElementById("fTedarikci")
+  var tb = document.getElementById("fTarihBas")
+  var te = document.getElementById("fTarihBit")
+  FILTRE_TEDARIKCI = td ? td.value : ""
+  FILTRE_TARIH_BAS = tb ? tb.value : ""
+  FILTRE_TARIH_BIT = te ? te.value : ""
+}
+
+function filtreParametreleri() {
+  var p = new URLSearchParams()
+  if (FILTRE_TEDARIKCI) p.set("tedarikci", FILTRE_TEDARIKCI)
+  if (FILTRE_TARIH_BAS) p.set("tarih_bas", FILTRE_TARIH_BAS)
+  if (FILTRE_TARIH_BIT) p.set("tarih_bit", FILTRE_TARIH_BIT)
+  return p
+}
+
+function filtreDegisti() {
+  filtreDegerleriOku()
+  if (AKTIF_SEKME === "irsaliye") irsaliyeListesiGetir()
+  else if (AKTIF_SEKME === "kalem") kalemListesiGetir()
+}
+
+// ═════════════ İRSALİYELER SEKMESİ ═════════════
+
+async function irsaliyeSekmesiYukle() {
+  await tedarikcilerYukle()
+  var gorunumBtn =
+    '<button class="ham-btn' + (IRS_GORUNUM === "kart" ? ' primary' : '') + '" onclick="irsGorunumSec(\'kart\')"><i class="fa-solid fa-grip"></i> Kart</button>' +
+    '<button class="ham-btn' + (IRS_GORUNUM === "tablo" ? ' primary' : '') + '" onclick="irsGorunumSec(\'tablo\')"><i class="fa-solid fa-list"></i> Tablo</button>'
+  document.getElementById("listeAlan").innerHTML = filtreBariHtml(gorunumBtn) + '<div id="irsListeAlan"></div>'
+  await irsaliyeListesiGetir()
+}
+
+function irsGorunumSec(tip) {
+  IRS_GORUNUM = tip
+  irsaliyeSekmesiYukle()
+}
+
+async function irsaliyeListesiGetir() {
+  var alan = document.getElementById("irsListeAlan")
+  if (alan) alan.innerHTML = '<div class="ham-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>'
+  try {
+    var p = filtreParametreleri()
+    var r = await fetch("/api/hammadde/irsaliyeler?" + p.toString())
+    IRSALIYELER = await r.json()
+    if (IRS_GORUNUM === "kart") irsaliyeListesiCiz()
+    else irsaliyeTablosuCiz()
+  } catch(e) {
+    if (alan) alan.innerHTML = '<div class="ham-bos"><i class="fa-solid fa-circle-exclamation"></i> Yüklenemedi</div>'
+  }
+}
+
+function irsaliyeListesiCiz() {
+  var alan = document.getElementById("irsListeAlan")
+  if (!alan) return
+  if (!Array.isArray(IRSALIYELER) || IRSALIYELER.length === 0) {
+    alan.innerHTML = '<div class="ham-bos"><i class="fa-solid fa-inbox"></i> Filtreye uyan irsaliye yok.</div>'
+    return
+  }
+  var html = '<div class="ham-grid">'
+  IRSALIYELER.forEach(function(i) {
+    var stokta = i.stokta_kalan || 0
+    html += '<div class="ham-kart" onclick="irsaliyeDetayGoster(\'' + escHtml(i.irsaliye_no).replace(/'/g,"\\'") + '\')">' +
+      '<div class="ham-kart-ust">' +
+        '<div><div class="ham-kart-no">' + escHtml(i.irsaliye_no) + '</div><div class="ham-kart-tarih">' + fTarih(i.irsaliye_tarihi) + '</div></div>' +
+        (stokta > 0 ? '<span class="ham-badge stokta">' + stokta + ' stokta</span>' : '<span class="ham-badge">tümü işlendi</span>') +
+      '</div>' +
+      '<div class="ham-kart-alt"><strong>' + (i.kalem_sayisi || 0) + '</strong> kalem' + (i.tedarikci ? ' · ' + escHtml(i.tedarikci) : '') +
+        (i.son_durum ? ' · <span class="ham-badge durum">' + escHtml(i.son_durum) + '</span>' : '') + '</div>' +
+      (i.ak_listesi && i.ak_listesi.length ? '<div class="ham-ak-chips">' + i.ak_listesi.map(function(a){
+        return '<span class="ham-ak-chip" onclick="event.stopPropagation();akDetayGoster(\'' + escHtml(a).replace(/'/g,"\\'") + '\')">' + escHtml(a) + '</span>'
+      }).join('') + '</div>' : '') +
+    '</div>'
+  })
+  html += '</div>'
+  alan.innerHTML = html
+}
+
+var DURUM_AKISI = ["SAT Bekleniyor", "SAS'a Döndü", "SAP'a İşlendi", "Nakil Yapıldı"]
+
+function irsaliyeTablosuCiz() {
+  var alan = document.getElementById("irsListeAlan")
+  if (!alan) return
+  if (!Array.isArray(IRSALIYELER) || IRSALIYELER.length === 0) {
+    alan.innerHTML = '<div class="ham-bos"><i class="fa-solid fa-inbox"></i> Filtreye uyan irsaliye yok.</div>'
+    return
+  }
+  var html = '<div class="kalem-tablo-wrap"><table class="kalem-tablo"><thead><tr>' +
+    '<th>İrsaliye No</th><th>Tarih</th><th>Tedarikçi</th><th>Kalem</th><th style="max-width:90px">AK No</th>' +
+    DURUM_AKISI.map(function(d){ return '<th class="grup-sap" style="text-align:center">' + escHtml(d) + '</th>' }).join('') +
+    '<th>Stok</th><th></th>' +
+  '</tr></thead><tbody>'
+  IRSALIYELER.forEach(function(i) {
+    var stokta = i.stokta_kalan || 0
+    var akHtml = '—'
+    if (i.ak_listesi && i.ak_listesi.length) {
+      var ilkAk = i.ak_listesi[0]
+      akHtml = '<span class="ham-link" onclick="akDetayGoster(\'' + escHtml(ilkAk).replace(/'/g,"\\'") + '\')" title="' + escHtml(i.ak_listesi.join(', ')) + '">' + escHtml(ilkAk) + '</span>' +
+        (i.ak_listesi.length > 1 ? ' <span style="color:var(--text3);font-size:9.5px">+' + (i.ak_listesi.length - 1) + '</span>' : '')
+    }
+    var dt = i.durum_tarihleri || {}
+    var girisYapilmadi = i.son_durum === "Girişi Yapılmadı"
+    var akisHucreleri
+    if (girisYapilmadi) {
+      var notMetni = i.son_durum_notu ? escHtml(i.son_durum_notu) : "Sebep belirtilmedi"
+      akisHucreleri = '<td class="grup-sap akis-hucre" colspan="' + DURUM_AKISI.length + '" style="background:var(--red-dim);text-align:left;padding:6px 10px">' +
+        '<i class="fa-solid fa-xmark" style="color:var(--red)"></i> <b style="color:var(--red)">Girişi Yapılmadı</b> — ' +
+        '<span style="color:var(--text2)">' + notMetni + '</span>' +
+      '</td>'
+    } else {
+      akisHucreleri = DURUM_AKISI.map(function(d) {
+        var tarih = dt[d]
+        if (!tarih) return '<td class="grup-sap akis-hucre akis-bos">—</td>'
+        return '<td class="grup-sap akis-hucre"><i class="fa-solid fa-check" style="color:var(--green)"></i><br><span class="akis-tarih">' + tarih.split(" ")[0] + '</span></td>'
+      }).join('')
+    }
+    html += '<tr' + (girisYapilmadi ? ' style="background:rgba(220,38,38,.05)"' : '') + '>' +
+      '<td><span class="ham-link ham-mono" onclick="irsaliyeDetayGoster(\'' + escHtml(i.irsaliye_no).replace(/'/g,"\\'") + '\')">' + escHtml(i.irsaliye_no) + '</span></td>' +
+      '<td>' + fTarih(i.irsaliye_tarihi) + '</td>' +
+      '<td>' + escHtml(i.tedarikci || '—') + '</td>' +
+      '<td>' + (i.kalem_sayisi || 0) + '</td>' +
+      '<td style="max-width:90px;white-space:normal">' + akHtml + '</td>' +
+      akisHucreleri +
+      '<td>' + (stokta > 0 ? '<span class="ham-badge stokta">' + stokta + ' stokta</span>' : '<span class="ham-badge">tümü işlendi</span>') + '</td>' +
+      '<td><button class="ham-durum-btn" onclick="durumModalAc(' + i.id + ', \'' + escHtml(i.irsaliye_no).replace(/'/g,"\\'") + '\')" title="Durum düzenle"><i class="fa-solid fa-flag"></i></button></td>' +
+    '</tr>'
+  })
+  html += '</tbody></table></div>'
+  alan.innerHTML = html
+}
+
+// ═════════════ AK NUMARALARI SEKMESİ ═════════════
+
+function akListesiCiz() {
+  if (!Array.isArray(AKLAR) || AKLAR.length === 0) {
+    document.getElementById("listeAlan").innerHTML = '<div class="ham-bos"><i class="fa-solid fa-inbox"></i> Henüz AK numarası yok.</div>'
+    return
+  }
+  var html = '<div class="ham-grid">'
+  AKLAR.forEach(function(a) {
+    var stokta = a.stokta_kalan || 0
+    html += '<div class="ham-kart" onclick="akDetayGoster(\'' + escHtml(a.siparis_no).replace(/'/g,"\\'") + '\')">' +
+      '<div class="ham-kart-ust">' +
+        '<div><div class="ham-kart-no">' + escHtml(a.siparis_no) + '</div><div class="ham-kart-tarih">' + fTarih(a.siparis_tarihi) + '</div></div>' +
+        (stokta > 0 ? '<span class="ham-badge stokta">' + stokta + ' stokta</span>' : '<span class="ham-badge">tümü işlendi</span>') +
+      '</div>' +
+      '<div class="ham-kart-alt"><strong>' + (a.kalem_sayisi || 0) + '</strong> kalem · <strong>' + (a.irsaliye_sayisi || 0) + '</strong> irsaliye' + (a.siparis_veren ? ' · ' + escHtml(a.siparis_veren) : '') + '</div>' +
+      (a.proje_listesi && a.proje_listesi.length ? '<div class="ham-ak-chips">' + a.proje_listesi.map(function(p){ return '<span class="ham-ak-chip">' + escHtml(p) + '</span>' }).join('') + '</div>' : '') +
+    '</div>'
+  })
+  html += '</div>'
+  document.getElementById("listeAlan").innerHTML = html
+}
+
+// ═════════════ TÜM KALEMLER SEKMESİ ═════════════
+
+async function kalemSekmesiYukle() {
+  await tedarikcilerYukle()
+  var butonlar =
+    '<button class="ham-btn" onclick="excelExportEt()"><i class="fa-solid fa-file-export"></i> Excel\'e Aktar</button>' +
+    '<button class="ham-btn primary" onclick="sapImportModalAc()"><i class="fa-solid fa-file-import"></i> SAP Kontrolünü Yükle</button>'
+  document.getElementById("listeAlan").innerHTML = filtreBariHtml(butonlar) + '<div id="kalemTabloAlan"></div>'
+  await kalemListesiGetir()
+}
+
+async function kalemListesiGetir() {
+  var alan = document.getElementById("kalemTabloAlan")
+  if (alan) alan.innerHTML = '<div class="ham-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>'
+  try {
+    var p = filtreParametreleri()
+    var r = await fetch("/api/hammadde/kalemler?" + p.toString())
+    KALEMLER = await r.json()
+    kalemTablosuGeriCiz()
+  } catch(e) {
+    if (alan) alan.innerHTML = '<div class="ham-bos"><i class="fa-solid fa-circle-exclamation"></i> Yüklenemedi</div>'
+  }
+}
+
+function kalemTablosuGeriCiz() {
+  var alan = document.getElementById("kalemTabloAlan")
+  if (!alan) return
+  if (!Array.isArray(KALEMLER) || KALEMLER.length === 0) {
+    alan.innerHTML = '<div class="ham-bos"><i class="fa-solid fa-inbox"></i> Filtreye uyan kalem yok</div>'
+    return
+  }
+  var html = '<div class="kalem-tablo-wrap"><table class="kalem-tablo"><thead><tr>' +
+    '<th class="grup-otis">İrsaliye</th><th class="grup-otis">Malzeme Tanım</th><th class="grup-otis">SAP Kodu</th>' +
+    '<th class="grup-otis">OTIS Giriş</th><th class="grup-otis">OTIS Stok</th>' +
+    '<th class="grup-sap">SAP Giriş</th><th class="grup-sap">SAP Stok</th><th class="grup-sap">Fark</th><th class="grup-sap">Not</th>' +
+  '</tr></thead><tbody>'
+  KALEMLER.forEach(function(k) {
+    var sapStokVar = (k.sap_stok_miktari !== null && k.sap_stok_miktari !== undefined)
+    var farkVar = sapStokVar && k.stok_miktari !== null && Math.abs(k.sap_stok_miktari - k.stok_miktari) > 0.01
+    html += '<tr>' +
+      '<td class="grup-otis"><span class="ham-link ham-mono" onclick="irsaliyeDetayGoster(\'' + escHtml(k.irsaliye_no).replace(/'/g,"\\'") + '\')">' + escHtml(k.irsaliye_no) + '</span></td>' +
+      '<td class="grup-otis ham-tanim" style="white-space:normal;max-width:280px">' + escHtml(k.malzeme_tanim) + '</td>' +
+      '<td class="grup-otis ham-mono">' + (k.sap_kodu || '—') + '</td>' +
+      '<td class="grup-otis">' + fSayi(k.giris_miktari) + '</td>' +
+      '<td class="grup-otis">' + fSayi(k.stok_miktari) + '</td>' +
+      '<td class="grup-sap">' + (sapStokVar || (k.sap_giris_miktari !== null && k.sap_giris_miktari !== undefined) ? fSayi(k.sap_giris_miktari) : '<span class="sap-bos">kontrol edilmedi</span>') + '</td>' +
+      '<td class="grup-sap">' + (sapStokVar ? fSayi(k.sap_stok_miktari) : '<span class="sap-bos">—</span>') + '</td>' +
+      '<td class="grup-sap ' + (farkVar ? 'fark-uyari' : 'fark-yok') + '">' + (sapStokVar ? (farkVar ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + fSayi(k.sap_stok_miktari - k.stok_miktari) : '✓') : '—') + '</td>' +
+      '<td class="grup-sap">' + escHtml(k.sap_kontrol_notu || '') + '</td>' +
+    '</tr>'
+  })
+  html += '</tbody></table></div>'
+  alan.innerHTML = html
+}
+
+function excelExportEt() {
+  var p = filtreParametreleri()
+  fetch("/api/hammadde/export?" + p.toString())
+    .then(function(r){ return r.json() })
+    .then(function(d){
+      if (d.durum === "ok") {
+        if (typeof toast === "function") toast(d.mesaj, "basari")
+      } else {
+        if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+      }
+    })
+    .catch(function(e){ if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata") })
+}
+
+function sapImportModalAc() {
+  document.getElementById("sapImportSonucAlani").innerHTML = ""
+  document.getElementById("sapImportDosya").value = ""
+  document.getElementById("sapImportModal").classList.add("goster")
+}
+function sapImportModalKapat() {
+  document.getElementById("sapImportModal").classList.remove("goster")
+  if (AKTIF_SEKME === "kalem") kalemListesiGetir()
+}
+async function sapImportGonder() {
+  var fInput = document.getElementById("sapImportDosya")
+  if (!fInput.files.length) { if (typeof bildirim === "function") bildirim("Dosya seçin", "Uyarı", "uyari"); return }
+  var fd = new FormData()
+  fd.append("dosya", fInput.files[0])
+  var btn = document.getElementById("sapImportBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...'
+  document.getElementById("sapImportSonucAlani").innerHTML = ""
+  try {
+    var r = await fetch("/api/hammadde/sap-import", { method: "POST", body: fd })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      var html = '<div class="import-sonuc"><b><i class="fa-solid fa-check-circle"></i> Başarılı!</b><br>' + d.mesaj + '</div>'
+      if (d.degisiklikler && d.degisiklikler.length) {
+        var farklilar = d.degisiklikler.filter(function(x){ return x.fark_var })
+        if (farklilar.length) {
+          html += '<div style="margin-top:10px;font-size:11px"><b style="color:var(--red)">' + farklilar.length + ' kalemde OTIS/SAP stok farkı var:</b>' +
+            '<div style="max-height:150px;overflow-y:auto;margin-top:6px">' +
+            farklilar.slice(0, 20).map(function(f){
+              return '<div style="padding:3px 0;border-bottom:1px solid var(--border-light)">' + escHtml(f.malzeme_tanim) +
+                ' — OTIS: ' + fSayi(f.otis_stok) + ' / SAP: ' + fSayi(f.sap_stok) + '</div>'
+            }).join('') + '</div></div>'
+        }
+      }
+      document.getElementById("sapImportSonucAlani").innerHTML = html
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+    } else {
+      document.getElementById("sapImportSonucAlani").innerHTML =
+        '<div class="import-sonuc hata"><b><i class="fa-solid fa-triangle-exclamation"></i> Hata</b><br>' + escHtml(d.mesaj) + '</div>'
+    }
+  } catch(e) {
+    document.getElementById("sapImportSonucAlani").innerHTML = '<div class="import-sonuc hata">Bağlantı hatası: ' + escHtml(e.message) + '</div>'
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
+  }
+}
+
+function temizleModalAc() {
+  document.getElementById("temizleOnayMetni").value = ""
+  document.getElementById("temizleSonucAlani").innerHTML = ""
+  document.getElementById("temizleModal").classList.add("goster")
+}
+function temizleModalKapat() {
+  document.getElementById("temizleModal").classList.remove("goster")
+}
+async function temizleOnayla() {
+  var metin = document.getElementById("temizleOnayMetni").value.trim()
+  if (metin !== "TEMİZLE") {
+    if (typeof bildirim === "function") bildirim("Onaylamak için kutuya büyük harflerle TEMİZLE yaz", "Uyarı", "uyari")
+    return
+  }
+  try {
+    var r = await fetch("/api/hammadde/temizle", { method: "POST" })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+      temizleModalKapat()
+      ustBilgiYukle()
+      listeYukle()
+    } else {
+      document.getElementById("temizleSonucAlani").innerHTML =
+        '<div class="import-sonuc hata">' + escHtml(d.mesaj) + '</div>'
+    }
+  } catch(e) {
+    document.getElementById("temizleSonucAlani").innerHTML = '<div class="import-sonuc hata">Bağlantı hatası: ' + escHtml(e.message) + '</div>'
+  }
+}
+
+// ═════════════ DETAY SAYFALARI (İrsaliye / AK) ═════════════
+
+async function irsaliyeDetayGoster(irsNo) {
+  document.getElementById("listeAlan").innerHTML = '<div class="ham-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>'
+  try {
+    var r = await fetch("/api/hammadde/irsaliye/" + encodeURIComponent(irsNo))
+    var d = await r.json()
+    if (d.durum !== "ok") { document.getElementById("listeAlan").innerHTML = '<div class="ham-bos">Bulunamadı</div>'; return }
+    var irsNoEsc = escHtml(d.irsaliye.irsaliye_no)
+    var html = '<div class="ham-detay-baslik">' +
+      '<div class="ham-detay-sol">' +
+        '<button class="ham-geri-btn" onclick="listeYukle()"><i class="fa-solid fa-arrow-left"></i> Geri</button>' +
+        '<div><h2>' + irsNoEsc + ' <button class="ham-copy-btn" onclick="kopyala(\'' + irsNoEsc.replace(/'/g,"\\'") + '\')" title="İrsaliye no kopyala"><i class="fa-solid fa-copy"></i></button></h2>' +
+        '<div class="ham-detay-meta">' + fTarih(d.irsaliye.irsaliye_tarihi) + (d.irsaliye.tedarikci ? ' · ' + escHtml(d.irsaliye.tedarikci) : '') + ' · ' + d.kalemler.length + ' kalem</div></div>' +
+      '</div>' +
+      '<div class="ham-detay-sag">' +
+        '<button class="ham-btn" onclick="kopyalaTumSapKodlari()"><i class="fa-solid fa-copy"></i> Tüm SAP Kodlarını Kopyala</button>' +
+        '<button class="ham-durum-btn" onclick="durumModalAc(' + d.irsaliye.id + ', \'' + irsNoEsc.replace(/'/g,"\\'") + '\')"><i class="fa-solid fa-flag"></i> Durum</button>' +
+      '</div>' +
+    '</div>'
+    DETAY_KALEMLER = d.kalemler
+    html += kalemTablosuCiz(d.kalemler, false)
+    document.getElementById("listeAlan").innerHTML = html
+  } catch(e) {
+    document.getElementById("listeAlan").innerHTML = '<div class="ham-bos"><i class="fa-solid fa-circle-exclamation"></i> Yüklenemedi</div>'
+  }
+}
+
+async function akDetayGoster(akNo) {
+  document.getElementById("listeAlan").innerHTML = '<div class="ham-bos"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</div>'
+  try {
+    var r = await fetch("/api/hammadde/ak/" + encodeURIComponent(akNo))
+    var d = await r.json()
+    if (d.durum !== "ok") { document.getElementById("listeAlan").innerHTML = '<div class="ham-bos">Bulunamadı</div>'; return }
+    var akNoEsc = escHtml(akNo)
+    var html = '<div class="ham-detay-baslik">' +
+      '<div class="ham-detay-sol">' +
+        '<button class="ham-geri-btn" onclick="listeYukle()"><i class="fa-solid fa-arrow-left"></i> Geri</button>' +
+        '<div><h2>' + akNoEsc + ' <button class="ham-copy-btn" onclick="kopyala(\'' + akNoEsc.replace(/'/g,"\\'") + '\')" title="AK no kopyala"><i class="fa-solid fa-copy"></i></button></h2>' +
+        '<div class="ham-detay-meta">' + d.kalemler.length + ' kalem, tüm irsaliyeler dahil</div></div>' +
+      '</div>' +
+      '<div class="ham-detay-sag"><button class="ham-btn" onclick="kopyalaTumSapKodlari()"><i class="fa-solid fa-copy"></i> Tüm SAP Kodlarını Kopyala</button></div>' +
+    '</div>'
+    DETAY_KALEMLER = d.kalemler
+    html += kalemTablosuCiz(d.kalemler, true)
+    document.getElementById("listeAlan").innerHTML = html
+  } catch(e) {
+    document.getElementById("listeAlan").innerHTML = '<div class="ham-bos"><i class="fa-solid fa-circle-exclamation"></i> Yüklenemedi</div>'
+  }
+}
+
+function kalemTablosuCiz(kalemler, irsaliyeSutunuGoster) {
+  if (!kalemler.length) return '<div class="ham-bos"><i class="fa-solid fa-inbox"></i> Kalem yok</div>'
+  var html = '<div class="kalem-tablo-wrap"><table class="kalem-tablo"><thead><tr>' +
+    (irsaliyeSutunuGoster ? '<th class="grup-otis">İrsaliye</th>' : '') +
+    '<th class="grup-otis">Malzeme Tanım</th><th class="grup-otis">Mal Grubu</th><th class="grup-otis">SAP Kodu</th>' +
+    '<th class="grup-otis">OTIS Giriş</th><th class="grup-otis">OTIS Stok</th><th class="grup-otis">Proje No</th>' +
+    '<th class="grup-sap">SAP Giriş</th><th class="grup-sap">SAP Stok</th><th class="grup-sap">Fark</th><th class="grup-sap">Not</th>' +
+    (irsaliyeSutunuGoster ? '<th></th>' : '') +
+  '</tr></thead><tbody>'
+  kalemler.forEach(function(k) {
+    var sapStokVar = (k.sap_stok_miktari !== null && k.sap_stok_miktari !== undefined)
+    var farkVar = sapStokVar && k.stok_miktari !== null && Math.abs(k.sap_stok_miktari - k.stok_miktari) > 0.01
+    html += '<tr>' +
+      (irsaliyeSutunuGoster ? '<td class="grup-otis"><span class="ham-link ham-mono" onclick="irsaliyeDetayGoster(\'' + escHtml(k.irsaliye_no).replace(/'/g,"\\'") + '\')">' + escHtml(k.irsaliye_no) + '</span><br><span style="font-size:9.5px;color:var(--text3)">' + fTarih(k.irsaliye_tarihi) + '</span></td>' : '') +
+      '<td class="grup-otis ham-tanim">' + escHtml(k.malzeme_tanim) + '</td>' +
+      '<td class="grup-otis">' + escHtml(k.mal_grubu) + '</td>' +
+      '<td class="grup-otis ham-mono">' + (k.sap_kodu ? escHtml(k.sap_kodu) + '<button class="mini-kopyala" onclick="kopyala(\'' + escHtml(k.sap_kodu).replace(/'/g,"\\'") + '\')" title="Kopyala"><i class="fa-solid fa-copy"></i></button>' : '—') + '</td>' +
+      '<td class="grup-otis">' + fSayi(k.giris_miktari) + ' ' + escHtml(k.birim || '') + '</td>' +
+      '<td class="grup-otis ' + ((k.stok_miktari !== null && k.stok_miktari > 0) ? 'ham-stok-var' : 'ham-stok-yok') + '">' + fSayi(k.stok_miktari) + '</td>' +
+      '<td class="grup-otis ham-mono">' + (k.proje_no || '—') + '</td>' +
+      '<td class="grup-sap"><input type="text" class="sap-input" value="' + (k.sap_giris_miktari !== null && k.sap_giris_miktari !== undefined ? k.sap_giris_miktari : '') + '" placeholder="—" onchange="kalemSapKaydet(' + k.id + ', \'sap_giris_miktari\', this.value)"></td>' +
+      '<td class="grup-sap"><input type="text" class="sap-input" value="' + (k.sap_stok_miktari !== null && k.sap_stok_miktari !== undefined ? k.sap_stok_miktari : '') + '" placeholder="—" onchange="kalemSapKaydet(' + k.id + ', \'sap_stok_miktari\', this.value)"></td>' +
+      '<td class="grup-sap ' + (farkVar ? 'fark-uyari' : 'fark-yok') + '">' + (sapStokVar ? (farkVar ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + fSayi(k.sap_stok_miktari - k.stok_miktari) : '✓') : '—') + '</td>' +
+      '<td class="grup-sap"><input type="text" class="sap-not-input" value="' + escHtml(k.sap_kontrol_notu || '') + '" placeholder="not ekle..." onchange="kalemSapKaydet(' + k.id + ', \'sap_kontrol_notu\', this.value)"></td>' +
+      (irsaliyeSutunuGoster ? '<td><button class="ham-durum-btn" onclick="durumModalAc(' + k.irsaliye_id + ', \'' + escHtml(k.irsaliye_no).replace(/'/g,"\\'") + '\')"><i class="fa-solid fa-flag"></i> Durum</button></td>' : '') +
+    '</tr>'
+  })
+  html += '</tbody></table></div>'
+  return html
+}
+
+// ---- IMPORT (OTIS) ----
+function importModalAc() {
+  document.getElementById("importSonucAlani").innerHTML = ""
+  document.getElementById("importDosya").value = ""
+  document.getElementById("importModal").classList.add("goster")
+}
+function importModalKapat() {
+  document.getElementById("importModal").classList.remove("goster")
+  listeYukle()
+  ustBilgiYukle()
+}
+async function importGonder() {
+  var fInput = document.getElementById("importDosya")
+  if (!fInput.files.length) { if (typeof bildirim === "function") bildirim("Dosya seçin", "Uyarı", "uyari"); return }
+  var fd = new FormData()
+  fd.append("dosya", fInput.files[0])
+  var btn = document.getElementById("importBtn")
+  var eski = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...'
+  document.getElementById("importSonucAlani").innerHTML = ""
+  try {
+    var r = await fetch("/api/hammadde/import", { method: "POST", body: fd })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      document.getElementById("importSonucAlani").innerHTML =
+        '<div class="import-sonuc"><b><i class="fa-solid fa-check-circle"></i> Başarılı!</b><br>' + d.mesaj + '</div>'
+      if (typeof toast === "function") toast(d.mesaj, "basari")
+    } else {
+      document.getElementById("importSonucAlani").innerHTML =
+        '<div class="import-sonuc hata"><b><i class="fa-solid fa-triangle-exclamation"></i> Hata</b><br>' + escHtml(d.mesaj) + '</div>'
+    }
+  } catch(e) {
+    document.getElementById("importSonucAlani").innerHTML = '<div class="import-sonuc hata">Bağlantı hatası: ' + escHtml(e.message) + '</div>'
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = eski
+  }
+}
+
+// ---- DURUM (artık irsaliye bazlı) ----
+async function durumModalAc(irsId, irsNo) {
+  DURUM_IRSALIYE_ID = irsId
+  document.getElementById("durumKalemAdi").innerText = irsNo
+  document.getElementById("durumNot").value = ""
+  document.getElementById("durumGecmisAlan").innerHTML = '<div style="font-size:11px;color:var(--text3)">Yükleniyor...</div>'
+  document.getElementById("durumModal").classList.add("goster")
+  try {
+    var r = await fetch("/api/hammadde/irsaliye-durum-gecmisi/" + irsId)
+    var d = await r.json()
+    if (!Array.isArray(d) || d.length === 0) {
+      document.getElementById("durumGecmisAlan").innerHTML = '<div style="font-size:11px;color:var(--text3);font-style:italic">Henüz durum kaydı yok</div>'
+      return
+    }
+    var html = ""
+    d.forEach(function(g) {
+      html += '<div class="durum-gecmis-satir"><div><div class="durum-gecmis-ad">' + escHtml(g.durum) + '</div>' +
+        (g.not_metni ? '<div class="durum-gecmis-alt">' + escHtml(g.not_metni) + '</div>' : '') + '</div>' +
+        '<div class="durum-gecmis-alt">' + g.tarih + '<br>' + escHtml(g.kullanici) + '</div></div>'
+    })
+    document.getElementById("durumGecmisAlan").innerHTML = html
+  } catch(e) {
+    document.getElementById("durumGecmisAlan").innerHTML = '<div style="font-size:11px;color:var(--red)">Yüklenemedi</div>'
+  }
+}
+function durumModalKapat() {
+  document.getElementById("durumModal").classList.remove("goster")
+  DURUM_IRSALIYE_ID = null
+}
+async function durumKaydet() {
+  if (!DURUM_IRSALIYE_ID) return
+  var durum = document.getElementById("durumSecim").value
+  var not_ = document.getElementById("durumNot").value.trim()
+  try {
+    var r = await fetch("/api/hammadde/irsaliye-durum-ekle/" + DURUM_IRSALIYE_ID, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({durum: durum, not: not_})
+    })
+    var d = await r.json()
+    if (d.durum === "ok") {
+      if (typeof toast === "function") toast("Durum eklendi", "basari")
+      durumModalAc(DURUM_IRSALIYE_ID, document.getElementById("durumKalemAdi").innerText)
+    } else {
+      if (typeof bildirim === "function") bildirim(d.mesaj, "Hata", "hata")
+    }
+  } catch(e) {
+    if (typeof bildirim === "function") bildirim(e.message, "Bağlantı Hatası", "hata")
+  }
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") { importModalKapat(); durumModalKapat(); sapImportModalKapat(); temizleModalKapat() }
+})
+
+window.addEventListener("load", function() {
+  ustBilgiYukle()
+  listeYukle()
+})
+</script>
+</body>
+</html>

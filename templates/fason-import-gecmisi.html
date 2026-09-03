@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Fason İçe Aktarma Geçmişi</title>
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/popup.js" defer></script>
+<style>
+  .igb-kart {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+  .igb-ust {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .igb-dosya {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .igb-dosya i { color: var(--blue); }
+  .igb-meta {
+    font-size: 10.5px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+  .igb-ozet {
+    font-size: 11.5px;
+    color: var(--text2);
+    text-align: right;
+  }
+  .igb-satir {
+    font-size: 11.5px;
+    color: var(--text2);
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .igb-satir:last-child { border-bottom: none; }
+  .igb-bos-liste {
+    font-size: 11px;
+    color: var(--text3);
+    font-style: italic;
+    padding: 6px 0;
+  }
+  .igb-tikla {
+  cursor: pointer;
+  transition: color .12s;
+}
+  .igb-tikla:hover {
+  color: var(--blue);
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
+      <h2>Warehouse Data</h2>
+      <span>V{{ APP_VERSION }}</span>
+    </div>
+    <div class="nav-section">Main Data</div>
+    <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+    <div class="nav-section">Sevkiyat</div>
+    <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+    <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+    <div class="nav-section">Araçlar</div>
+    <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+    {% if personel_yetki %}
+    <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+    {% endif %}
+    {% if fason_gor_yetki %}
+    <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+    {% endif %}
+    {% if hammadde_gor_yetki %}
+    <a href="/hammadde" class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
+    {% endif %}
+    <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+    <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+    <div class="nav-section">Raporlama</div>
+    <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+    <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+    <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+    <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
+    <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+    {% if session.kullanici == "admin" %}
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
+    <a href="/fason/durumlar" class="nav-item active"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
+    {% endif %}
+    <div class="sidebar-footer">
+      <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+        <i class="fa-solid fa-sun"></i> Açık Tema
+      </button>
+      <button class="cikis-btn" onclick="cikisYap()">
+        <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+      </button>
+    </div>
+  </nav>
+
+<div class="main-area">
+<div class="topbar">
+  <div>
+    <div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span><a href="/fason">Fason Takip</a><span class="bc-sep">›</span><span class="bc-current">İçe Aktarma Geçmişi</span></div>
+    <div class="topbar-title">Fason İçe Aktarma Geçmişi</div>
+    <div class="topbar-sub">Excel'den yapılan tüm güncellemeler</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
+  </div>
+</div>
+<div class="content">
+  <div id="icerik"><div class="bos-durum"><i class="fa-solid fa-spinner fa-spin"></i><p>Yükleniyor...</p></div></div>
+</div>
+</div>
+</div>
+
+<script>
+async function yukle() {
+  try {
+    var r = await fetch("/api/fason/import-log")
+    var gruplar = await r.json()
+    goster(gruplar)
+  } catch(e) {
+    document.getElementById("icerik").innerHTML = '<div class="bos-durum"><i class="fa-solid fa-circle-exclamation"></i><p>Yüklenemedi</p></div>'
+  }
+}
+
+function escHtml(s) {
+  if (s === null || s === undefined) return ""
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+}
+
+function filtreyeGit(irsNo) {
+  window.location.href = "/fason?ara=" + encodeURIComponent(irsNo)
+}
+
+function goster(gruplar) {
+  if (!gruplar.length) {
+    document.getElementById("icerik").innerHTML = '<div class="bos-durum"><i class="fa-solid fa-inbox"></i><p>Henüz import kaydı yok.</p></div>'
+    return
+  }
+  var html = ""
+  gruplar.forEach(function(g) {
+    html += '<div class="igb-kart">' +
+      '<div class="igb-ust">' +
+        '<div>' +
+          '<div class="igb-dosya"><i class="fa-solid fa-file-excel"></i> ' + escHtml(g.dosya || "Dosya") + '</div>' +
+          '<div class="igb-meta">' + escHtml(g.tarih) + ' · ' + escHtml(g.yapan_ad) + '</div>' +
+        '</div>' +
+        '<div class="igb-ozet">' + escHtml(g.ozet) + '</div>' +
+      '</div>'
+        if (g.degisiklikler && g.degisiklikler.length) {
+      g.degisiklikler.forEach(function(d) {
+        html += '<div class="igb-satir igb-tikla" onclick="filtreyeGit(\'' + escHtml(d.irsaliye_no) + '\')" title="Fason Takip\'te filtrele">' + escHtml(d.detay) + '</div>'
+      })
+    } else {
+      html += '<div class="igb-bos-liste">Önemli alan değişikliği yok</div>'
+    }
+    html += '</div>'
+  })
+  document.getElementById("icerik").innerHTML = html
+}
+
+window.addEventListener("load", yukle)
+</script>
+</body>
+</html>
