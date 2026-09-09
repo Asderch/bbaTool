@@ -20,8 +20,8 @@
     .import-table {width: 100%;border-collapse: collapse;table-layout: fixed;}
     .import-table th,
     .import-table td {padding: 14px 16px;text-align: left;vertical-align: middle;box-sizing: border-box;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}
-    .import-table th {font-size: 12px;font-weight: 700;color: #7f8a99;}
-    .import-table td {font-size: 14px;color: #e8edf2;}
+    .import-table th {font-size: 12px;font-weight: 700;color: var(--text2);}
+    .import-table td {font-size: 14px;color: var(--text);}
     .import-table th:nth-child(1),
     .import-table td:nth-child(1) {width: 50px;text-align: center;}
     .import-table th:nth-child(2),
@@ -132,13 +132,13 @@
       <button class="btn temizle" onclick="ekleGizle()" style="font-size:12px;padding:6px 12px;margin-top:8px"><i class="fa-solid fa-xmark"></i> Kapat</button>
     </div>
     <div class="toolbar"><div class="toolbar-sol">
-      <button class="btn" onclick="topluGonderimBaslat()" style="background:#217346">
+      <button class="btn" onclick="topluGonderimBaslat()" style="background:var(--green)">
         <i class="fa-solid fa-truck-fast"></i> Toplu Gönderim
       </button>
       <button class="btn" onclick="topluDevretBaslat()">
         <i class="fa-solid fa-share"></i> Seçilenleri Devret
       </button>
-      <button class="btn" onclick="topluKalanIptalBaslat()" style="background:#ad1457">
+      <button class="btn" onclick="topluKalanIptalBaslat()" style="background:var(--red)">
         <i class="fa-solid fa-ban"></i> Toplu Kalan İptal
       </button>
       <button class="filtre-btn aktif" onclick="filtrele('tumu',this)">Tümü</button>
@@ -152,15 +152,15 @@
   </div>
   <div class="modal-bg" id="gondModal" onclick="if(event.target===this)gondKapat()">
     <div class="modal-ic"><h3><i class="fa-solid fa-truck"></i> Gönderim Yap</h3>
-      <p style="font-size:13px;color:#666;margin-bottom:6px" id="gondBilgi"></p>
-      <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:#555">Gönderilecek Miktar (KG)</label><input type="number" id="gondMiktar" step="0.01" style="margin-top:4px"></div>
-      <div style="margin-bottom:14px"><label style="font-size:12px;font-weight:700;color:#555">Tır Plakası</label><input type="text" id="gondPlaka" placeholder="34 ABC 1234" style="margin-top:4px"></div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:6px" id="gondBilgi"></p>
+      <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:var(--text)">Gönderilecek Miktar (KG)</label><input type="number" id="gondMiktar" step="0.01" style="margin-top:4px"></div>
+      <div style="margin-bottom:14px"><label style="font-size:12px;font-weight:700;color:var(--text)">Tır Plakası</label><input type="text" id="gondPlaka" placeholder="34 ABC 1234" style="margin-top:4px"></div>
       <div style="display:flex;gap:10px"><button class="btn" onclick="gondOnayla()" style="font-size:13px"><i class="fa-solid fa-check"></i> Gönder</button><button class="btn temizle" onclick="gondKapat()" style="font-size:13px"><i class="fa-solid fa-xmark"></i> İptal</button></div>
     </div>
   </div>
   <div class="modal-bg" id="devirModal" onclick="if(event.target===this)devirKapat()">
     <div class="modal-ic"><h3><i class="fa-solid fa-share"></i> Kalemi Devret</h3>
-      <p style="font-size:13px;color:#666;margin-bottom:14px" id="devirBilgi"></p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px" id="devirBilgi"></p>
       <select id="devirHedef" style="width:100%;margin-bottom:14px"></select>
       <div style="display:flex;gap:10px"><button class="btn" onclick="devirOnayla()" style="font-size:13px"><i class="fa-solid fa-check"></i> Devret</button><button class="btn temizle" onclick="devirKapat()" style="font-size:13px"><i class="fa-solid fa-xmark"></i> İptal</button></div>
     </div>
@@ -171,13 +171,13 @@
     <div class="modal-ic" style="max-width:700px;max-height:80vh;overflow-y:auto">
       <h3><i class="fa-solid fa-truck-fast"></i> Toplu Gönderim</h3>
       <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:700;color:#555">Tır Plakası (tüm kalemler için)</label>
+        <label style="font-size:12px;font-weight:700;color:var(--text)">Tır Plakası (tüm kalemler için)</label>
         <input type="text" id="topluGondPlaka" placeholder="34 ABC 1234" style="margin-top:4px">
       </div>
-      <div style="font-size:12px;color:#666;margin-bottom:10px"><strong id="topluGondAdet">0</strong> kalem seçildi</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px"><strong id="topluGondAdet">0</strong> kalem seçildi</div>
       <div id="topluGondListe" style="max-height:350px;overflow-y:auto"></div>
       <div style="display:flex;gap:10px;margin-top:14px">
-        <button class="btn" onclick="topluGondOnayla()" id="topluGondBtn" style="font-size:13px;background:#217346"><i class="fa-solid fa-check"></i> Tümünü Gönder</button>
+        <button class="btn" onclick="topluGondOnayla()" id="topluGondBtn" style="font-size:13px;background:var(--green)"><i class="fa-solid fa-check"></i> Tümünü Gönder</button>
         <button class="btn temizle" onclick="topluGondKapat()" style="font-size:13px"><i class="fa-solid fa-xmark"></i> İptal</button>
       </div>
     </div>
@@ -187,9 +187,9 @@
   <div class="modal-bg" id="hareketDuzenleModal" onclick="if(event.target===this)hareketDuzenleKapat()">
     <div class="modal-ic">
       <h3><i class="fa-solid fa-pen"></i> Gönderim Düzenle</h3>
-      <p style="font-size:13px;color:#666;margin-bottom:10px" id="hareketDuzenleBilgi"></p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px" id="hareketDuzenleBilgi"></p>
       <div style="margin-bottom:12px">
-        <label style="font-size:12px;font-weight:700;color:#555">Yeni Miktar</label>
+        <label style="font-size:12px;font-weight:700;color:var(--text)">Yeni Miktar</label>
         <input type="number" id="hareketYeniMiktar" step="0.01" style="margin-top:4px">
       </div>
       <div style="display:flex;gap:10px">
@@ -320,7 +320,7 @@ kalemler.map(k=>k.mal_grubu).filter(v=>v)
 )]
 }
 
-let html=`<div style="font-weight:700;margin-bottom:6px;color:#666">
+let html=`<div style="font-weight:700;margin-bottom:6px;color:var(--text2)">
 Filtre Seç
 </div>`
 
@@ -333,7 +333,7 @@ ${v}
 })
 
 html+=`
-<div style="margin-top:6px;color:#c62828;cursor:pointer"
+<div style="margin-top:6px;color:var(--red);cursor:pointer"
 onclick="kolonFiltreTemizle('${kolon}')">
 Filtreyi temizle
 </div>
@@ -461,7 +461,7 @@ Mal Grubu
         ? Math.min((gonderilenGosterim / k.planlanan_miktar) * 100, 100)
         : 0
 
-        let gecmis="";const gonderimHrk=(k.hareketler||[]).filter(hr=>hr.islem==="gonder");if(gonderimHrk.length>0){gecmis='<div class="hareket-liste">';gonderimHrk.forEach(hr=>{const duzenleBtn=kullaniciRol==="admin"?`<button class="ib duzenle" onclick="hareketDuzenleBaslat(${hr.id}, ${hr.miktar}, '${k.birim}', '${(k.malzeme_tanimi||"").replace(/'/g,"\\'")}')" style="padding:1px 5px;font-size:9px" title="Düzenle"><i class="fa-solid fa-pen" style="font-size:8px"></i></button>`:"";gecmis+=`<div class="hareket-satir"><span class="h-tarih">${hr.tarih.substring(0,16)}</span><span class="h-miktar">${fN(hr.miktar)} ${k.birim}</span>${hr.tir_plaka?`<span class="h-plaka"><i class="fa-solid fa-truck" style="font-size:8px"></i> ${hr.tir_plaka}</span>`:""}<span class="h-kisi">${hr.yapan_ad}</span>${duzenleBtn}</div>`});gecmis+='</div>'}else gecmis='<span style="color:#ccc;font-size:10px">—</span>'
+        let gecmis="";const gonderimHrk=(k.hareketler||[]).filter(hr=>hr.islem==="gonder");if(gonderimHrk.length>0){gecmis='<div class="hareket-liste">';gonderimHrk.forEach(hr=>{const duzenleBtn=kullaniciRol==="admin"?`<button class="ib duzenle" onclick="hareketDuzenleBaslat(${hr.id}, ${hr.miktar}, '${k.birim}', '${(k.malzeme_tanimi||"").replace(/'/g,"\\'")}')" style="padding:1px 5px;font-size:9px" title="Düzenle"><i class="fa-solid fa-pen" style="font-size:8px"></i></button>`:"";gecmis+=`<div class="hareket-satir"><span class="h-tarih">${hr.tarih.substring(0,16)}</span><span class="h-miktar">${fN(hr.miktar)} ${k.birim}</span>${hr.tir_plaka?`<span class="h-plaka"><i class="fa-solid fa-truck" style="font-size:8px"></i> ${hr.tir_plaka}</span>`:""}<span class="h-kisi">${hr.yapan_ad}</span>${duzenleBtn}</div>`});gecmis+='</div>'}else gecmis='<span style="color:var(--text3);font-size:10px">—</span>'
         let isl="";if(k.durum!=="Gönderildi"&&k.durum!=="Devreden"){
           isl+=`<button class="ib gonder" onclick="gondBaslat(${k.id})"><i class="fa-solid fa-truck"></i> Gönder</button> `;
           isl+=`<button class="ib devret" onclick="devirBaslat(${k.id})"><i class="fa-solid fa-share"></i> Devret</button> `;
@@ -485,10 +485,10 @@ isl += `<button class="ib duzenle" onclick="duzenleBaslat(${k.id})">
             </td>
             <td><strong>${fN(k.planlanan_miktar)}</strong></td>
               <td>
-                <strong style="color:#217346">${fN(k.gonderilen_gosterim ?? k.gonderilen_miktar)}</strong>
+                <strong style="color:var(--green)">${fN(k.gonderilen_gosterim ?? k.gonderilen_miktar)}</strong>
                 ${
                 (k.fazla_miktar || 0) > 0
-                ? `<div style="font-size:9px;color:#1976d2;font-weight:700">+${fN(k.fazla_miktar)} fazla</div>`
+                ? `<div style="font-size:9px;color:var(--blue);font-weight:700">+${fN(k.fazla_miktar)} fazla</div>`
                 : ""
                 }
                 <div class="prog-bar">
@@ -497,8 +497,8 @@ isl += `<button class="ib duzenle" onclick="duzenleBaslat(${k.id})">
                   </td>
                 <td>
                   ${kalan>0
-                  ? `<strong style="color:#e67e22">${fN(kalan)}</strong>`
-                  : `<span style="color:#217346;font-weight:700">Tamam</span>`
+                  ? `<strong style="color:var(--amber)">${fN(kalan)}</strong>`
+                  : `<span style="color:var(--green);font-weight:700">Tamam</span>`
                   }
                   
                   </td>
@@ -694,7 +694,7 @@ Kalan: <strong>${fN(k.kalan_miktar)} ${k.birim}</strong>`
       })
       gecmis += '</div>'
     }else{
-      gecmis = '<span style="color:#ccc;font-size:10px">—</span>'
+      gecmis = '<span style="color:var(--text3);font-size:10px">—</span>'
     }
 
     let isl = ""
@@ -727,7 +727,7 @@ Kalan: <strong>${fN(k.kalan_miktar)} ${k.birim}</strong>`
       <td><strong>${fN(planlanan)}</strong></td>
 
       <td>
-        <strong style="color:#217346">${fN(gonderilenGosterim)}</strong>
+        <strong style="color:var(--green)">${fN(gonderilenGosterim)}</strong>
         <div class="prog-bar">
           <div class="prog-fill ${k.durum==="Kısmi" ? "kis" : ""}" style="width:${pct}%"></div>
         </div>
@@ -736,14 +736,14 @@ Kalan: <strong>${fN(k.kalan_miktar)} ${k.birim}</strong>`
       <td>
         ${fazla > 0
           ? `<strong class="fazla-gonderim">${fN(fazla)}</strong>`
-          : `<span style="color:#bbb">0</span>`
+          : `<span style="color:var(--text3)">0</span>`
         }
       </td>
 
       <td>
         ${kalan > 0
-          ? `<strong style="color:#e67e22">${fN(kalan)}</strong>`
-          : `<span style="color:#217346;font-weight:700">Tamam</span>`
+          ? `<strong style="color:var(--amber)">${fN(kalan)}</strong>`
+          : `<span style="color:var(--green);font-weight:700">Tamam</span>`
         }
       </td>
 
@@ -822,7 +822,7 @@ bildirim(e.message,"Bağlantı Hatası","hata")
 
     
     let importKalemler=[]
-    async function excelImportEt(){try{const r=await fetch("/api/sevkiyat/import-oku",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});const j=await r.json();if(j.durum==="ok"){importKalemler=j.kalemler;document.getElementById("importAdet").innerText=importKalemler.length;document.getElementById("importToplam").innerText=fKg(importKalemler.reduce((t,k)=>t+(k.birim==="KG"?k.miktar:0),0));let h=`<div style="margin-bottom:10px;font-size:12px;color:#666"><i class="fa-solid fa-file-excel"></i> Dosya: <strong>${j.dosya}</strong></div><table class="import-tablo"><thead><tr><th>#</th><th>Yüklenici</th><th>Sipariş</th><th>Mal Gr.</th><th>Malzeme</th><th>Miktar</th><th>Birim</th></tr></thead><tbody>`;importKalemler.forEach((k,i)=>{h+=`<tr><td>${i+1}</td><td>${k.yuklenici_firma||"-"}</td><td style="font-size:10px">${k.siparis_no||"-"}</td><td>${k.mal_grubu||"-"}</td><td style="text-align:left">${k.malzeme_tanimi}</td><td><strong>${fN(k.miktar)}</strong></td><td>${k.birim}</td></tr>`});h+=`</tbody></table>`;document.getElementById("importTabloAlani").innerHTML=h;document.getElementById("importOnizleme").classList.add("goster")}else bildirim(j.mesaj||"Dosya okunamadı.","Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}}
+    async function excelImportEt(){try{const r=await fetch("/api/sevkiyat/import-oku",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});const j=await r.json();if(j.durum==="ok"){importKalemler=j.kalemler;document.getElementById("importAdet").innerText=importKalemler.length;document.getElementById("importToplam").innerText=fKg(importKalemler.reduce((t,k)=>t+(k.birim==="KG"?k.miktar:0),0));let h=`<div style="margin-bottom:10px;font-size:12px;color:var(--text2)"><i class="fa-solid fa-file-excel"></i> Dosya: <strong>${j.dosya}</strong></div><table class="import-tablo"><thead><tr><th>#</th><th>Yüklenici</th><th>Sipariş</th><th>Mal Gr.</th><th>Malzeme</th><th>Miktar</th><th>Birim</th></tr></thead><tbody>`;importKalemler.forEach((k,i)=>{h+=`<tr><td>${i+1}</td><td>${k.yuklenici_firma||"-"}</td><td style="font-size:10px">${k.siparis_no||"-"}</td><td>${k.mal_grubu||"-"}</td><td style="text-align:left">${k.malzeme_tanimi}</td><td><strong>${fN(k.miktar)}</strong></td><td>${k.birim}</td></tr>`});h+=`</tbody></table>`;document.getElementById("importTabloAlani").innerHTML=h;document.getElementById("importOnizleme").classList.add("goster")}else bildirim(j.mesaj||"Dosya okunamadı.","Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}}
     async function importOnayla(){if(!importKalemler.length)return;try{const r=await fetch("/api/sevkiyat/kalem-toplu-ekle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan_id:planId,kalemler:importKalemler})});const j=await r.json();if(j.durum==="ok"){toast(j.eklenen+" kalem eklendi!","basari");importIptal();detayYukle()}else bildirim(j.mesaj,"Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}}
     function importIptal(){importKalemler=[];document.getElementById("importOnizleme").classList.remove("goster")}
     async function sablonIndir(){try{const r=await fetch("/api/sevkiyat/sablon-indir",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});const j=await r.json();if(j.durum==="ok"){toast("Şablon kaydedildi","basari");await fetch("/api/import-klasor-ac",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})}else bildirim(j.mesaj,"Hata","hata")}catch(e){bildirim(e.message,"Bağlantı Hatası","hata")}}
@@ -973,15 +973,15 @@ function topluGonderimBaslat(){
   document.getElementById("topluGondAdet").innerText = uygunKalemler.length
 
   let html = '<table style="width:100%;border-collapse:collapse;font-size:12px">'
-  html += '<thead><tr style="background:#f4f6f8"><th style="padding:6px;text-align:left">Malzeme</th><th style="padding:6px">Planlanan</th><th style="padding:6px">Gönderilen</th><th style="padding:6px">Kalan</th><th style="padding:6px">Gönderi Miktarı</th></tr></thead><tbody>'
+  html += '<thead><tr style="background:var(--bg-content)"><th style="padding:6px;text-align:left">Malzeme</th><th style="padding:6px">Planlanan</th><th style="padding:6px">Gönderilen</th><th style="padding:6px">Kalan</th><th style="padding:6px">Gönderi Miktarı</th></tr></thead><tbody>'
 
   uygunKalemler.forEach(k => {
     const kalan = Math.max(k.planlanan_miktar - Math.min(k.gonderilen_miktar, k.planlanan_miktar), 0)
-    html += `<tr style="border-bottom:1px solid #eee">
+    html += `<tr style="border-bottom:1px solid var(--border-light)">
       <td style="padding:6px;text-align:left;font-size:11px">${k.malzeme_tanimi}</td>
       <td style="padding:6px;text-align:center">${fN(k.planlanan_miktar)}</td>
-      <td style="padding:6px;text-align:center;color:#217346">${fN(k.gonderilen_miktar)}</td>
-      <td style="padding:6px;text-align:center;color:#e67e22;font-weight:700">${fN(kalan)}</td>
+      <td style="padding:6px;text-align:center;color:var(--green)">${fN(k.gonderilen_miktar)}</td>
+      <td style="padding:6px;text-align:center;color:var(--amber);font-weight:700">${fN(kalan)}</td>
       <td style="padding:6px;text-align:center"><input type="number" step="0.01" value="${kalan}" class="topluGondInput" data-id="${k.id}" style="width:90px;padding:4px 6px;font-size:12px;text-align:center;margin:0"></td>
     </tr>`
   })

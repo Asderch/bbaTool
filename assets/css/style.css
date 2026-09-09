@@ -111,7 +111,7 @@
 [data-theme="light"] .toast{background:#fff;border-color:var(--border)}
 [data-theme="light"] .ekle-kart{background:#fff;border-color:var(--border)}
 [data-theme="light"] .program-bilgi{background:#fff;border-color:var(--border)}
-[data-theme="light"] .hosgeldin-kart{background:#0a0a0a;border-color:#262626}
+/* .hosgeldin-kart tema override'ı artık index.html'in kendi <style> bloğunda tanımlı */
 [data-theme="light"] .login-main{background:#fff}
 [data-theme="light"] .login-main h1{color:var(--text)}
 [data-theme="light"] .login-main .sub{color:var(--text3)}

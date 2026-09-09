@@ -73,14 +73,19 @@ def _connect_db(db_yol):
     conn = sqlite3.connect(db_yol, timeout=30, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
-    # WAL modu paylaşılan bellek eşlemesi gerektirir; SMB/ağ paylaşım sürücülerinde
-    # (K: gibi) bu çok yavaş çalışır veya güvenilmez — sadece yerel diskte kullan.
+    # NOT: Ölçümler gösterdi ki WAL, ağ sürücüsünde (K:) HER bağlantıda ölçülebilir bir
+    # ek maliyet getiriyor (bkz. 2026-09 açılış performansı incelemesi — WAL: ~9.7sn,
+    # DELETE: ~3sn toplam açılış). Bu sadece açılışta değil, gün boyu her istek K:'ye
+    # bağlandığında tekrarlanan bir maliyet olduğu için DELETE modunda kalıyoruz.
+    # Risk: DELETE modu yazma sırasında dosyayı kilitler (WAL'daki gibi eşzamanlı
+    # okuma/yazma yok) — çoklu kullanıcı aynı anda yazarsa "database is locked"
+    # ihtimali artar. busy_timeout bunu 5 saniyeye kadar tolere ediyor.
     ag_yolu = os.path.isdir(ORTAK_KLASOR) and os.path.normcase(os.path.abspath(db_yol)).startswith(os.path.normcase(os.path.abspath(ORTAK_KLASOR)))
-    if not ag_yolu:
-        conn.execute("PRAGMA journal_mode=WAL")
-    else:
+    if ag_yolu:
         conn.execute("PRAGMA journal_mode=DELETE")
         conn.execute("PRAGMA synchronous=NORMAL")
+    else:
+        conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout=5000")
     return conn
 

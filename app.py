@@ -217,8 +217,9 @@ def get_db():
     conn = sqlite3.connect(db_yol, timeout=30, check_same_thread=False)
     conn.row_factory = sqlite3.Row
 
-    # WAL modu paylaşılan bellek eşlemesi ister; SMB/ağ paylaşım sürücülerinde (K: gibi)
-    # bu çok yavaş çalışır veya güvenilmez — sadece yerel diskteyse WAL kullan.
+    # WAL, ağ sürücüsünde (K:) her bağlantıda ölçülebilir bir ek maliyet getiriyor
+    # (bkz. fason_db.py _connect_db üzerindeki not) — sadece açılışta değil, gün boyu
+    # her istekte tekrarlanan bir maliyet. DELETE modunda kalıyoruz.
     if os.path.exists(r"K:\Warehouse\Yeşilovacık\12_Paylaşım Klasörü\01-BBA\bba-tool"):
         conn.execute("PRAGMA journal_mode=DELETE")
         conn.execute("PRAGMA synchronous=NORMAL")
