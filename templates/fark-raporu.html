@@ -75,7 +75,7 @@
     .mg-kart {
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px; padding: 14px;
+      border-radius:var(--radius); padding: 14px;
       transition: all .15s; cursor: pointer;
     }
     .mg-kart:hover { border-color: var(--primary); transform: translateY(-2px); }
@@ -341,7 +341,7 @@
     .detay-modal {
       background: var(--bg-white);
       border: 1px solid var(--border);
-      border-radius: 12px; padding: 20px;
+      border-radius:var(--radius-lg); padding: 20px;
       max-width: 900px; width: 92%;
       max-height: 85vh; overflow: auto;
     }
@@ -385,7 +385,7 @@
       padding: 10px 14px;
       background: rgba(168,85,247,0.08);
       border: 1px solid rgba(168,85,247,0.35);
-      border-radius: 8px;
+      border-radius:var(--radius);
       margin: 12px 0;
       font-size: 12px;
       color: var(--text);

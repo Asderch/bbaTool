@@ -75,7 +75,7 @@
     <div class="content">
 
     <!-- Tarih aralığı mini panel - gizli, tıklayınca açılır -->
-    <div id="tarihAralikPanel" style="display:none;background:var(--bg-white);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:none">
+    <div id="tarihAralikPanel" style="display:none;background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;display:none">
       <div style="display:flex;gap:8px;align-items:center">
         <span style="font-size:10px;color:var(--text3);font-weight:600">Başlangıç:</span>
         <input type="date" id="tarihBaslangic" style="width:130px;padding:4px 8px;font-size:11px;margin:0">
@@ -125,21 +125,21 @@
       </div>
       <div class="mg-modal-body">
         <div style="margin-bottom:16px">
-          <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:8px">Ana Kategoriler</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">Ana Kategoriler</div>
           <div id="mgKatListe"></div>
           <div style="display:flex;gap:8px;margin-top:10px">
             <input type="text" id="mgYeniKatAd" placeholder="Yeni kategori adı..." style="flex:1;padding:6px 10px;font-size:12px;margin:0">
-            <input type="color" id="mgYeniKatRenk" value="#1565c0" style="width:36px;height:32px;padding:2px;margin:0;border:1px solid #ddd;border-radius:6px">
+            <input type="color" id="mgYeniKatRenk" value="#1565c0" style="width:36px;height:32px;padding:2px;margin:0;border:1px solid var(--border);border-radius:6px">
             <button class="btn" onclick="mgKategoriEkle()" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-plus"></i></button>
           </div>
         </div>
         <div>
-          <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:8px">Mal Grubu → Kategori Eşlemeleri</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">Mal Grubu → Kategori Eşlemeleri</div>
           <div id="mgEslemeListe" style="max-height:300px;overflow-y:auto"></div>
         </div>
       </div>
       <div class="mg-modal-footer">
-        <button class="btn" onclick="mgEslemeleriKaydet()" style="font-size:12px;background:#217346"><i class="fa-solid fa-check"></i> Kaydet</button>
+        <button class="btn" onclick="mgEslemeleriKaydet()" style="font-size:12px;background:var(--green)"><i class="fa-solid fa-check"></i> Kaydet</button>
         <button class="btn temizle" onclick="mgAyarModalKapat()" style="font-size:12px"><i class="fa-solid fa-xmark"></i> Kapat</button>
       </div>
     </div>
@@ -294,7 +294,7 @@ async function mgAyarModalAc(){
                 <button class="ib sil" onclick="mgKategoriSilModal(${k.id})" style="font-size:9px;padding:2px 6px"><i class="fa-solid fa-trash"></i></button>
             </div>`
         })
-        document.getElementById("mgKatListe").innerHTML = kh || '<div style="color:#ccc;font-size:12px">Kategori yok</div>'
+        document.getElementById("mgKatListe").innerHTML = kh || '<div style="color:var(--text3);font-size:12px">Kategori yok</div>'
 
         // Eşleme listesi
         let eh = ""
@@ -309,7 +309,7 @@ async function mgAyarModalAc(){
                 <select class="mg-esleme-select" data-mg="${mg}">${opts}</select>
             </div>`
         })
-        document.getElementById("mgEslemeListe").innerHTML = eh || '<div style="color:#ccc;font-size:12px">Mal grubu yok</div>'
+        document.getElementById("mgEslemeListe").innerHTML = eh || '<div style="color:var(--text3);font-size:12px">Mal grubu yok</div>'
 
         document.getElementById("mgAyarModal").classList.add("goster")
     } catch(e){
@@ -659,7 +659,7 @@ function renderPlans(planlar){
     <div class="id">
         <span>Planlanan: <strong>${fKg(p.planlanan_kg)}</strong></span>
         <span>Gönderilen: <strong>${fKg(p.gonderilen_kg)}</strong></span>
-        ${(p.fazla_gonderim_kg || 0) > 0 ? `<span>Fazla: <strong style="color:#1976d2">${fKg(p.fazla_gonderim_kg)}</strong></span>` : ""}
+        ${(p.fazla_gonderim_kg || 0) > 0 ? `<span>Fazla: <strong style="color:var(--blue)">${fKg(p.fazla_gonderim_kg)}</strong></span>` : ""}
         <span>Kalan: <strong>${fKg(p.kalan_kg)}</strong></span>
         <span>Bekliyor: <strong>${bek}</strong></span>
         <span>Gönderildi: <strong>${tamam}</strong></span>
@@ -708,7 +708,7 @@ function renderTopMG(list){
     console.log("renderTopMG:", list)
 
     if(!list || !Array.isArray(list) || list.length === 0){
-        $("topMG").innerHTML = "<div style='color:#aaa;font-size:13px;padding:12px'>Filtreye uygun veri yok</div>"
+        $("topMG").innerHTML = "<div style='color:var(--text3);font-size:13px;padding:12px'>Filtreye uygun veri yok</div>"
         return
     }
 
@@ -737,7 +737,7 @@ function renderTopMG(list){
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                 <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${g.renk}"></span>
                 <span style="font-size:13px;font-weight:800;color:${g.renk}">${kat}</span>
-                <span style="font-size:11px;color:#888;font-weight:600">— ${fKg(g.toplam)}</span>
+                <span style="font-size:11px;color:var(--text2);font-weight:600">— ${fKg(g.toplam)}</span>
             </div>`
         g.items.forEach((m, i) => {
             html += `<div class="ti" style="margin-left:18px">
@@ -753,7 +753,7 @@ function renderTopMG(list){
     if(atamasizlar.length > 0){
         if(katKeys.length > 0){
             html += `<div style="margin-bottom:14px">
-                <div style="font-size:13px;font-weight:800;color:#888;margin-bottom:6px">Atanmamış</div>`
+                <div style="font-size:13px;font-weight:800;color:var(--text2);margin-bottom:6px">Atanmamış</div>`
         }
         atamasizlar.forEach((m, i) => {
             html += `<div class="ti">

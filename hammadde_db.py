@@ -29,6 +29,12 @@ DB_KLASOR = _db_klasor_bul()
 DB_YOL = os.path.join(DB_KLASOR, "hammadde.db")
 SEVKIYAT_DB_YOL = os.path.join(DB_KLASOR, "sevkiyat.db")
 
+def _hammadde_export_klasor():
+    """Export dosyaları PC'nin lokal klasörüne gitsin, ortak K: sürücüsüne değil."""
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
 # Hammadde sayılacak mal grupları (senin onayladığın liste)
 HEDEF_MAL_GRUPLARI = {
     "Boru Çelik", "Boru Bağlantı Parçaları", "Profiller", "Saclar",
@@ -37,16 +43,25 @@ HEDEF_MAL_GRUPLARI = {
 
 
 def get_db():
-    conn = sqlite3.connect(DB_YOL)
+    os.makedirs(DB_KLASOR, exist_ok=True)
+    conn = sqlite3.connect(DB_YOL, timeout=30, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL modu paylaşılan bellek eşlemesi ister; SMB/ağ paylaşım sürücülerinde (K: gibi)
+    # bu çok yavaş çalışır veya güvenilmez — sadece yerel diskteyse WAL kullan.
+    if os.path.isdir(ORTAK_KLASOR):
+        conn.execute("PRAGMA journal_mode=DELETE")
+        conn.execute("PRAGMA synchronous=NORMAL")
+    else:
+        conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=5000")
     return conn
 
 
 def log_kaydet(islem, detay="", ilgili_id=None, ilgili_ad=""):
-    """Hammadde işlemlerini merkezi İşlem Geçmişi'ne (sevkiyat.db → islem_log) yazar."""
+    """Fason işlemlerini merkezi İşlem Geçmişi tablosuna (sevkiyat.db → islem_log) yazar."""
     try:
-        conn = sqlite3.connect(SEVKIYAT_DB_YOL, timeout=10)
+        conn = sqlite3.connect(SEVKIYAT_DB_YOL, timeout=30, check_same_thread=False)
         conn.execute(
             "INSERT INTO islem_log (modul,islem,detay,ilgili_id,ilgili_ad,yapan,yapan_ad,tarih) VALUES (?,?,?,?,?,?,?,?)",
             ("Hammadde", islem, detay, ilgili_id, ilgili_ad,
@@ -457,6 +472,7 @@ def api_hammadde_irsaliyeler():
     tedarikci = request.args.get("tedarikci", "").strip()
     tarih_bas = request.args.get("tarih_bas", "").strip()
     tarih_bit = request.args.get("tarih_bit", "").strip()
+    ara = request.args.get("ara", "").strip()
 
     sorgu = """
         SELECT
@@ -464,6 +480,8 @@ def api_hammadde_irsaliyeler():
             i.son_guncelleme_tarihi,
             COUNT(k.id) AS kalem_sayisi,
             SUM(CASE WHEN k.stok_miktari > 0 THEN 1 ELSE 0 END) AS stokta_kalan,
+            SUM(k.giris_miktari) AS toplam_giris,
+            SUM(k.sap_giris_miktari) AS toplam_sap_giris,
             GROUP_CONCAT(DISTINCT NULLIF(k.siparis_no, '')) AS ak_listesi,
             (SELECT d.durum FROM hammadde_durum_log d WHERE d.irsaliye_id = i.id ORDER BY d.id DESC LIMIT 1) AS son_durum,
             (SELECT d.tarih FROM hammadde_durum_log d WHERE d.irsaliye_id = i.id ORDER BY d.id DESC LIMIT 1) AS son_durum_tarihi,
@@ -482,6 +500,9 @@ def api_hammadde_irsaliyeler():
     if tarih_bit:
         sorgu += " AND i.irsaliye_tarihi <= ?"
         params.append(tarih_bit)
+    if ara:
+        sorgu += " AND i.irsaliye_no LIKE ?"
+        params.append(f"%{ara}%")
     sorgu += " GROUP BY i.id ORDER BY i.irsaliye_tarihi DESC, i.id DESC"
 
     conn = get_db()
@@ -544,22 +565,44 @@ def api_hammadde_irsaliye_detay(irsaliye_no):
 def api_hammadde_ak_listesi():
     if not session.get("kullanici"):
         return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    tedarikci = request.args.get("tedarikci", "").strip()
+    tarih_bas = request.args.get("tarih_bas", "").strip()
+    tarih_bit = request.args.get("tarih_bit", "").strip()
+    ara = request.args.get("ara", "").strip()
+
+    sorgu = """
+        SELECT
+            k.siparis_no,
+            MAX(k.siparis_tarihi) AS siparis_tarihi,
+            MAX(k.siparis_veren) AS siparis_veren,
+            COUNT(*) AS kalem_sayisi,
+            COUNT(DISTINCT k.irsaliye_id) AS irsaliye_sayisi,
+            SUM(CASE WHEN k.stok_miktari > 0 THEN 1 ELSE 0 END) AS stokta_kalan,
+            SUM(k.giris_miktari) AS toplam_giris,
+            SUM(k.sap_giris_miktari) AS toplam_sap_giris,
+            GROUP_CONCAT(DISTINCT NULLIF(k.proje_no, '')) AS proje_listesi
+        FROM hammadde_kalem k
+        JOIN hammadde_irsaliye i ON i.id = k.irsaliye_id
+        WHERE k.siparis_no IS NOT NULL AND k.siparis_no != ''
+    """
+    params = []
+    if tedarikci:
+        sorgu += " AND i.tedarikci = ?"
+        params.append(tedarikci)
+    if tarih_bas:
+        sorgu += " AND k.siparis_tarihi >= ?"
+        params.append(tarih_bas)
+    if tarih_bit:
+        sorgu += " AND k.siparis_tarihi <= ?"
+        params.append(tarih_bit)
+    if ara:
+        sorgu += " AND k.siparis_no LIKE ?"
+        params.append(f"%{ara}%")
+    sorgu += " GROUP BY k.siparis_no ORDER BY siparis_tarihi DESC"
+
     conn = get_db()
     try:
-        rows = conn.execute("""
-            SELECT
-                k.siparis_no,
-                k.siparis_tarihi,
-                k.siparis_veren,
-                COUNT(*) AS kalem_sayisi,
-                COUNT(DISTINCT k.irsaliye_id) AS irsaliye_sayisi,
-                SUM(CASE WHEN k.stok_miktari > 0 THEN 1 ELSE 0 END) AS stokta_kalan,
-                GROUP_CONCAT(DISTINCT NULLIF(k.proje_no, '')) AS proje_listesi
-            FROM hammadde_kalem k
-            WHERE k.siparis_no IS NOT NULL AND k.siparis_no != ''
-            GROUP BY k.siparis_no
-            ORDER BY k.siparis_tarihi DESC
-        """).fetchall()
+        rows = conn.execute(sorgu, params).fetchall()
         sonuc = []
         for r in rows:
             d = dict(r)
@@ -649,6 +692,23 @@ def api_hammadde_tedarikciler():
             ORDER BY tedarikci
         """).fetchall()
         return jsonify([r["tedarikci"] for r in rows])
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+@hammadde_bp.route("/api/hammadde/mal-gruplari", methods=["GET"])
+def api_hammadde_mal_gruplari():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    conn = get_db()
+    try:
+        rows = conn.execute("""
+            SELECT DISTINCT mal_grubu FROM hammadde_kalem
+            WHERE mal_grubu IS NOT NULL AND mal_grubu != ''
+            ORDER BY mal_grubu
+        """).fetchall()
+        return jsonify([r["mal_grubu"] for r in rows])
     except Exception as e:
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500
     finally:
@@ -816,7 +876,7 @@ def api_hammadde_export():
 
         ws.freeze_panes = "E3"
 
-        klasor = os.path.join(DB_KLASOR, "exports", "hammadde")
+        klasor = os.path.join(_hammadde_export_klasor(), "exports", "hammadde")
         os.makedirs(klasor, exist_ok=True)
         dosya_adi = f"hammadde_kontrol_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
         yol = os.path.join(klasor, dosya_adi)
@@ -986,6 +1046,141 @@ def api_hammadde_kalem_sap_guncelle(kalem_id):
         """, (sap_giris, sap_stok, notu, session.get("kullanici", "-"), kalem_id))
         conn.commit()
         return jsonify({"durum": "ok", "mesaj": "Güncellendi"})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+@hammadde_bp.route("/api/hammadde/kalem-birlestir", methods=["POST"])
+def api_hammadde_kalem_birlestir():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    d = request.get_json(silent=True) or {}
+    kalem_idler = d.get("kalem_idler") or []
+    if not isinstance(kalem_idler, list) or len(kalem_idler) < 2:
+        return jsonify({"durum": "hata", "mesaj": "En az 2 kalem seçmelisin"}), 400
+
+    conn = get_db()
+    try:
+        ph = ",".join("?" * len(kalem_idler))
+        kalemler = conn.execute(
+            f"SELECT * FROM hammadde_kalem WHERE id IN ({ph})", kalem_idler
+        ).fetchall()
+
+        if len(kalemler) != len(kalem_idler):
+            return jsonify({"durum": "hata", "mesaj": "Bazı kalemler bulunamadı"}), 404
+
+        irs_idler = set(k["irsaliye_id"] for k in kalemler)
+        if len(irs_idler) > 1:
+            return jsonify({"durum": "hata", "mesaj": "Sadece aynı irsaliyedeki kalemler birleştirilebilir"}), 400
+
+        def topla(alan):
+            degerler = [k[alan] for k in kalemler if k[alan] is not None]
+            return sum(degerler) if degerler else None
+
+        ana = kalemler[0]
+        yeni_giris = topla("giris_miktari")
+        yeni_stok = topla("stok_miktari")
+        yeni_sap_giris = topla("sap_giris_miktari")
+        yeni_sap_stok = topla("sap_stok_miktari")
+
+        conn.execute("""
+            UPDATE hammadde_kalem
+            SET giris_miktari = ?, stok_miktari = ?, sap_giris_miktari = ?, sap_stok_miktari = ?,
+                sap_kontrol_tarihi = datetime('now','localtime'), sap_kontrol_kullanici = ?
+            WHERE id = ?
+        """, (yeni_giris, yeni_stok, yeni_sap_giris, yeni_sap_stok, session.get("kullanici", "-"), ana["id"]))
+
+        silinecekler = [k["id"] for k in kalemler if k["id"] != ana["id"]]
+        if silinecekler:
+            ph2 = ",".join("?" * len(silinecekler))
+            conn.execute(f"DELETE FROM hammadde_kalem WHERE id IN ({ph2})", silinecekler)
+
+        conn.commit()
+
+        log_kaydet(
+            "Kalem Birleştirme",
+            f"{ana['malzeme_tanim']}: {len(kalemler)} kalem birleştirildi (giriş: {yeni_giris}, stok: {yeni_stok})",
+            ana["irsaliye_id"], ana["malzeme_tanim"]
+        )
+
+        return jsonify({"durum": "ok", "mesaj": f"{len(kalemler)} kalem birleştirildi", "ana_kalem_id": ana["id"]})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+# ═════════════════════════════════════════════════
+# MALZEME ÖZETİ — SAP kodu (yoksa malzeme tanımı) bazında gruplanmış
+# ═════════════════════════════════════════════════
+
+@hammadde_bp.route("/api/hammadde/malzeme-ozet", methods=["GET"])
+def api_hammadde_malzeme_ozet():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    tedarikci = request.args.get("tedarikci", "").strip()
+    tarih_bas = request.args.get("tarih_bas", "").strip()
+    tarih_bit = request.args.get("tarih_bit", "").strip()
+    mal_grubu = request.args.get("mal_grubu", "").strip()
+
+    sorgu = """
+        SELECT
+            COALESCE(NULLIF(k.sap_kodu, ''), k.malzeme_tanim) AS grup_anahtar,
+            MAX(k.malzeme_tanim) AS malzeme_tanim,
+            MAX(k.mal_grubu) AS mal_grubu,
+            MAX(NULLIF(k.sap_kodu, '')) AS sap_kodu,
+            COUNT(*) AS kalem_sayisi,
+            COUNT(DISTINCT k.irsaliye_id) AS irsaliye_sayisi,
+            SUM(k.giris_miktari) AS toplam_giris,
+            SUM(k.stok_miktari) AS toplam_stok,
+            SUM(k.sap_giris_miktari) AS toplam_sap_giris,
+            SUM(k.sap_stok_miktari) AS toplam_sap_stok
+        FROM hammadde_kalem k
+        JOIN hammadde_irsaliye i ON i.id = k.irsaliye_id
+        WHERE 1=1
+    """
+    params = []
+    if tedarikci:
+        sorgu += " AND i.tedarikci = ?"
+        params.append(tedarikci)
+    if tarih_bas:
+        sorgu += " AND i.irsaliye_tarihi >= ?"
+        params.append(tarih_bas)
+    if tarih_bit:
+        sorgu += " AND i.irsaliye_tarihi <= ?"
+        params.append(tarih_bit)
+    if mal_grubu:
+        sorgu += " AND k.mal_grubu = ?"
+        params.append(mal_grubu)
+    sorgu += " GROUP BY grup_anahtar ORDER BY malzeme_tanim"
+
+    conn = get_db()
+    try:
+        rows = conn.execute(sorgu, params).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@hammadde_bp.route("/api/hammadde/malzeme-detay", methods=["GET"])
+def api_hammadde_malzeme_detay():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    anahtar = request.args.get("anahtar", "").strip()
+    if not anahtar:
+        return jsonify({"durum": "hata", "mesaj": "Anahtar gerekli"}), 400
+    conn = get_db()
+    try:
+        rows = conn.execute("""
+            SELECT k.*, i.irsaliye_no, i.irsaliye_tarihi, i.tedarikci
+            FROM hammadde_kalem k
+            JOIN hammadde_irsaliye i ON i.id = k.irsaliye_id
+            WHERE COALESCE(NULLIF(k.sap_kodu, ''), k.malzeme_tanim) = ?
+            ORDER BY i.irsaliye_tarihi DESC, k.id
+        """, (anahtar,)).fetchall()
+        return jsonify({"durum": "ok", "anahtar": anahtar, "kalemler": [dict(r) for r in rows]})
     except Exception as e:
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500
     finally:

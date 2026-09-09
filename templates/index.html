@@ -10,24 +10,24 @@
   <script src="/assets/js/popup.js" defer></script>
   <style>
     /* ---- HOŞGELDİN BANNER ---- */
-.hosgeldin-kart{background:#111111;border:0.5px solid #2a2a2a;border-radius:var(--radius-lg);padding:16px 22px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden}
-.hosgeldin-kart::after{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(91,141,239,.06)}
-.hosgeldin-kart .sol{color:white;z-index:1}
+.hosgeldin-kart{background:#0a0a0a;border:0.5px solid #262626;border-radius:var(--radius-lg);padding:16px 22px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden}
+.hosgeldin-kart::after{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(62,207,142,.08)}
+.hosgeldin-kart .sol{color:#fff;z-index:1}
 .hosgeldin-kart .sol h1{font-size:16px;font-weight:700;margin:0;display:flex;align-items:baseline;gap:6px}
 .hosgeldin-kart .sol h1 .ust{font-size:12px;font-weight:400;opacity:.55}
 .hosgeldin-kart .sol .alt-satir{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:10.5px}
-.hosgeldin-kart .sol .rol{padding:2px 8px;border-radius:5px;font-weight:700;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);letter-spacing:.3px}
+.hosgeldin-kart .sol .rol{padding:2px 8px;border-radius:999px;font-weight:700;background:rgba(62,207,142,.15);color:#5fe0a8;letter-spacing:.3px}
 .hosgeldin-kart .sol .ayrac{opacity:.3}
 .hosgeldin-kart .sol .tarih-bilgi{opacity:.45}
 .hosgeldin-kart .sag{z-index:1;display:flex;gap:10px;align-items:center}
-.hosgeldin-kart .sag img{height:34px;width:auto;opacity:.7}
+.hosgeldin-kart .sag img{height:34px;width:auto;opacity:.85}
 
     /* ---- GENEL ÖZET KPI ---- */
     .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:20px}
     .kpi-kart{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;box-shadow:var(--shadow-sm);transition:all var(--transition);cursor:default}
     .kpi-kart:hover{border-color:var(--blue);box-shadow:var(--shadow)}
     .kpi-kart .kpi-ust{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .kpi-kart .kpi-ikon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px}
+    .kpi-kart .kpi-ikon{width:32px;height:32px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:13px}
     .kpi-kart .kpi-ikon.blue{background:var(--blue-dim);color:var(--blue)}
     .kpi-kart .kpi-ikon.green{background:var(--green-dim);color:var(--green)}
     .kpi-kart .kpi-ikon.amber{background:var(--amber-dim);color:var(--amber)}
@@ -77,7 +77,7 @@
 
     /* ---- PERSONEL DURUM ---- */
     .personel-ozet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-    .pers-mini{background:var(--bg);border:1px solid var(--border-light);border-radius:8px;padding:10px 12px;text-align:center}
+    .pers-mini{background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius);padding:10px 12px;text-align:center}
     .pers-mini .pm-sayi{font-size:18px;font-weight:800;color:var(--text)}
     .pers-mini .pm-et{font-size:9px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
     .pers-mini.izinde-mini{border-left:3px solid var(--amber)}
@@ -97,7 +97,7 @@
       display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;
     }
     .hizli-item:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:var(--shadow)}
-    .hizli-item .hi-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px}
+    .hizli-item .hi-icon{width:34px;height:34px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:15px}
     .hizli-item .hi-icon.blue{background:var(--blue-dim);color:var(--blue)}
     .hizli-item .hi-icon.green{background:var(--green-dim);color:var(--green)}
     .hizli-item .hi-icon.purple{background:var(--purple-dim);color:var(--purple)}
@@ -144,7 +144,7 @@
 .att-chip.ok .ac-dot{background:var(--green)}
 
 /* ---- OPERASYON MERKEZİ (plan satırları) ---- */
-.op-satir{display:flex;align-items:center;gap:12px;padding:11px 10px;margin:0 -10px;border-radius:8px;border-left:3px solid transparent;cursor:pointer;transition:all var(--transition)}
+.op-satir{display:flex;align-items:center;gap:12px;padding:11px 10px;margin:0 -10px;border-radius:var(--radius);border-left:3px solid transparent;cursor:pointer;transition:all var(--transition)}
 .op-satir:hover{background:var(--bg-hover)}
 .op-satir.gecikmis{border-left-color:var(--red)}
 .op-satir.yaklasan{border-left-color:var(--amber)}
@@ -679,13 +679,9 @@ async function yukleDashboard(){
 // ---- FASON TAKİP ÖZETİ ----
 async function yukleFasonOzeti(){
   try{
-    const [r1, r2] = await Promise.all([
-      fetch("/api/fason/liste"),
-      fetch("/api/fason/durumlar")
-    ]);
+    const r1 = await fetch("/api/fason/liste");
     const liste = await r1.json();
-    const durumlar = await r2.json();
-    if(!Array.isArray(liste) || !Array.isArray(durumlar)){throw new Error()}
+    if(!Array.isArray(liste)){throw new Error()}
 
     if(liste.length===0){
       document.getElementById("fasonOzetAlani").innerHTML = `
@@ -697,24 +693,34 @@ async function yukleFasonOzeti(){
       return;
     }
 
+    const kategoriler = [
+      { ad: "Belirlenmedi", renk: "text3" },
+      { ad: "Stok",         renk: "red" },
+      { ad: "Kısmi Çıkış",  renk: "amber" },
+      { ad: "Çıkış",        renk: "green" },
+      { ad: "Tadilat",      renk: "purple" },
+      { ad: "Nakil",        renk: "blue" },
+      { ad: "Aspro",        renk: "teal" }
+    ];
     const sayilar = {};
     let toplamTutar = 0;
     liste.forEach(r=>{
-      if(r.durum_id) sayilar[r.durum_id] = (sayilar[r.durum_id]||0)+1;
-      if(r.toplam_fiyat!=null && !isNaN(r.toplam_fiyat)) toplamTutar += Number(r.toplam_fiyat);
+      const d = (r.durum_hesaplanan !== undefined && r.durum_hesaplanan !== null && r.durum_hesaplanan !== "") ? r.durum_hesaplanan : "Belirlenmedi";
+      sayilar[d] = (sayilar[d]||0)+1;
+      if(r.toplam_fiyat_sum!=null && !isNaN(r.toplam_fiyat_sum)) toplamTutar += Number(r.toplam_fiyat_sum);
     });
-
+    
     let h = `<div class="fason-toplam">
       <div class="ft-sayi">${liste.length}</div>
       <div class="ft-et">Toplam İrsaliye</div>
       ${toplamTutar>0 ? `<div class="ft-tutar">$${toplamTutar.toLocaleString("tr-TR",{maximumFractionDigits:0})}</div>` : ""}
     </div><div class="fason-durum-liste">`;
 
-    durumlar.forEach(d=>{
-      const sayi = sayilar[d.id]||0;
+    kategoriler.forEach(k=>{
+      const sayi = sayilar[k.ad]||0;
       h += `<div class="fd-satir">
-        <span class="fd-dot" style="background:var(--${d.renk})"></span>
-        <span class="fd-ad">${d.ad}</span>
+        <span class="fd-dot" style="background:var(--${k.renk})"></span>
+        <span class="fd-ad">${k.ad}</span>
         <span class="fd-sayi">${sayi}</span>
       </div>`;
     });

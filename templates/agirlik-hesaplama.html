@@ -78,18 +78,18 @@
     .gecmis-baslik { display: flex; align-items: center; justify-content: space-between; margin-top: 40px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
     .gecmis-baslik h2 { margin: 0; }
     .gecmis-aksiyonlar { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn-db { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; font-family: inherit; }
+    .btn-db { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius:var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; font-family: inherit; }
     .btn-db i { font-size: 14px; }
     .btn-db-kaydet { background: var(--primary); color: #000; }
     .btn-db-kaydet:hover { filter: brightness(1.15); }
     .btn-db-indir, .btn-db-import { background: var(--bg-white); color: var(--text); border: 1px solid var(--border); }
     .btn-db-indir:hover, .btn-db-import:hover { background: var(--bg-hover); }
-    .aciklama-input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-white); color: var(--text); font-size: 13px; width: 200px; font-family: inherit; }
+    .aciklama-input { padding: 8px 12px; border-radius:var(--radius); border: 1px solid var(--border); background: var(--bg-white); color: var(--text); font-size: 13px; width: 200px; font-family: inherit; }
     .aciklama-input::placeholder { color: var(--text3); }
     .gecmis-grid { display: flex; flex-direction: column; gap: 8px; }
     .gecmis-kart { background: var(--bg-white); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 16px; transition: all .2s; cursor: pointer; }
     .gecmis-kart:hover { border-color: var(--primary); }
-    .gecmis-tarih { background: var(--bg); padding: 8px 12px; border-radius: 8px; text-align: center; min-width: 72px; flex-shrink: 0; }
+    .gecmis-tarih { background: var(--bg); padding: 8px 12px; border-radius:var(--radius); text-align: center; min-width: 72px; flex-shrink: 0; }
     .gecmis-tarih .gun { font-size: 18px; font-weight: 700; line-height: 1; }
     .gecmis-tarih .ay { font-size: 10px; color: var(--text3); margin-top: 2px; }
     .gecmis-tarih .saat { font-size: 10px; color: var(--primary); margin-top: 2px; }
@@ -133,7 +133,7 @@
       padding: 10px 14px;
       background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.04));
       border: 1px solid rgba(59,130,246,0.4);
-      border-radius: 8px;
+      border-radius:var(--radius);
       font-size: 13px;
       color: var(--text);
       margin-bottom: 14px;
@@ -227,7 +227,7 @@
       margin-bottom: 12px;
       background: rgba(245,158,11,0.1);
       border: 1px solid rgba(245,158,11,0.4);
-      border-radius: 8px;
+      border-radius:var(--radius);
       color: var(--amber);
       font-size: 12px;
       align-items: center;
@@ -268,7 +268,7 @@
     .mb52-modal {
       background: var(--bg-white);
       border: 1px solid var(--border);
-      border-radius: 12px; padding: 24px;
+      border-radius:var(--radius-lg); padding: 24px;
       max-width: 480px; width: 90%;
       box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     }
@@ -279,7 +279,7 @@
     }
     .mb52-drop-zone {
       border: 2px dashed var(--border);
-      border-radius: 8px; padding: 32px 16px;
+      border-radius:var(--radius); padding: 32px 16px;
       text-align: center; cursor: pointer;
       transition: all .15s;
       margin-bottom: 12px;
@@ -355,7 +355,7 @@
       margin-bottom: 12px;
       background: linear-gradient(135deg, rgba(62,207,142,0.08), rgba(62,207,142,0.02));
       border: 1px solid rgba(62,207,142,0.4);
-      border-radius: 8px;
+      border-radius:var(--radius);
       font-size: 13px;
       color: var(--text);
     }
@@ -415,7 +415,7 @@
     .toplu-modal {
       background: var(--bg-white);
       border: 1px solid var(--border);
-      border-radius: 12px; padding: 24px;
+      border-radius:var(--radius-lg); padding: 24px;
       max-width: 520px; width: 92%;
       box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     }
@@ -435,7 +435,7 @@
       display: flex; gap: 12px; align-items: flex-start;
       width: 100%; padding: 14px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius:var(--radius);
       background: var(--bg);
       cursor: pointer;
       margin-bottom: 8px;
@@ -450,7 +450,7 @@
     }
     .format-secenek .ikon {
       width: 40px; height: 40px;
-      border-radius: 8px;
+      border-radius:var(--radius);
       background: rgba(62,207,142,0.12);
       color: var(--primary);
       display: flex; align-items: center; justify-content: center;

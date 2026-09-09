@@ -10,6 +10,15 @@ import sqlite3
 from datetime import datetime
 from flask import Blueprint, request, jsonify, session
 from kullanici_db import VARSAYILAN_ROLLER
+from difflib import SequenceMatcher
+from openpyxl.worksheet.datavalidation import DataValidation
+
+def _benzerlik_orani(a, b):
+    a = (a or "").strip().upper()
+    b = (b or "").strip().upper()
+    if not a or not b:
+        return 0.0
+    return SequenceMatcher(None, a, b).ratio()
 
 def _fason_yetki_var_mi(yetki):
     rol = session.get("rol")
@@ -21,8 +30,8 @@ ORTAK_KLASOR = r"K:\Warehouse\Yeşilovacık\12_Paylaşım Klasörü\01-BBA\bba-t
 
 
 def _db_klasor_bul():
-    if os.path.isdir(ORTAK_KLASOR):
-        return ORTAK_KLASOR
+    # fason.db artık HER ZAMAN yerel diskte yaşıyor (K: ağ gecikmesi sorununu çözmek için).
+    # K: sürücüsü sadece "senkronize et" butonuyla manuel yedekleme/paylaşım için kullanılıyor.
     if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
@@ -40,7 +49,7 @@ SEVKIYAT_DB_YOL = os.path.join(DB_KLASOR, "sevkiyat.db")
 def log_kaydet(islem, detay="", ilgili_id=None, ilgili_ad=""):
     """Fason işlemlerini merkezi İşlem Geçmişi tablosuna (sevkiyat.db → islem_log) yazar."""
     try:
-        conn = sqlite3.connect(SEVKIYAT_DB_YOL, timeout=10)
+        conn = sqlite3.connect(SEVKIYAT_DB_YOL, timeout=30, check_same_thread=False)
         conn.execute(
             "INSERT INTO islem_log (modul,islem,detay,ilgili_id,ilgili_ad,yapan,yapan_ad,tarih) VALUES (?,?,?,?,?,?,?,?)",
             ("Fason", islem, detay, ilgili_id, ilgili_ad,
@@ -59,19 +68,52 @@ def _fason_export_klasor():
     return os.path.dirname(os.path.abspath(__file__))
 
 
-def get_db():
-    conn = sqlite3.connect(DB_YOL)
+def _connect_db(db_yol):
+    os.makedirs(os.path.dirname(db_yol), exist_ok=True)
+    conn = sqlite3.connect(db_yol, timeout=30, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL modu paylaşılan bellek eşlemesi gerektirir; SMB/ağ paylaşım sürücülerinde
+    # (K: gibi) bu çok yavaş çalışır veya güvenilmez — sadece yerel diskte kullan.
+    ag_yolu = os.path.isdir(ORTAK_KLASOR) and os.path.normcase(os.path.abspath(db_yol)).startswith(os.path.normcase(os.path.abspath(ORTAK_KLASOR)))
+    if not ag_yolu:
+        conn.execute("PRAGMA journal_mode=WAL")
+    else:
+        conn.execute("PRAGMA journal_mode=DELETE")
+        conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA busy_timeout=5000")
     return conn
 
+
+def _aktif_db_yolu():
+    # admin kullanıcısı hızlı yerel veritabanını kullanır (senkronizasyon onun elinde).
+    # Diğer herkes doğrudan K:'deki (admin'in yedeklediği) veritabanını okur/yazar.
+    if session.get("kullanici") == "admin":
+        return DB_YOL
+    if os.path.isdir(ORTAK_KLASOR):
+        return os.path.join(ORTAK_KLASOR, "fason.db")
+    # K: şu an erişilemiyorsa (ağ koptu vb.) çökmemek için yerel dosyaya düş
+    return DB_YOL
+
+
+def get_db():
+    return _connect_db(_aktif_db_yolu())
 
 def _kolon_var_mi(conn, tablo, kolon):
     r = conn.execute(f"PRAGMA table_info({tablo})").fetchall()
     return any(row[1] == kolon for row in r)
 
 
-def _migrate_ek_kolonlar(conn):
+def _mevcut_kolonlar(conn, tablo):
+    """Bir tablonun tüm kolon adlarını TEK sorguda döner (ağ üzerinde her kolon için
+    ayrı PRAGMA çağrısı yapmaktan kaçınmak için — bkz. init süresi optimizasyonu)."""
+    r = conn.execute(f"PRAGMA table_info({tablo})").fetchall()
+    return {row[1] for row in r}
+
+
+def _migrate_ek_kolonlar(conn, yerel=True):
+    import time as _t
+    _b = _t.time()
     yeni_kolonlar = [
         ("irsaliye_tarihi", "TEXT"),
         ("stok_miktari",    "REAL"),
@@ -81,19 +123,111 @@ def _migrate_ek_kolonlar(conn):
         ("toplam_fiyat",    "REAL"),
         ("firma_id",        "INTEGER"),
     ]
-    for kolon_ad, tip in yeni_kolonlar:
-        if not _kolon_var_mi(conn, "fason_irsaliye", kolon_ad):
-            try:
-                conn.execute(f"ALTER TABLE fason_irsaliye ADD COLUMN {kolon_ad} {tip}")
-                print(f"[Fason DB] Kolon eklendi: {kolon_ad}")
-            except Exception as e:
-                print(f"[Fason DB] Kolon ekleme hatasi ({kolon_ad}): {e}")
+    mevcut = _mevcut_kolonlar(conn, "fason_irsaliye")
+    print(f"[FASON-TANI]   mevcut_kolonlar(fason_irsaliye) tamam: {_t.time()-_b:.2f} sn", flush=True)
+    eksikler = [(ad, tip) for ad, tip in yeni_kolonlar if ad not in mevcut]
+    if eksikler:
+        conn.executescript(";\n".join(
+            f"ALTER TABLE fason_irsaliye ADD COLUMN {ad} {tip}" for ad, tip in eksikler
+        ) + ";")
+        for ad, _ in eksikler:
+            print(f"[Fason DB] Kolon eklendi: {ad}")
+    print(f"[FASON-TANI]   irsaliye alter (varsa) tamam: {_t.time()-_b:.2f} sn", flush=True)
+
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS fason_kalem (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            irsaliye_id         INTEGER NOT NULL,
+            malzeme_tanim       TEXT NOT NULL DEFAULT '',
+            sap_kodu            TEXT DEFAULT '',
+            irsaliye_tarihi     TEXT,
+            stok_miktari        REAL,
+            giris_miktari       REAL,
+            otis_stok           REAL,
+            otis_giris          REAL,
+            toplam_fiyat        REAL,
+            para_birimi         TEXT DEFAULT '',
+            birim_fiyat         REAL,
+            belge_tarihi        TEXT,
+            fark_sebebi         TEXT DEFAULT '',
+            olusturma_tarihi    TEXT DEFAULT (datetime('now', 'localtime')),
+            FOREIGN KEY (irsaliye_id) REFERENCES fason_irsaliye(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_kalem_irsaliye ON fason_kalem(irsaliye_id);
+        CREATE INDEX IF NOT EXISTS idx_kalem_sap_kodu ON fason_kalem(sap_kodu);
+        CREATE INDEX IF NOT EXISTS idx_kalem_tanim ON fason_kalem(malzeme_tanim);
+    """)
+    print(f"[FASON-TANI]   fason_kalem create+index tamam: {_t.time()-_b:.2f} sn", flush=True)
+
+    # OTIS eşleştirme kimliği + stok değişim takibi — fason_kalem oluşturulduktan SONRA eklenmeli
+    mevcut_kalem = _mevcut_kolonlar(conn, "fason_kalem")
+    ek_kolonlar = [
+        ("otis_malzeme_tanim", "TEXT"), ("otis_sap_kodu", "TEXT"),
+        ("durum", "TEXT DEFAULT 'Stok'"), ("cikis_irsaliye_no", "TEXT DEFAULT ''"),
+    ]
+    eksik_kalem = [(ad, tip) for ad, tip in ek_kolonlar if ad not in mevcut_kalem]
+    if eksik_kalem:
+        conn.executescript(";\n".join(
+            f"ALTER TABLE fason_kalem ADD COLUMN {ad} {tip}" for ad, tip in eksik_kalem
+        ) + ";")
+    # 'durum' kolonunda index yoksa aşağıdaki UPDATE (ve durum'a göre filtreleyen her sorgu)
+    # tüm tabloyu tarar — ağ sürücüsünde bu saniyeler sürebilir. Index'i garantiye al.
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_kalem_durum ON fason_kalem(durum)")
+    print(f"[FASON-TANI]   kalem alter + durum index (varsa) tamam: {_t.time()-_b:.2f} sn", flush=True)
+    # Stok miktarı hiç girilmemiş kalemlerde "Stok" durumu otomatik atanmış olabilir — temizle.
+    # Bu tek seferlik bir veri temizliği; 'durum' kolonu varsayılan olarak 'Stok' geldiği için
+    # index bu sorguyu ayırt edemiyor (neredeyse tüm satırlar eşleşiyor) — ağdaki büyüyen
+    # ortak tabloya karşı her açılışta taratmanın maliyeti çok yüksek. Sadece yerelde çalıştır.
+    if yerel:
+        try:
+            conn.execute("UPDATE fason_kalem SET durum = '' WHERE durum = 'Stok' AND stok_miktari IS NULL")
+        except Exception:
+            pass
+    print(f"[FASON-TANI]   update tamam: {_t.time()-_b:.2f} sn", flush=True)
+
+    _fason_kalem_migration(conn)
+    print(f"[FASON-TANI]   _fason_kalem_migration tamam: {_t.time()-_b:.2f} sn", flush=True)
 
 
-def init_fason_db():
-    conn = get_db()
+def _fason_kalem_migration(conn):
+    """Mevcut tek-satır irsaliyeleri, geriye dönük uyumluluk için tek bir kaleme dönüştürür.
+    Yalnızca fason_kalem tablosu tamamen boşsa çalışır (tekrar tekrar migrate etmez)."""
+    kalem_var_mi = conn.execute("SELECT COUNT(*) FROM fason_kalem").fetchone()[0]
+    if kalem_var_mi > 0:
+        return
+
+    irsaliyeler = conn.execute("""
+        SELECT id, aciklama, irsaliye_tarihi, stok_miktari, giris_miktari,
+               otis_stok, otis_giris, toplam_fiyat
+        FROM fason_irsaliye
+    """).fetchall()
+    print(f"[FASON-TANI]     migration: {len(irsaliyeler)} satır bulundu, INSERT döngüsü başlıyor", flush=True)
+
+    veriler = [
+        ((irs["aciklama"] or "").strip() or "Genel Kalem", irs["id"], irs["irsaliye_tarihi"],
+         irs["stok_miktari"], irs["giris_miktari"], irs["otis_stok"], irs["otis_giris"], irs["toplam_fiyat"])
+        for irs in irsaliyeler
+    ]
+    conn.executemany("""
+        INSERT INTO fason_kalem
+            (malzeme_tanim, irsaliye_id, irsaliye_tarihi, stok_miktari, giris_miktari,
+             otis_stok, otis_giris, toplam_fiyat)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, veriler)
+
+    if irsaliyeler:
+        print(f"[Fason DB] Migration: {len(irsaliyeler)} irsaliye tek kaleme dönüştürüldü (malzeme adı: açıklama varsa o, yoksa 'Genel Kalem')")
+
+
+def _init_fason_db_at(db_yol):
+    import time as _t
+    _b = _t.time()
+    def _tan(etiket):
+        print(f"[FASON-TANI] {etiket} ({db_yol}): {_t.time()-_b:.2f} sn", flush=True)
+    conn = _connect_db(db_yol)
+    _tan("_connect_db tamam")
     try:
-        conn.execute("""
+        conn.executescript("""
             CREATE TABLE IF NOT EXISTS fason_durum (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ad TEXT NOT NULL UNIQUE,
@@ -102,19 +236,15 @@ def init_fason_db():
                 sira INTEGER DEFAULT 0,
                 aktif INTEGER DEFAULT 1,
                 olusturulma TEXT DEFAULT (datetime('now', 'localtime'))
-            )
-        """)
+            );
 
-        conn.execute("""
             CREATE TABLE IF NOT EXISTS fason_firma (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ad TEXT NOT NULL UNIQUE,
                 aktif INTEGER DEFAULT 1,
                 olusturulma TEXT DEFAULT (datetime('now', 'localtime'))
-            )
-        """)
+            );
 
-        conn.execute("""
             CREATE TABLE IF NOT EXISTS fason_irsaliye (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 irsaliye_no TEXT NOT NULL,
@@ -126,16 +256,35 @@ def init_fason_db():
                 durum_guncelleyen TEXT DEFAULT '',
                 durum_guncelleme_tarihi TEXT DEFAULT '',
                 FOREIGN KEY (durum_id) REFERENCES fason_durum(id)
-            )
+            );
+
+            CREATE TABLE IF NOT EXISTS fason_otis_bekleyen (
+                id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                irsaliye_id         INTEGER NOT NULL,
+                malzeme_tanim       TEXT NOT NULL,
+                mal_grubu           TEXT DEFAULT '',
+                sap_kodu            TEXT DEFAULT '',
+                otis_stok           REAL,
+                otis_giris          REAL,
+                olusturma_tarihi    TEXT DEFAULT (datetime('now', 'localtime')),
+                FOREIGN KEY (irsaliye_id) REFERENCES fason_irsaliye(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_bekleyen_irsaliye ON fason_otis_bekleyen(irsaliye_id);
         """)
+        _tan("1. executescript (4 tablo+1 index) tamam")
 
-        _migrate_ek_kolonlar(conn)
+        _migrate_ek_kolonlar(conn, yerel=(db_yol == DB_YOL))
+        _tan("_migrate_ek_kolonlar tamam")
 
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_irsaliye_no ON fason_irsaliye(irsaliye_no)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_durum ON fason_irsaliye(durum_id)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_firma ON fason_irsaliye(firma_id)")
+        conn.executescript("""
+            CREATE INDEX IF NOT EXISTS idx_irsaliye_no ON fason_irsaliye(irsaliye_no);
+            CREATE INDEX IF NOT EXISTS idx_durum ON fason_irsaliye(durum_id);
+            CREATE INDEX IF NOT EXISTS idx_firma ON fason_irsaliye(firma_id);
+        """)
+        _tan("2. executescript (3 index) tamam")
 
         c = conn.execute("SELECT COUNT(*) FROM fason_durum").fetchone()
+        _tan("SELECT COUNT(fason_durum) tamam")
         if c[0] == 0:
             varsayilan_durumlar = [
                 ("Fatura kaydı bekleniyor", "amber",  "fa-hourglass-half", 10),
@@ -150,11 +299,22 @@ def init_fason_db():
             print(f"[Fason DB] Varsayilan 4 durum eklendi")
 
         conn.commit()
-        print(f"[Fason DB] Tablolar hazir: {DB_YOL}")
+        _tan("commit tamam")
+        print(f"[Fason DB] Tablolar hazir: {db_yol}")
     except Exception as e:
         print(f"[Fason DB] Init hatasi: {e}")
     finally:
         conn.close()
+
+
+def init_fason_db():
+    _init_fason_db_at(DB_YOL)
+    try:
+        if os.path.isdir(ORTAK_KLASOR):
+            ortak_db_yol = os.path.join(ORTAK_KLASOR, "fason.db")
+            _init_fason_db_at(ortak_db_yol)
+    except Exception as e:
+        print(f"[Fason DB] Ortak (K:) veritabanı hazırlanamadı: {e}")
 
 
 # ═════════════════════════════════════════════════
@@ -240,16 +400,24 @@ def api_fason_liste():
             SELECT
                 i.id, i.irsaliye_no, i.aciklama,
                 i.giren_kullanici, i.girilme_tarihi,
-                i.durum_id, i.durum_notu,
-                i.durum_guncelleyen, i.durum_guncelleme_tarihi,
-                i.irsaliye_tarihi, i.stok_miktari, i.giris_miktari,
-                i.otis_stok, i.otis_giris, i.toplam_fiyat,
-                i.firma_id,
-                d.ad AS durum_ad, d.renk AS durum_renk, d.ikon AS durum_ikon,
-                f.ad AS firma_ad
+                i.irsaliye_tarihi, i.firma_id,
+                f.ad AS firma_ad,
+                k.toplam_stok, k.toplam_giris, k.toplam_otis_stok, k.toplam_otis_giris,
+                k.toplam_fiyat_sum, k.kalem_sayisi,
+                COALESCE(k.durum_hesaplanan, 'Stok') AS durum_hesaplanan
             FROM fason_irsaliye i
-            LEFT JOIN fason_durum d ON i.durum_id = d.id
             LEFT JOIN fason_firma f ON i.firma_id = f.id
+            LEFT JOIN (
+                SELECT irsaliye_id,
+                       SUM(stok_miktari) AS toplam_stok,
+                       SUM(giris_miktari) AS toplam_giris,
+                       SUM(otis_stok) AS toplam_otis_stok,
+                       SUM(otis_giris) AS toplam_otis_giris,
+                       SUM(toplam_fiyat) AS toplam_fiyat_sum,
+                       COUNT(*) AS kalem_sayisi,
+                       CASE WHEN COUNT(DISTINCT durum) = 1 THEN MAX(durum) ELSE 'Kısmi Çıkış' END AS durum_hesaplanan
+                FROM fason_kalem GROUP BY irsaliye_id
+            ) k ON k.irsaliye_id = i.id
             ORDER BY i.id DESC
         """).fetchall()
         return jsonify([dict(r) for r in rows])
@@ -324,6 +492,124 @@ def api_fason_ekle():
     except Exception as e:
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500
 
+@fason_bp.route("/api/fason/irsaliye/<int:irs_id>/kalemler", methods=["GET"])
+def api_fason_kalem_liste(irs_id):
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM fason_kalem WHERE irsaliye_id = ? ORDER BY id", (irs_id,)
+        ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/kalem-ekle/<int:irs_id>", methods=["POST"])
+def api_fason_kalem_ekle(irs_id):
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    d = request.get_json() or {}
+    malzeme_tanim = (d.get("malzeme_tanim") or "").strip()
+    if not malzeme_tanim:
+        return jsonify({"durum": "hata", "mesaj": "Malzeme tanımı zorunlu"}), 400
+
+    def sayi(v):
+        if v in (None, ""): return None
+        try: return float(v)
+        except Exception: return None
+
+    conn = get_db()
+    try:
+        irs = conn.execute("SELECT id FROM fason_irsaliye WHERE id = ?", (irs_id,)).fetchone()
+        if not irs:
+            return jsonify({"durum": "hata", "mesaj": "İrsaliye bulunamadı"}), 404
+
+        cur = conn.execute("""
+            INSERT INTO fason_kalem
+                (irsaliye_id, malzeme_tanim, sap_kodu, irsaliye_tarihi, stok_miktari,
+                 giris_miktari, otis_stok, otis_giris, toplam_fiyat, para_birimi,
+                 birim_fiyat, belge_tarihi, fark_sebebi, durum, cikis_irsaliye_no)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            irs_id, malzeme_tanim, (d.get("sap_kodu") or "").strip(),
+            d.get("irsaliye_tarihi"), sayi(d.get("stok_miktari")), sayi(d.get("giris_miktari")),
+            sayi(d.get("otis_stok")), sayi(d.get("otis_giris")), sayi(d.get("toplam_fiyat")),
+            (d.get("para_birimi") or "").strip(), sayi(d.get("birim_fiyat")),
+            d.get("belge_tarihi"), (d.get("fark_sebebi") or "").strip(),
+            (d.get("durum") or "").strip(), (d.get("cikis_irsaliye_no") or "").strip()
+        ))
+        conn.commit()
+        log_kaydet("Kalem Ekleme", f"{malzeme_tanim}", cur.lastrowid, malzeme_tanim)
+        return jsonify({"durum": "ok", "id": cur.lastrowid, "mesaj": "Kalem eklendi"})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/kalem-guncelle/<int:kalem_id>", methods=["POST"])
+def api_fason_kalem_guncelle(kalem_id):
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    d = request.get_json() or {}
+
+    def sayi(v):
+        if v in (None, ""): return None
+        try: return float(v)
+        except Exception: return None
+
+    alanlar = ["malzeme_tanim", "sap_kodu", "irsaliye_tarihi", "stok_miktari", "giris_miktari",
+               "otis_stok", "otis_giris", "toplam_fiyat", "para_birimi", "birim_fiyat",
+               "belge_tarihi", "fark_sebebi", "durum", "cikis_irsaliye_no"]
+    sayisal = {"stok_miktari", "giris_miktari", "otis_stok", "otis_giris", "toplam_fiyat", "birim_fiyat"}
+
+    conn = get_db()
+    try:
+        mevcut = conn.execute("SELECT * FROM fason_kalem WHERE id = ?", (kalem_id,)).fetchone()
+        if not mevcut:
+            return jsonify({"durum": "hata", "mesaj": "Kalem bulunamadı"}), 404
+
+        set_parts, vals = [], []
+        for a in alanlar:
+            if a in d:
+                v = sayi(d[a]) if a in sayisal else (d[a] or "").strip() if isinstance(d[a], str) else d[a]
+                set_parts.append(f"{a} = ?")
+                vals.append(v)
+        if "durum" in d and d["durum"] not in ("Stok", "Çıkış", "Tadilat", "Nakil", "Aspro"):
+            return jsonify({"durum": "hata", "mesaj": "Geçersiz durum değeri"}), 400          
+        if not set_parts:
+            return jsonify({"durum": "hata", "mesaj": "Güncellenecek alan yok"}), 400
+        vals.append(kalem_id)
+        conn.execute(f"UPDATE fason_kalem SET {', '.join(set_parts)} WHERE id = ?", vals)
+        conn.commit()
+        return jsonify({"durum": "ok", "mesaj": "Güncellendi"})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/kalem-sil/<int:kalem_id>", methods=["DELETE"])
+def api_fason_kalem_sil(kalem_id):
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT malzeme_tanim FROM fason_kalem WHERE id = ?", (kalem_id,)).fetchone()
+        if not row:
+            return jsonify({"durum": "hata", "mesaj": "Bulunamadı"}), 404
+        conn.execute("DELETE FROM fason_kalem WHERE id = ?", (kalem_id,))
+        conn.commit()
+        log_kaydet("Kalem Silme", row["malzeme_tanim"], kalem_id, row["malzeme_tanim"])
+        return jsonify({"durum": "ok", "mesaj": "Silindi"})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
 
 @fason_bp.route("/api/fason/durum-guncelle/<int:irs_id>", methods=["POST"])
 def api_fason_durum_guncelle(irs_id):
@@ -696,15 +982,30 @@ def api_fason_import():
         wb = load_workbook(dosya, data_only=True)
         ws = wb.active
 
+        def _tr_norm(s):
+            return (str(s) if s is not None else "").strip().lower().replace("\u0307", "")
+
+        def _tr_norm(s):
+            # Python'un .lower()'ı Türkçe "İ" harfini "i" + görünmez nokta karakterine
+            # çevirdiği için (i̇), bu görünmez karakteri temizleyip normal karşılaştırma yapıyoruz
+            return (str(s) if s is not None else "").strip().lower().replace("\u0307", "")
+
         h_row = None
         for row_idx in range(1, 5):
-            row = [str(c.value or "").strip().lower() for c in ws[row_idx]]
-            if "id" in row or "i̇d" in row:
+            row = [_tr_norm(c.value) for c in ws[row_idx]]
+            if "kalem id" in row:
                 h_row = row_idx
                 break
-
         if h_row is None:
-            return jsonify({"durum": "hata", "mesaj": "Başlık satırında 'ID' bulunamadı"}), 400
+            return jsonify({"durum": "hata", "mesaj": "Başlık satırında 'Kalem ID' bulunamadı"}), 400
+
+        basliklar = [_tr_norm(c.value) for c in ws[h_row]]
+        col_id = basliklar.index("kalem id") + 1 if "kalem id" in basliklar else -1
+        col_stok = basliklar.index("yeni stok") + 1 if "yeni stok" in basliklar else -1
+        col_cikis_irs = basliklar.index("çıkış irsaliyesi") + 1 if "çıkış irsaliyesi" in basliklar else -1
+        col_durum = basliklar.index("yeni durum") + 1 if "yeni durum" in basliklar else -1
+        if col_id < 0 or col_stok < 0:
+            return jsonify({"durum": "hata", "mesaj": "Kalem ID / Yeni Stok sütunları bulunamadı"}), 400
 
         basliklar_raw = [str(c.value or "").strip() for c in ws[h_row]]
         def bul(anahtar_liste):
@@ -1125,3 +1426,849 @@ def api_fason_duzenle(irs_id):
             conn.close()
     except Exception as e:
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500 
+
+
+# ═════════════════════════════════════════════════
+# ZMM068 IMPORT — SAP mal girişi raporu
+# İrsaliye no'ya göre eşleşen satırları kalem olarak işler
+# ═════════════════════════════════════════════════
+
+@fason_bp.route("/api/fason/zmm068-import", methods=["POST"])
+def api_fason_zmm068_import():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if "dosya" not in request.files:
+        return jsonify({"durum": "hata", "mesaj": "Dosya yok"}), 400
+    dosya = request.files["dosya"]
+    if not dosya.filename:
+        return jsonify({"durum": "hata", "mesaj": "Dosya adı boş"}), 400
+
+    try:
+        from openpyxl import load_workbook
+        wb = load_workbook(dosya, data_only=True, read_only=True)
+        ws = wb.active
+
+        rows_iter = ws.iter_rows(values_only=True)
+        try:
+            hdr_row = next(rows_iter)
+        except StopIteration:
+            return jsonify({"durum": "hata", "mesaj": "Dosya boş"}), 400
+
+        hdr = [str(h or "").strip() for h in hdr_row]
+        def kol(ad):
+            return hdr.index(ad) if ad in hdr else -1
+
+        c_referans   = kol("Referans")
+        c_malzeme    = kol("Malzeme")
+        c_kisa_metin = kol("Malzeme kısa metni")
+        c_miktar     = kol("Miktar (giriş ÖB)")
+        c_birim      = kol("Giriş ölçü birimi")
+        c_toplam_fyt = kol("Toplam Fiyat")
+        c_para       = kol("Para birimi")
+        c_birim_fyt  = kol("Birim Fiyat")
+        c_belge_tar  = kol("Belge tarihi")
+
+        if c_referans < 0 or c_kisa_metin < 0:
+            return jsonify({"durum": "hata", "mesaj": "Beklenen kolonlar bulunamadı (Referans / Malzeme kısa metni)"}), 400
+
+        def al(row, idx):
+            if idx < 0 or idx >= len(row):
+                return None
+            return row[idx]
+
+        def sayi(v):
+            if v in (None, ""): return None
+            try: return float(v)
+            except Exception: return None
+
+        def tarih_str(v):
+            if v is None: return None
+            if hasattr(v, "strftime"): return v.strftime("%Y-%m-%d")
+            return str(v)
+
+        conn = get_db()
+        toplam_satir = 0
+        eslesen_irsaliye = 0
+        eslesmeyen_irsaliye = 0
+        yeni_kalem = 0
+        guncellenen_kalem = 0
+        atlanan = []
+
+        # irsaliye_no -> irsaliye_id cache
+        irsaliye_cache = {}
+        temizlenen_genel_kalem = set()
+
+        try:
+            for row in rows_iter:
+                toplam_satir += 1
+                irsaliye_no = str(al(row, c_referans) or "").strip()
+                malzeme_tanim = str(al(row, c_kisa_metin) or "").strip()
+                if not irsaliye_no or not malzeme_tanim:
+                    continue
+
+                if irsaliye_no not in irsaliye_cache:
+                    r = conn.execute(
+                        "SELECT id FROM fason_irsaliye WHERE irsaliye_no = ?", (irsaliye_no,)
+                    ).fetchone()
+                    irsaliye_cache[irsaliye_no] = r["id"] if r else None
+
+                irs_id = irsaliye_cache[irsaliye_no]
+                if irs_id is None:
+                    eslesmeyen_irsaliye += 1
+                    atlanan.append(irsaliye_no)
+                    continue
+
+                # Gerçek malzeme verisi geldiğinde, migration'dan kalan boş "Genel Kalem" plasholder'ını sil
+                if irs_id not in temizlenen_genel_kalem:
+                    conn.execute("""
+                        DELETE FROM fason_kalem
+                        WHERE irsaliye_id = ? AND malzeme_tanim = 'Genel Kalem' AND (sap_kodu IS NULL OR sap_kodu = '')
+                    """, (irs_id,))
+                    temizlenen_genel_kalem.add(irs_id)
+
+                sap_kodu = str(al(row, c_malzeme) or "").strip()
+                giris_miktari = sayi(al(row, c_miktar))
+                birim = str(al(row, c_birim) or "").strip()
+                toplam_fiyat = sayi(al(row, c_toplam_fyt))
+                para_birimi = str(al(row, c_para) or "").strip()
+                birim_fiyat = sayi(al(row, c_birim_fyt))
+                belge_tarihi = tarih_str(al(row, c_belge_tar))
+
+                # Aynı irsaliyede, aynı SAP kodu (varsa) ya da aynı malzeme tanımıyla eşleşen kalem var mı?
+                mevcut = None
+                if sap_kodu:
+                    mevcut = conn.execute(
+                        "SELECT id FROM fason_kalem WHERE irsaliye_id = ? AND sap_kodu = ?",
+                        (irs_id, sap_kodu)
+                    ).fetchone()
+                if not mevcut:
+                    mevcut = conn.execute(
+                        "SELECT id FROM fason_kalem WHERE irsaliye_id = ? AND malzeme_tanim = ?",
+                        (irs_id, malzeme_tanim)
+                    ).fetchone()
+
+                if mevcut:
+                    conn.execute("""
+                        UPDATE fason_kalem
+                        SET sap_kodu = ?, giris_miktari = ?, toplam_fiyat = ?,
+                            para_birimi = ?, birim_fiyat = ?, belge_tarihi = ?
+                        WHERE id = ?
+                    """, (sap_kodu, giris_miktari, toplam_fiyat, para_birimi,
+                          birim_fiyat, belge_tarihi, mevcut["id"]))
+                    guncellenen_kalem += 1
+                else:
+                    conn.execute("""
+                        INSERT INTO fason_kalem
+                            (irsaliye_id, malzeme_tanim, sap_kodu, giris_miktari,
+                             toplam_fiyat, para_birimi, birim_fiyat, belge_tarihi, durum)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, '')
+                    """, (irs_id, malzeme_tanim, sap_kodu, giris_miktari,
+                          toplam_fiyat, para_birimi, birim_fiyat, belge_tarihi))
+                    yeni_kalem += 1
+
+            eslesen_irsaliye = len(set(k for k, v in irsaliye_cache.items() if v is not None))
+            conn.commit()
+        finally:
+            conn.close()
+
+        log_kaydet(
+            "ZMM068 Import",
+            f"{dosya.filename}: {yeni_kalem} yeni kalem, {guncellenen_kalem} güncellendi, "
+            f"{eslesen_irsaliye} irsaliye eşleşti, {eslesmeyen_irsaliye} satır eşleşmedi",
+            None, dosya.filename
+        )
+
+        return jsonify({
+            "durum": "ok",
+            "toplam_satir": toplam_satir,
+            "eslesen_irsaliye": eslesen_irsaliye,
+            "eslesmeyen_satir": eslesmeyen_irsaliye,
+            "yeni_kalem": yeni_kalem,
+            "guncellenen_kalem": guncellenen_kalem,
+            "atlanan_irsaliyeler": sorted(set(atlanan))[:30],
+            "mesaj": f"{yeni_kalem} yeni kalem, {guncellenen_kalem} güncellendi ({eslesmeyen_irsaliye} satır sistemde olmayan irsaliyeye ait, atlandı)"
+        })
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+
+# ═════════════════════════════════════════════════
+# OTIS IMPORT — "Tüm Gelen Malzemeler" export'u
+# Kalemleri OTIS Stok/OTIS Giriş ile eşleştirir
+# ═════════════════════════════════════════════════
+
+BENZERLIK_ESIGI = 0.98
+
+
+@fason_bp.route("/api/fason/otis-import", methods=["POST"])
+def api_fason_otis_import():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if "dosya" not in request.files:
+        return jsonify({"durum": "hata", "mesaj": "Dosya yok"}), 400
+    dosya = request.files["dosya"]
+    if not dosya.filename:
+        return jsonify({"durum": "hata", "mesaj": "Dosya adı boş"}), 400
+
+    try:
+        from openpyxl import load_workbook
+        wb = load_workbook(dosya, data_only=True, read_only=True)
+        ws = wb.active
+
+        rows_iter = ws.iter_rows(values_only=True)
+        try:
+            hdr_row = next(rows_iter)
+        except StopIteration:
+            return jsonify({"durum": "hata", "mesaj": "Dosya boş"}), 400
+
+        hdr = [str(h or "").strip().upper() for h in hdr_row]
+        def kol(*adaylar):
+            for a in adaylar:
+                if a in hdr:
+                    return hdr.index(a)
+            return -1
+
+        c_stok      = kol("STOK")
+        c_irs_no    = kol("İRSALİYE NO", "IRSALIYE NO")
+        c_mal_grubu = kol("MAL GRUBU")
+        c_tanim     = kol("MALZEME TANIM")
+        c_birim     = kol("BİRİM", "BIRIM")
+        c_sap       = kol("SAP KODU")
+        c_mkg       = kol("MİKTAR(KG)", "MIKTAR(KG)")
+        c_madt      = kol("MİKTAR(ADT)", "MIKTAR(ADT)")
+
+        if c_irs_no < 0 or c_tanim < 0:
+            return jsonify({"durum": "hata", "mesaj": "Beklenen kolonlar bulunamadı (İRSALİYE NO / MALZEME TANIM)"}), 400
+
+        def al(row, idx):
+            if idx < 0 or idx >= len(row):
+                return None
+            return row[idx]
+
+        def sayi(v):
+            if v is None or v == "":
+                return None
+            try:
+                return float(v)
+            except Exception:
+                try:
+                    return float(str(v).replace(",", "."))
+                except Exception:
+                    return None
+
+        def giris_miktari_hesapla(birim, mkg, madt):
+            b = (birim or "").strip().upper()
+            if b == "KG":
+                return sayi(mkg)
+            m = sayi(madt)
+            return m if m is not None else sayi(mkg)
+
+        conn = get_db()
+        toplam_satir = 0
+        eslesmeyen_irsaliye = 0
+        dogrudan_guncellenen = 0
+        otomatik_eslesen = 0
+        beklemeye_alinan = 0
+        atlanan_irsaliyeler = []
+        stok_degisen_kalemler = []
+
+        def stok_karsilastir_ve_isle(kalem_row, yeni_stok, irs_no_):
+            eski = kalem_row["otis_stok"]
+            if eski != yeni_stok and (eski is not None or yeni_stok is not None):
+                stok_degisen_kalemler.append({
+                    "irsaliye_no": irs_no_,
+                    "malzeme_tanim": kalem_row["malzeme_tanim"],
+                    "eski_stok": eski,
+                    "yeni_stok": yeni_stok
+                })
+                return eski
+            return None
+
+        irsaliye_cache = {}       # irsaliye_no -> irs_id (None ise sistemde yok)
+        kalem_cache = {}          # irs_id -> [fason_kalem satırları] (irsaliye başına bir kere çekilir)
+        temizlenen_genel_kalem = set()
+
+        try:
+            # 1) ÖNCE: aynı irsaliyede aynı malzeme tanımıyla gelen satırları TOPLA
+            gruplu = {}
+            grup_sira = []
+            for row in rows_iter:
+                toplam_satir += 1
+                irsaliye_no = str(al(row, c_irs_no) or "").strip()
+                malzeme_tanim = str(al(row, c_tanim) or "").strip()
+                if not irsaliye_no or not malzeme_tanim:
+                    continue
+
+                birim = str(al(row, c_birim) or "").strip()
+                otis_giris_deger = giris_miktari_hesapla(birim, al(row, c_mkg), al(row, c_madt))
+                otis_stok_deger = sayi(al(row, c_stok))
+                sap_kodu_deger = str(al(row, c_sap) or "").strip()
+                mal_grubu_deger = str(al(row, c_mal_grubu) or "").strip()
+
+                anahtar = (irsaliye_no, malzeme_tanim)
+                if anahtar not in gruplu:
+                    gruplu[anahtar] = {
+                        "irsaliye_no": irsaliye_no,
+                        "malzeme_tanim": malzeme_tanim,
+                        "otis_stok": None,
+                        "otis_giris": None,
+                        "sap_kodu": sap_kodu_deger,
+                        "mal_grubu": mal_grubu_deger,
+                    }
+                    grup_sira.append(anahtar)
+
+                g = gruplu[anahtar]
+                if otis_stok_deger is not None:
+                    g["otis_stok"] = (g["otis_stok"] or 0) + otis_stok_deger
+                if otis_giris_deger is not None:
+                    g["otis_giris"] = (g["otis_giris"] or 0) + otis_giris_deger
+                if sap_kodu_deger and not g["sap_kodu"]:
+                    g["sap_kodu"] = sap_kodu_deger
+                if mal_grubu_deger and not g["mal_grubu"]:
+                    g["mal_grubu"] = mal_grubu_deger
+
+            # 2) SONRA: toplanmış her (irsaliye, malzeme) grubunu tek kalem gibi işle
+            for anahtar in grup_sira:
+                g = gruplu[anahtar]
+                irsaliye_no = g["irsaliye_no"]
+                malzeme_tanim = g["malzeme_tanim"]
+                otis_stok = g["otis_stok"]
+                otis_giris = g["otis_giris"]
+                sap_kodu_otis = g["sap_kodu"]
+                mal_grubu = g["mal_grubu"]
+
+                if irsaliye_no not in irsaliye_cache:
+                    r = conn.execute(
+                        "SELECT id FROM fason_irsaliye WHERE irsaliye_no = ?", (irsaliye_no,)
+                    ).fetchone()
+                    irsaliye_cache[irsaliye_no] = r["id"] if r else None
+
+                irs_id = irsaliye_cache[irsaliye_no]
+                if irs_id is None:
+                    eslesmeyen_irsaliye += 1
+                    atlanan_irsaliyeler.append(irsaliye_no)
+                    continue
+
+                # Gerçek malzeme verisi geldiğinde, migration'dan kalan boş "Genel Kalem" plasholder'ını sil
+                if irs_id not in temizlenen_genel_kalem:
+                    conn.execute("""
+                        DELETE FROM fason_kalem
+                        WHERE irsaliye_id = ? AND malzeme_tanim = 'Genel Kalem' AND (sap_kodu IS NULL OR sap_kodu = '')
+                    """, (irs_id,))
+                    temizlenen_genel_kalem.add(irs_id)
+
+                if irs_id not in kalem_cache:
+                    kalem_cache[irs_id] = conn.execute(
+                        "SELECT * FROM fason_kalem WHERE irsaliye_id = ?", (irs_id,)
+                    ).fetchall()
+
+                kalemler = kalem_cache[irs_id]
+
+                # 1) DAHA ÖNCE OTIS'E BAĞLANMIŞ KALEM VAR MI? (doğrudan güncelle)
+                dogrudan = next((k for k in kalemler if k["otis_malzeme_tanim"] == malzeme_tanim), None)
+                if dogrudan:
+                    eski_stok = stok_karsilastir_ve_isle(dogrudan, otis_stok, irsaliye_no)
+                    conn.execute(
+                        "UPDATE fason_kalem SET otis_stok = ?, otis_giris = ?, otis_stok_onceki = ?, otis_stok_son_degisim_tarihi = ? WHERE id = ?",
+                        (otis_stok, otis_giris, eski_stok,
+                         datetime.now().strftime("%Y-%m-%d %H:%M:%S") if eski_stok is not None else dogrudan["otis_stok_son_degisim_tarihi"],
+                         dogrudan["id"])
+                    )
+                    dogrudan_guncellenen += 1
+                    continue
+
+                # 2) SAP KODU İLE OTOMATİK EŞLEŞTİRME (henüz OTIS'e bağlanmamış kalemler arasında)
+                aday = None
+                if sap_kodu_otis:
+                    sap_adaylari = [k for k in kalemler if k["otis_malzeme_tanim"] is None and k["sap_kodu"] == sap_kodu_otis]
+                    if len(sap_adaylari) == 1:
+                        aday = sap_adaylari[0]
+
+                # 3) %98+ METİN BENZERLİĞİ İLE OTOMATİK EŞLEŞTİRME
+                if aday is None:
+                    benzer_adaylar = []
+                    for k in kalemler:
+                        if k["otis_malzeme_tanim"] is not None:
+                            continue
+                        oran = _benzerlik_orani(malzeme_tanim, k["malzeme_tanim"])
+                        if oran >= BENZERLIK_ESIGI:
+                            benzer_adaylar.append(k)
+                    if len(benzer_adaylar) == 1:
+                        aday = benzer_adaylar[0]
+
+                if aday:
+                    eski_stok = stok_karsilastir_ve_isle(aday, otis_stok, irsaliye_no)
+                    conn.execute("""
+                        UPDATE fason_kalem
+                        SET otis_malzeme_tanim = ?, otis_sap_kodu = ?, otis_stok = ?, otis_giris = ?,
+                            otis_stok_onceki = ?, otis_stok_son_degisim_tarihi = ?
+                        WHERE id = ?
+                    """, (malzeme_tanim, sap_kodu_otis, otis_stok, otis_giris, eski_stok,
+                          datetime.now().strftime("%Y-%m-%d %H:%M:%S") if eski_stok is not None else aday["otis_stok_son_degisim_tarihi"],
+                          aday["id"]))
+                    otomatik_eslesen += 1
+                    # cache'i güncelle ki aynı import içinde tekrar eşleşmesin
+                    kalem_cache[irs_id] = [
+                        dict(k, otis_malzeme_tanim=malzeme_tanim) if k["id"] == aday["id"] else k
+                        for k in kalemler
+                    ]
+                    continue
+
+                # 4) HİÇBİR ADAY YOK/BELİRSİZ → BEKLEME LİSTESİNE AL
+                var_mi = conn.execute("""
+                    SELECT id FROM fason_otis_bekleyen
+                    WHERE irsaliye_id = ? AND malzeme_tanim = ?
+                """, (irs_id, malzeme_tanim)).fetchone()
+                if var_mi:
+                    conn.execute(
+                        "UPDATE fason_otis_bekleyen SET otis_stok = ?, otis_giris = ?, sap_kodu = ?, mal_grubu = ? WHERE id = ?",
+                        (otis_stok, otis_giris, sap_kodu_otis, mal_grubu, var_mi["id"])
+                    )
+                else:
+                    conn.execute("""
+                        INSERT INTO fason_otis_bekleyen
+                            (irsaliye_id, malzeme_tanim, mal_grubu, sap_kodu, otis_stok, otis_giris)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (irs_id, malzeme_tanim, mal_grubu, sap_kodu_otis, otis_stok, otis_giris))
+                    beklemeye_alinan += 1
+
+            conn.commit()
+        finally:
+            conn.close()
+
+        log_kaydet(
+            "OTIS Import",
+            f"{dosya.filename}: {dogrudan_guncellenen} güncellendi, {otomatik_eslesen} otomatik eşleşti, "
+            f"{beklemeye_alinan} eşleştirme bekliyor, {eslesmeyen_irsaliye} satır sistemde olmayan irsaliyeye ait",
+            None, dosya.filename
+        )
+
+        return jsonify({
+            "durum": "ok",
+            "toplam_satir": toplam_satir,
+            "dogrudan_guncellenen": dogrudan_guncellenen,
+            "otomatik_eslesen": otomatik_eslesen,
+            "beklemeye_alinan": beklemeye_alinan,
+            "eslesmeyen_satir": eslesmeyen_irsaliye,
+            "atlanan_irsaliyeler": sorted(set(atlanan_irsaliyeler))[:30],
+            "stok_degisen_kalemler": stok_degisen_kalemler[:200],
+            "stok_degisen_sayisi": len(stok_degisen_kalemler),
+            "mesaj": f"{dogrudan_guncellenen + otomatik_eslesen} kalem güncellendi, {beklemeye_alinan} kalem elle eşleştirme bekliyor, {len(stok_degisen_kalemler)} kalemde stok değişti"
+        })
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+
+# ═════════════════════════════════════════════════
+# ELLE EŞLEŞTİRME — bekleyen OTIS satırlarını çözme
+# ═════════════════════════════════════════════════
+
+@fason_bp.route("/api/fason/otis-bekleyen", methods=["GET"])
+def api_fason_otis_bekleyen():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    conn = get_db()
+    try:
+        bekleyenler = conn.execute("""
+            SELECT b.*, i.irsaliye_no
+            FROM fason_otis_bekleyen b
+            JOIN fason_irsaliye i ON i.id = b.irsaliye_id
+            ORDER BY i.irsaliye_no, b.id
+        """).fetchall()
+
+        sonuc = []
+        for b in bekleyenler:
+            adaylar = conn.execute("""
+                SELECT id, malzeme_tanim, sap_kodu, stok_miktari, giris_miktari
+                FROM fason_kalem
+                WHERE irsaliye_id = ? AND otis_malzeme_tanim IS NULL
+            """, (b["irsaliye_id"],)).fetchall()
+            d = dict(b)
+            d["adaylar"] = [dict(a) for a in adaylar]
+            # SAP (ZMM068) kaynaklı gerçek kalem var mı? ("Genel Kalem" / sap_kodu boş olanlar sayılmaz)
+            d["sap_kalemi_var_mi"] = any((a["sap_kodu"] or "").strip() for a in adaylar)
+            sonuc.append(d)
+        return jsonify(sonuc)
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/otis-eslestir", methods=["POST"])
+def api_fason_otis_eslestir():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    d = request.get_json() or {}
+    bekleyen_id = d.get("bekleyen_id")
+    kalem_id = d.get("kalem_id")
+    if not bekleyen_id or not kalem_id:
+        return jsonify({"durum": "hata", "mesaj": "bekleyen_id ve kalem_id zorunlu"}), 400
+
+    conn = get_db()
+    try:
+        b = conn.execute("SELECT * FROM fason_otis_bekleyen WHERE id = ?", (bekleyen_id,)).fetchone()
+        if not b:
+            return jsonify({"durum": "hata", "mesaj": "Bekleyen kayıt bulunamadı"}), 404
+        k = conn.execute("SELECT * FROM fason_kalem WHERE id = ?", (kalem_id,)).fetchone()
+        if not k:
+            return jsonify({"durum": "hata", "mesaj": "Kalem bulunamadı"}), 404
+
+        conn.execute("""
+            UPDATE fason_kalem
+            SET otis_malzeme_tanim = ?, otis_sap_kodu = ?, otis_stok = ?, otis_giris = ?
+            WHERE id = ?
+        """, (b["malzeme_tanim"], b["sap_kodu"], b["otis_stok"], b["otis_giris"], kalem_id))
+        conn.execute("DELETE FROM fason_otis_bekleyen WHERE id = ?", (bekleyen_id,))
+        conn.commit()
+
+        log_kaydet("OTIS Elle Eşleştirme", f"{b['malzeme_tanim']} → {k['malzeme_tanim']}", kalem_id, k["malzeme_tanim"])
+        return jsonify({"durum": "ok", "mesaj": "Eşleştirildi"})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/otis-yeni-kalem/<int:bekleyen_id>", methods=["POST"])
+def api_fason_otis_yeni_kalem(bekleyen_id):
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    conn = get_db()
+    try:
+        b = conn.execute("SELECT * FROM fason_otis_bekleyen WHERE id = ?", (bekleyen_id,)).fetchone()
+        if not b:
+            return jsonify({"durum": "hata", "mesaj": "Bekleyen kayıt bulunamadı"}), 404
+        
+        cur = conn.execute("""
+            INSERT INTO fason_kalem
+                (irsaliye_id, malzeme_tanim, otis_malzeme_tanim, otis_sap_kodu, otis_stok, otis_giris, durum)
+            VALUES (?, ?, ?, ?, ?, ?, '')
+        """, (b["irsaliye_id"], b["malzeme_tanim"], b["malzeme_tanim"], b["sap_kodu"], b["otis_stok"], b["otis_giris"]))
+        conn.execute("DELETE FROM fason_otis_bekleyen WHERE id = ?", (bekleyen_id,))
+        conn.commit()
+
+        log_kaydet("OTIS Yeni Kalem", b["malzeme_tanim"], cur.lastrowid, b["malzeme_tanim"])
+        return jsonify({"durum": "ok", "id": cur.lastrowid, "mesaj": "Yeni kalem oluşturuldu"})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/otis-bekleyen-sil/<int:bekleyen_id>", methods=["DELETE"])
+def api_fason_otis_bekleyen_sil(bekleyen_id):
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM fason_otis_bekleyen WHERE id = ?", (bekleyen_id,))
+        conn.commit()
+        return jsonify({"durum": "ok", "mesaj": "Silindi"})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+@fason_bp.route("/api/fason/tum-kalemler", methods=["GET"])
+def api_fason_tum_kalemler():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    ara = request.args.get("ara", "").strip()
+    cikis_irs_ara = request.args.get("cikis_irs", "").strip()
+
+    sorgu = """
+        SELECT k.id, k.malzeme_tanim, k.sap_kodu, k.stok_miktari, k.giris_miktari,
+               k.otis_stok, k.otis_giris, k.fark_sebebi, k.durum, k.cikis_irsaliye_no,
+               i.id AS irsaliye_id, i.irsaliye_no, f.ad AS firma_ad
+        FROM fason_kalem k
+        JOIN fason_irsaliye i ON i.id = k.irsaliye_id
+        LEFT JOIN fason_firma f ON f.id = i.firma_id
+        WHERE 1=1
+    """
+    params = []
+    if ara:
+        sorgu += " AND k.malzeme_tanim LIKE ?"
+        params.append(f"%{ara}%")
+    if cikis_irs_ara:
+        sorgu += " AND k.cikis_irsaliye_no LIKE ?"
+        params.append(f"%{cikis_irs_ara}%")
+    sorgu += " ORDER BY k.malzeme_tanim, i.irsaliye_no"
+
+    conn = get_db()
+    try:
+        rows = conn.execute(sorgu, params).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+@fason_bp.route("/api/fason/genel-kalem-temizle", methods=["POST"])
+def api_fason_genel_kalem_temizle():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if session.get("kullanici") != "admin":
+        return jsonify({"durum": "hata", "mesaj": "Sadece admin"}), 403
+
+    conn = get_db()
+    try:
+        # Yanında başka gerçek kalemi olan, boş "Genel Kalem" satırlarını sil
+        silinecekler = conn.execute("""
+            SELECT gk.id FROM fason_kalem gk
+            WHERE gk.malzeme_tanim = 'Genel Kalem'
+              AND (gk.sap_kodu IS NULL OR gk.sap_kodu = '')
+              AND (
+                SELECT COUNT(*) FROM fason_kalem k2
+                WHERE k2.irsaliye_id = gk.irsaliye_id AND k2.id != gk.id
+              ) > 0
+        """).fetchall()
+        silinen_idler = [r["id"] for r in silinecekler]
+        if silinen_idler:
+            ph = ",".join("?" * len(silinen_idler))
+            conn.execute(f"DELETE FROM fason_kalem WHERE id IN ({ph})", silinen_idler)
+        conn.commit()
+        log_kaydet("Genel Kalem Temizliği", f"{len(silinen_idler)} çift kalem temizlendi", None, "")
+        return jsonify({"durum": "ok", "silinen": len(silinen_idler), "mesaj": f"{len(silinen_idler)} çift 'Genel Kalem' temizlendi"})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+@fason_bp.route("/api/fason/irsaliye/<int:irs_id>/stok-export", methods=["GET"])
+def api_fason_irsaliye_stok_export(irs_id):
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+
+        conn = get_db()
+        irs = conn.execute("SELECT irsaliye_no FROM fason_irsaliye WHERE id = ?", (irs_id,)).fetchone()
+        if not irs:
+            conn.close()
+            return jsonify({"durum": "hata", "mesaj": "İrsaliye bulunamadı"}), 404
+        kalemler = conn.execute(
+            "SELECT id, malzeme_tanim, sap_kodu, stok_miktari, giris_miktari, durum, cikis_irsaliye_no, otis_giris, otis_stok FROM fason_kalem WHERE irsaliye_id = ? ORDER BY id",
+            (irs_id,)
+        ).fetchall()
+        conn.close()
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Stok Kontrol"
+
+        h_font = Font(bold=True, color="FFFFFF", size=11)
+        h_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        kilit_fill = PatternFill("solid", fgColor="374151")
+        edit_fill = PatternFill("solid", fgColor="065F46")
+        border = Border(
+            left=Side(style="thin", color="D1D5DB"), right=Side(style="thin", color="D1D5DB"),
+            top=Side(style="thin", color="D1D5DB"), bottom=Side(style="thin", color="D1D5DB")
+        )
+
+        ws.merge_cells("A1:C1")
+        ws["A1"] = f"İRSALİYE: {irs['irsaliye_no']} — SABİT (değiştirmeyin)"
+        ws["A1"].font = Font(bold=True, color="FFFFFF", size=10)
+        ws["A1"].fill = kilit_fill
+        ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+
+        ws.merge_cells("D1:G1")
+        ws["D1"] = "REFERANS (OTIS / SAP / Mevcut)"
+        ws["D1"].font = Font(bold=True, color="FFFFFF", size=10)
+        ws["D1"].fill = kilit_fill
+        ws["D1"].alignment = Alignment(horizontal="center", vertical="center")
+
+        ws.merge_cells("H1:J1")
+        ws["H1"] = "MB52'DEN KONTROL EDİP DOLDURUN"
+        ws["H1"].font = Font(bold=True, color="FFFFFF", size=10)
+        ws["H1"].fill = edit_fill
+        ws["H1"].alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[1].height = 22
+
+        basliklar = [
+            ("Kalem ID", "kilit"), ("Malzeme Tanım", "kilit"), ("SAP Kodu", "kilit"),
+            ("OTIS Giriş", "kilit"), ("SAP Giriş", "kilit"), ("OTIS Stok", "kilit"), ("Mevcut Stok", "kilit"),
+            ("Yeni Stok", "edit"), ("Çıkış İrsaliyesi", "edit"), ("Yeni Durum", "edit"),
+        ]
+        for col_idx, (baslik, tip) in enumerate(basliklar, start=1):
+            cell = ws.cell(row=2, column=col_idx, value=baslik)
+            cell.font = h_font
+            cell.fill = kilit_fill if tip == "kilit" else edit_fill
+            cell.alignment = h_align
+            cell.border = border
+        ws.row_dimensions[2].height = 28
+
+        for i, w in enumerate([10, 45, 16, 12, 12, 12, 12, 12, 18, 14], start=1):
+            ws.column_dimensions[get_column_letter(i)].width = w
+
+        thin_border = Border(
+            left=Side(style="thin", color="E5E7EB"), right=Side(style="thin", color="E5E7EB"),
+            top=Side(style="thin", color="E5E7EB"), bottom=Side(style="thin", color="E5E7EB")
+        )
+        for idx, k in enumerate(kalemler, start=3):
+            values = [
+                k["id"], k["malzeme_tanim"], k["sap_kodu"] or "",
+                k["otis_giris"], k["giris_miktari"], k["otis_stok"], k["stok_miktari"],
+                None, k["cikis_irsaliye_no"] or "", k["durum"] or "Stok",
+            ]
+            for c_idx, v in enumerate(values, start=1):
+                cell = ws.cell(row=idx, column=c_idx, value=v)
+                cell.border = thin_border
+                if c_idx in (1, 4, 5, 6, 7, 8):
+                    cell.alignment = Alignment(horizontal="right")
+                    if c_idx in (4, 5, 6, 7, 8) and v is not None:
+                        cell.number_format = "#,##0.00"
+                else:
+                    cell.alignment = Alignment(horizontal="left", vertical="center")
+            if idx % 2 == 0:
+                for c_idx in range(1, 11):
+                    ws.cell(row=idx, column=c_idx).fill = PatternFill("solid", fgColor="F9FAFB")
+
+        durum_dv = DataValidation(type="list", formula1='"Stok,Çıkış,Tadilat,Nakil,Aspro"', allow_blank=True)
+        ws.add_data_validation(durum_dv)
+        durum_dv.add(f"J3:J{2 + len(kalemler)}")
+
+        ws.freeze_panes = "B3"
+
+        klasor = os.path.join(_fason_export_klasor(), "exports", "fason_stok")
+        os.makedirs(klasor, exist_ok=True)
+        dosya_adi = f"stok_{irs['irsaliye_no']}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+        yol = os.path.join(klasor, dosya_adi)
+        wb.save(yol)
+        try:
+            os.startfile(klasor)
+        except Exception:
+            pass
+
+        return jsonify({"durum": "ok", "kayit": len(kalemler), "dosya": dosya_adi, "mesaj": f"{len(kalemler)} kalem Excel'e aktarıldı"})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+
+
+@fason_bp.route("/api/fason/stok-import", methods=["POST"])
+def api_fason_stok_import():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if "dosya" not in request.files:
+        return jsonify({"durum": "hata", "mesaj": "Dosya yok"}), 400
+    dosya = request.files["dosya"]
+    if not dosya.filename:
+        return jsonify({"durum": "hata", "mesaj": "Dosya adı boş"}), 400
+
+    try:
+        from openpyxl import load_workbook
+        wb = load_workbook(dosya, data_only=True)
+        ws = wb.active
+
+        def _tr_norm(s):
+            # Python'un .lower()'ı Türkçe "İ" harfini "i" + görünmez nokta karakterine
+            # çevirdiği için (i̇), bu görünmez karakteri temizleyip normal karşılaştırma yapıyoruz
+            return (str(s) if s is not None else "").strip().lower().replace("\u0307", "")
+
+        h_row = None
+        for row_idx in range(1, 5):
+            row = [_tr_norm(c.value) for c in ws[row_idx]]
+            if "kalem id" in row:
+                h_row = row_idx
+                break
+        if h_row is None:
+            return jsonify({"durum": "hata", "mesaj": "Başlık satırında 'Kalem ID' bulunamadı"}), 400
+
+        basliklar = [_tr_norm(c.value) for c in ws[h_row]]
+        col_id = basliklar.index("kalem id") + 1 if "kalem id" in basliklar else -1
+        col_stok = basliklar.index("yeni stok") + 1 if "yeni stok" in basliklar else -1
+        col_cikis_irs = basliklar.index("çıkış irsaliyesi") + 1 if "çıkış irsaliyesi" in basliklar else -1
+        col_durum = basliklar.index("yeni durum") + 1 if "yeni durum" in basliklar else -1
+        if col_id < 0 or col_stok < 0:
+            return jsonify({"durum": "hata", "mesaj": "Kalem ID / Yeni Stok sütunları bulunamadı"}), 400
+
+        def sayi(v):
+            if v is None or v == "": return None
+            try: return float(v)
+            except Exception:
+                try: return float(str(v).replace(".", "").replace(",", "."))
+                except Exception: return None
+
+        conn = get_db()
+        guncellenen = 0
+        degisiklikler = []
+        try:
+            for row_idx in range(h_row + 1, ws.max_row + 1):
+                id_val = ws.cell(row=row_idx, column=col_id).value
+                if id_val is None or id_val == "":
+                    continue
+                try:
+                    kalem_id = int(id_val)
+                except Exception:
+                    continue
+                yeni_stok = sayi(ws.cell(row=row_idx, column=col_stok).value)
+                cikis_irs_deger = str(ws.cell(row=row_idx, column=col_cikis_irs).value or "").strip() if col_cikis_irs > 0 else ""
+                durum_deger = str(ws.cell(row=row_idx, column=col_durum).value or "").strip() if col_durum > 0 else ""
+
+                mevcut = conn.execute("SELECT id, malzeme_tanim, stok_miktari, durum, cikis_irsaliye_no FROM fason_kalem WHERE id = ?", (kalem_id,)).fetchone()
+                if not mevcut:
+                    continue
+
+                # Otomatik durum kuralı: Excel'de "Yeni Durum" elle girilmediyse,
+                # çıkış irsaliyesi girildiyse ya da stok 0'landıysa otomatik "Çıkış" say
+                yeni_durum = mevcut["durum"] or "Stok"
+                if durum_deger in ("Stok", "Çıkış", "Tadilat", "Nakil", "Aspro"):
+                    yeni_durum = durum_deger
+                elif cikis_irs_deger:
+                    yeni_durum = "Çıkış"
+                elif yeni_stok is not None and abs(yeni_stok) < 0.005:
+                    yeni_durum = "Çıkış"
+
+                yeni_cikis_irs = cikis_irs_deger or (mevcut["cikis_irsaliye_no"] or "")
+
+                degisti = (mevcut["stok_miktari"] != yeni_stok) or (mevcut["durum"] != yeni_durum) or ((mevcut["cikis_irsaliye_no"] or "") != yeni_cikis_irs)
+                if not degisti:
+                    continue
+
+                conn.execute(
+                    "UPDATE fason_kalem SET stok_miktari = ?, durum = ?, cikis_irsaliye_no = ? WHERE id = ?",
+                    (yeni_stok, yeni_durum, yeni_cikis_irs, kalem_id)
+                )
+                guncellenen += 1
+                degisiklikler.append({
+                    "malzeme_tanim": mevcut["malzeme_tanim"],
+                    "eski_stok": mevcut["stok_miktari"],
+                    "yeni_stok": yeni_stok,
+                    "yeni_durum": yeni_durum
+                })
+            conn.commit()
+        finally:
+            conn.close()
+
+        log_kaydet("Toplu Stok Import (MB52)", f"{dosya.filename}: {guncellenen} kalem güncellendi", None, dosya.filename)
+
+        return jsonify({
+            "durum": "ok", "guncellenen": guncellenen, "degisiklikler": degisiklikler[:100],
+            "mesaj": f"{guncellenen} kalemin stoğu güncellendi"
+        })
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+
+@fason_bp.route("/api/fason/db-senkronize-et", methods=["POST"])
+def api_fason_db_senkronize_et():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if session.get("kullanici") != "admin":
+        return jsonify({"durum": "hata", "mesaj": "Sadece admin"}), 403
+    try:
+        if not os.path.isdir(ORTAK_KLASOR):
+            return jsonify({"durum": "hata", "mesaj": "K: sürücüsüne şu an erişilemiyor"}), 500
+
+        hedef_yol = os.path.join(ORTAK_KLASOR, "fason.db")
+        kaynak = sqlite3.connect(DB_YOL)
+        hedef = sqlite3.connect(hedef_yol)
+        kaynak.backup(hedef)
+        hedef.close()
+        kaynak.close()
+
+        return jsonify({
+            "durum": "ok",
+            "mesaj": "fason.db K: sürücüsüne gönderildi (üzerine yazıldı)"
+        })
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500

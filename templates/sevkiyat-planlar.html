@@ -9,11 +9,11 @@
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/popup.js" defer></script>
   <style>
-    .plan-kart.tamamlandi .plan-kart-ad{color:#8a8a8a}
-    .plan-kart.tamamlandi .plan-kart-bilgi{color:#9a9a9a}
-    .plan-kart.tamamlandi .miktar-ozet{color:#9a9a9a}
+    .plan-kart.tamamlandi .plan-kart-ad{color:var(--text3)}
+    .plan-kart.tamamlandi .plan-kart-bilgi{color:var(--text3)}
+    .plan-kart.tamamlandi .miktar-ozet{color:var(--text3)}
     .plan-kart.tamamlandi .plan-kart-yuzde{color:var(--red)}
-    .plan-kart.tamamlandi .progress-bar-fill{background:#d6a5a5 !important}
+    .plan-kart.tamamlandi .progress-bar-fill{background:var(--red) !important}
     .plan-kart.tamamlandi .ozet-item{opacity:.72}
   </style>
 </head>
@@ -113,8 +113,8 @@
           </div>
         </div>
 
-        <div style="background:#f4f8fc;padding:12px 16px;border-radius:8px;margin-bottom:12px;border:1.5px dashed #c0d4f5">
-          <div style="font-size:11px;color:#888;font-weight:700;margin-bottom:4px">Plan Adı Önizleme</div>
+        <div style="background:var(--bg-content);padding:12px 16px;border-radius:var(--radius);margin-bottom:12px;border:1.5px dashed var(--blue)">
+          <div style="font-size:11px;color:var(--text2);font-weight:700;margin-bottom:4px">Plan Adı Önizleme</div>
           <div id="planAdiOnizleme" style="font-size:15px;font-weight:800;color:var(--primary)">—</div>
         </div>
 
@@ -351,10 +351,10 @@
 
     <div class="miktar-ozet">
       <span>Planlanan: <strong>${fKg(pm)}</strong></span>
-      <span>Gönderilen: <strong style="color:#217346">${fKg(gm)}</strong></span>
-      ${fazlaGonderim > 0 ? `<span>Fazla Gönderim: <strong style="color:#1976d2">${fKg(fazlaGonderim)}</strong></span>` : ""}
-      <span>Kalan: <strong style="color:#e67e22">${fKg(kalanGoster)}</strong></span>
-      ${devKg > 0 ? `<span>Devreden: <strong style="color:#c62828">${fKg(devKg)}</strong></span>` : ""}
+      <span>Gönderilen: <strong style="color:var(--green)">${fKg(gm)}</strong></span>
+      ${fazlaGonderim > 0 ? `<span>Fazla Gönderim: <strong style="color:var(--blue)">${fKg(fazlaGonderim)}</strong></span>` : ""}
+      <span>Kalan: <strong style="color:var(--amber)">${fKg(kalanGoster)}</strong></span>
+      ${devKg > 0 ? `<span>Devreden: <strong style="color:var(--red)">${fKg(devKg)}</strong></span>` : ""}
     </div>
 
     <div class="progress-bar-bg">

@@ -1,9 +1,20 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+import time as _tanilama_time
+_t0 = _tanilama_time.time()
+def _tanilama(etiket):
+    print(f"[TANILAMA] {etiket}: {_tanilama_time.time()-_t0:.2f} sn", flush=True)
+
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, g
+_tanilama("flask import edildi")
 from agirlik_db import agirlik_bp, init_agirlik_db
+_tanilama("agirlik_db import edildi")
 from fason_db import fason_bp, init_fason_db
+_tanilama("fason_db import edildi")
 from mb52_backend import mb52_bp, mb52_init_db
+_tanilama("mb52_backend import edildi")
 from malzeme_kontrol import malzeme_bp, init_malzeme_db
+_tanilama("malzeme_kontrol import edildi")
 from hammadde_db import hammadde_bp, init_hammadde_db
+_tanilama("hammadde_db import edildi")
 
 # ═══ KULLANICI YÖNETİMİ ═══
 from kullanici_db import (
@@ -19,9 +30,11 @@ from versiyon_db import (
     versiyon_dosyasini_hazirla,
     guncel_mi,
 )
+_tanilama("kullanici_db + versiyon_db import edildi")
 
 import threading
 import webview
+_tanilama("webview import edildi")
 import time
 import os
 import base64
@@ -66,17 +79,35 @@ app.register_blueprint(malzeme_bp)
 app.register_blueprint(kullanici_bp)
 app.register_blueprint(fason_bp)
 init_fason_db()
+_tanilama("init_fason_db bitti")
 app.register_blueprint(hammadde_bp)
 init_hammadde_db()
+_tanilama("init_hammadde_db bitti")
 app.register_blueprint(versiyon_bp)
 versiyon_dosyasini_hazirla()
+_tanilama("versiyon_dosyasini_hazirla bitti")
+
+@app.before_request
+def _zaman_baslat():
+    g.baslangic = time.time()
+
+@app.after_request
+def _zaman_bitir(response):
+    try:
+        gecen_ms = (time.time() - g.baslangic) * 1000
+        if gecen_ms > 300:
+            print(f"[YAVAŞ İSTEK] {request.method} {request.path} — {gecen_ms:.0f} ms")
+    except Exception:
+        pass
+    return response
 
 # ═══ Kullanıcı JSON dosyasını hazırla (yoksa oluşturur) ═══
 kullanici_dosyasini_hazirla()
+_tanilama("kullanici_dosyasini_hazirla bitti (modül yüklemesi tamamlandı)")
 
 from functools import wraps
 
-APP_VERSION = "5.3"
+APP_VERSION = "6.0"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -186,7 +217,13 @@ def get_db():
     conn = sqlite3.connect(db_yol, timeout=30, check_same_thread=False)
     conn.row_factory = sqlite3.Row
 
-    conn.execute("PRAGMA journal_mode=WAL")
+    # WAL modu paylaşılan bellek eşlemesi ister; SMB/ağ paylaşım sürücülerinde (K: gibi)
+    # bu çok yavaş çalışır veya güvenilmez — sadece yerel diskteyse WAL kullan.
+    if os.path.exists(r"K:\Warehouse\Yeşilovacık\12_Paylaşım Klasörü\01-BBA\bba-tool"):
+        conn.execute("PRAGMA journal_mode=DELETE")
+        conn.execute("PRAGMA synchronous=NORMAL")
+    else:
+        conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout=5000")
 
     return conn
@@ -3261,21 +3298,42 @@ def rickroll_sayfasi():
 
 # ---- SERVER ----
 def start_server(): app.run(host="127.0.0.1",port=5000)
-def open_login(): time.sleep(5);webview.windows[0].load_url("http://127.0.0.1:5000/login")
+def open_login():
+    import urllib.request
+    url = "http://127.0.0.1:5000/login"
+    baslangic = time.time()
+    while time.time() - baslangic < 15:          # en fazla 15 sn dene, sonra yine de geç
+        try:
+            urllib.request.urlopen("http://127.0.0.1:5000/", timeout=0.5)
+            break                                  # sunucu cevap verdi, hazır
+        except Exception:
+            time.sleep(0.15)
+    _tanilama(f"sunucu hazır (polling {time.time()-baslangic:.2f} sn sürdü), login'e geçiliyor")
+    webview.windows[0].load_url(url)
 
 if __name__=="__main__":
+    _tanilama("main başladı")
     veritabani_olustur()
+    _tanilama("veritabani_olustur bitti")
     mal_grubu_kategorileri_olustur()
+    _tanilama("mal_grubu_kategorileri_olustur bitti")
     init_agirlik_db()
+    _tanilama("init_agirlik_db bitti")
     init_malzeme_db()
+    _tanilama("init_malzeme_db bitti")
     mb52_init_db()  
+    _tanilama("mb52_init_db bitti")
     e=get_export_path()
     os.makedirs(os.path.join(e,"exports","pdf"),exist_ok=True)
     os.makedirs(os.path.join(e,"exports","excel"),exist_ok=True)
     os.makedirs(os.path.join(e,"exports","html"),exist_ok=True)
     os.makedirs(os.path.join(e,"import"),exist_ok=True)
     os.makedirs(os.path.join(e,"assets","fonts"),exist_ok=True)
+    _tanilama("klasörler hazırlandı")
     server=threading.Thread(target=start_server);server.daemon=True;server.start()
+    _tanilama("server thread başlatıldı")
     webview.create_window("Warehouse Data Management","http://127.0.0.1:5000/splash",width=1200,height=800)
+    _tanilama("webview penceresi oluşturuldu")
     threading.Thread(target=open_login).start()
     webview.start()
+    _tanilama("webview.start() döndü (pencere kapandı)")

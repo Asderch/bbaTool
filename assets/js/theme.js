@@ -2,7 +2,7 @@
 
 (function(){
   // Sayfa yüklenmeden önce temayı uygula (flash önleme)
-  const kayitliTema = localStorage.getItem('bba-tema') || 'dark';
+  const kayitliTema = localStorage.getItem('bba-tema') || 'light';
   document.documentElement.setAttribute('data-theme', kayitliTema);
 })();
 
@@ -11,7 +11,7 @@
  */
 function temaToggle() {
   const html = document.documentElement;
-  const mevcutTema = html.getAttribute('data-theme') || 'dark';
+  const mevcutTema = html.getAttribute('data-theme') || 'light';
   const yeniTema = mevcutTema === 'dark' ? 'light' : 'dark';
 
   html.setAttribute('data-theme', yeniTema);
@@ -111,7 +111,7 @@ async function topbarAvatarGuncelle() {
 
 // Sayfa yüklenince butonları ve avatarı güncelle
 document.addEventListener('DOMContentLoaded', function() {
-  const tema = localStorage.getItem('bba-tema') || 'dark';
+  const tema = localStorage.getItem('bba-tema') || 'light';
   temaButonlariGuncelle(tema);
   topbarAvatarGuncelle();
 });
