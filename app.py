@@ -107,7 +107,7 @@ _tanilama("kullanici_dosyasini_hazirla bitti (modül yüklemesi tamamlandı)")
 
 from functools import wraps
 
-APP_VERSION = "6.0"
+APP_VERSION = "6.1"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -453,6 +453,9 @@ def inject_fason_permissions():
         'fason_duzenle_yetki': yetki_var_mi("fason_duzenle"),
         'fason_import_yetki': yetki_var_mi("fason_import"),
         'fason_import_gecmisi_yetki': yetki_var_mi("fason_import_gecmisi"),
+        'fason_kalem_ekle_yetki': yetki_var_mi("fason_kalem_ekle"),
+        'fason_kalem_guncelle_yetki': yetki_var_mi("fason_kalem_guncelle"),
+        'fason_kalem_sil_yetki': yetki_var_mi("fason_kalem_sil"),
     }
 
 @app.route("/islem-gecmisi")
@@ -980,7 +983,7 @@ def guncelle_sayfasi():
     return render_template("guncelle.html")
 
 
-# Sürüm yönetimi sayfası — sadece admin kullanıcı adı
+# Sürüm yönetimi sayfası — sadece admin rolü
 @app.route("/surum-yonetimi")
 def surum_yonetimi_sayfa():
     if not giris_yapildi_mi():

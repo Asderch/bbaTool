@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fason Takip · BBA Ambar Data</title>
 
-<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/style.css?v={{ APP_VERSION }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/theme.js?v={{ APP_VERSION }}"></script>
 <script src="/assets/js/popup.js" defer></script>
 
 <style>
@@ -78,7 +78,7 @@
     background: var(--bg);
     color: var(--text2);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius);
     padding: 0 12px;
     cursor: pointer;
     font-family: inherit;
@@ -95,7 +95,7 @@
     background: var(--primary);
     color: #000;
     padding: 0 22px;
-    border-radius: 6px;
+    border-radius: var(--radius);
     border: none;
     font-weight: 700;
     cursor: pointer;
@@ -175,7 +175,7 @@
 
   .arac-btn {
     padding: 8px 14px;
-    border-radius: 6px;
+    border-radius: var(--radius);
     border: 1px solid var(--border);
     background: var(--bg-white);
     color: var(--text);
@@ -204,7 +204,7 @@
   .firma-kart {
     background: var(--bg-white);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     padding: 8px 10px;
     box-shadow: var(--shadow-sm);
     cursor: pointer;
@@ -309,7 +309,7 @@
   .ozet-kart {
     background: var(--bg-white);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     padding: 8px 10px;
     box-shadow: var(--shadow-sm);
     cursor: pointer;
@@ -799,7 +799,7 @@
   }
   .modal-actions button {
     padding: 9px 18px;
-    border-radius: 6px;
+    border-radius: var(--radius);
     font-size: 12.5px;
     font-weight: 700;
     cursor: pointer;
@@ -930,7 +930,7 @@
   .ft-grid-row .ft-fiyat { text-align: right; font-family: monospace; color: var(--primary); font-weight: 700; }
   .ft-grid-row .ft-meta { color: var(--text3); font-size: 11px; }
   .ft-grid-row .ft-irsno { color: var(--text); font-weight: 700; font-family: monospace; }
-  .fk-grid-wrap { overflow-x: auto; overflow-y: hidden; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+  .fk-grid-wrap { overflow-x: auto; overflow-y: hidden; background: var(--bg-white); border: 1px solid var(--border); border-radius: 0; }
   .fk-grid-cols {
     display: grid;
     grid-template-columns: 24px minmax(200px,2fr) 120px 80px 80px 80px 80px 80px 130px 110px 150px 36px;
@@ -940,7 +940,7 @@
   .fk-grid-header {
     background: var(--bg-white);
     border-bottom: 1px solid var(--border);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: 0;
   }
   .fk-grid-header > div {
     padding: 8px 10px;
@@ -962,7 +962,7 @@
   .fk-sil-btn:hover { background: var(--red-dim); border-radius: 4px; }
   .fk-ozet-bar {
     display: flex; flex-wrap: wrap; gap: 18px;
-    background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    background: var(--bg-white); border: none; border-radius: var(--radius-lg, 16px); box-shadow: var(--shadow-sm);
     padding: 12px 16px; margin-bottom: 10px;
   }
   .fk-ozet-item { display: flex; flex-direction: column; gap: 2px; }
@@ -1467,6 +1467,7 @@ function fasonDurumAd(d) {
   return (d !== undefined && d !== null && d !== "") ? d : "Belirlenmedi"
 }
 var FASON_KALEM_FILTRE = ""
+var FASON_KALEM_DURUM_FILTRE = ""
 var FASON_KALEM_SIRALA = ""
 
 function stickyReset(topId, phId) {
@@ -1622,8 +1623,8 @@ function durumSelectDoldur() {
     '<option value="Belirlenmedi">Belirlenmedi</option>' +
     '<option value="Stok">Stok</option>' +
     '<option value="Çıkış">Çıkış</option>' +
-    '<option value="Tadilat">Tadilat</option>' +
-    '<option value="Nakil">Nakil</option>' +
+    '<option value="Tadilat">Tadilat / Fason</option>' +
+    '<option value="Nakil">Nakil / Akkuyu</option>' +
     '<option value="Aspro">Aspro</option>' +
     '<option value="Kısmi Çıkış">Kısmi Çıkış</option>'
   fs.value = mevcut
@@ -2451,17 +2452,27 @@ function kalemDetayCiz() {
       '<button class="fk-btn" onclick="kalemDetaySapKopyala()"><i class="fa-solid fa-copy"></i> SAP Kodlarını Kopyala</button>' +
       '<button class="fk-btn" onclick="fasonStokExport(' + irs.id + ')"><i class="fa-solid fa-file-arrow-down"></i> Stok Excel\'e Aktar</button>' +
       '<button class="fk-btn" onclick="fasonStokImportModalAc()"><i class="fa-solid fa-file-arrow-up"></i> Stok Yükle</button>' +
-      (MEVCUT_YETKI.fason_ekle ? '<button class="fk-btn primary" onclick="kalemEkleModalAc(' + irs.id + ')"><i class="fa-solid fa-plus"></i> Kalem Ekle</button>' : '') +
+      (MEVCUT_YETKI.fason_kalem_ekle ? '<button class="fk-btn primary" onclick="kalemEkleModalAc(' + irs.id + ')"><i class="fa-solid fa-plus"></i> Kalem Ekle</button>' : '') +
     '</div>' +
   '</div>'
 
   html += '<div class="gs-sticky-placeholder" id="fkStickyPlaceholder"></div>'
   FASON_KALEM_FILTRE = ""
+  FASON_KALEM_DURUM_FILTRE = ""
   FASON_KALEM_SIRALA = ""
   html += '<div class="fk-sticky-top" id="fkStickyTop">'
   html += '<div id="fkOzetBarAlan">' + kalemOzetBarCiz(DETAY_FASON_KALEMLER) + '</div>'
   html += '<div class="fk-filtre-bar">' +
     '<input type="text" id="fkMalzemeFiltre" placeholder="Malzeme tanımına göre filtrele (örn: 32UQC)..." oninput="fasonKalemFiltreDegisti(this.value)">' +
+    '<select id="fkDurumFiltre" style="flex:0 0 170px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-white);color:var(--text);font-size:12.5px" onchange="fasonKalemDurumFiltreDegisti(this.value)">' +
+      '<option value="">Durum: Tümü</option>' +
+      '<option value="__bos__">— Belirlenmedi —</option>' +
+      '<option value="Stok">Stok</option>' +
+      '<option value="Çıkış">Çıkış</option>' +
+      '<option value="Tadilat">Tadilat / Fason</option>' +
+      '<option value="Nakil">Nakil / Akkuyu</option>' +
+      '<option value="Aspro">Aspro</option>' +
+    '</select>' +
     '<select id="fkSirala" style="flex:0 0 240px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-white);color:var(--text);font-size:12.5px" onchange="fasonKalemSiralaDegisti(this.value)">' +
       '<option value="">Sırala: Varsayılan</option>' +
       '<option value="otis-stok-azalan">OTIS Stok (yüksek → düşük)</option>' +
@@ -2484,13 +2495,14 @@ function kalemDetayCiz() {
       '<option value="toplam_fiyat">Fiyat</option>' +
       '<option value="fark_sebebi">Fark Sebebi</option>' +
     '</select>' +
-    '<select id="fkTopluDurumSelect"><option value="Stok">Stok</option><option value="Çıkış">Çıkış</option><option value="Tadilat">Tadilat</option><option value="Nakil">Nakil</option><option value="Aspro">Aspro</option></select>' +
+    '<select id="fkTopluDurumSelect"><option value="Stok">Stok</option><option value="Çıkış">Çıkış</option><option value="Tadilat">Tadilat / Fason</option><option value="Nakil">Nakil / Akkuyu</option><option value="Aspro">Aspro</option></select>' +
     '<input type="text" id="fkTopluCikisIrs" placeholder="Çıkış İrsaliyesi No (opsiyonel)" style="display:none">' +
+    '<select id="fkTopluFarkSelect" style="display:none"><option value="">— Fark Sebebi Yok —</option><option value="Kantar Farkı">Kantar Farkı</option><option value="Bilinmeyen">Bilinmeyen</option><option value="Sipariş Fazlası">Sipariş Fazlası</option></select>' +
     '<input type="text" id="fkTopluDeger" placeholder="Değer yaz..." style="display:none">' +
-    '<button onclick="fasonTopluDuzenle()">Seçilenlere Uygula</button>' +
+    '<button onclick="fasonTopluDuzenle()"' + (MEVCUT_YETKI.fason_kalem_guncelle ? '' : ' disabled title="Yetkiniz yok"') + '>Seçilenlere Uygula</button>' +
   '</div>'
   html += '<div class="fk-grid-cols fk-grid-header">' +
-    '<div><input type="checkbox" id="fkTumunuSecCheck" onchange="fasonTumunuSec(this.checked)" title="Tümünü Seç"></div>' +
+    '<div><input type="checkbox" id="fkTumunuSecCheck" class="fk-check" onchange="fasonTumunuSec(this.checked)" title="Tümünü Seç"' + (MEVCUT_YETKI.fason_kalem_sil ? '' : ' disabled') + '></div>' +
     '<div>Malzeme Tanım</div><div>SAP Kodu</div><div>SAP Stok</div><div>SAP Giriş</div><div>OTIS Stok</div><div>OTIS Giriş</div><div>Fiyat</div><div>Fark Sebebi</div><div>Durum</div><div>Çıkış İrs.</div><div></div>' +
   '</div>'
 
@@ -2514,6 +2526,12 @@ function kalemFiltrelenmisListe() {
       return (k.malzeme_tanim || "").toLocaleUpperCase('tr-TR').indexOf(f) !== -1
     })
   }
+  if (FASON_KALEM_DURUM_FILTRE) {
+    liste = liste.filter(function(k){
+      var d = k.durum || ""
+      return FASON_KALEM_DURUM_FILTRE === "__bos__" ? d === "" : d === FASON_KALEM_DURUM_FILTRE
+    })
+  }
   liste = liste.slice()
   if (FASON_KALEM_SIRALA === "otis-stok-azalan") liste.sort(function(a,b){ return (b.otis_stok ?? -Infinity) - (a.otis_stok ?? -Infinity) })
   else if (FASON_KALEM_SIRALA === "otis-stok-artan") liste.sort(function(a,b){ return (a.otis_stok ?? Infinity) - (b.otis_stok ?? Infinity) })
@@ -2529,6 +2547,17 @@ function fasonKalemSiralaDegisti(deger) {
   FASON_KALEM_SIRALA = deger
   var filtreli = kalemFiltrelenmisListe()
   document.getElementById("fkGovdeAlan").innerHTML = kalemTablosuCizFason(filtreli)
+  requestAnimationFrame(function(){ stickyCheck("fkStickyTop", "fkStickyPlaceholder") })
+}
+
+function fasonKalemDurumFiltreDegisti(deger) {
+  FASON_KALEM_DURUM_FILTRE = deger
+  SECILI_FASON_KALEMLER = []
+  var filtreli = kalemFiltrelenmisListe()
+  document.getElementById("fkOzetBarAlan").innerHTML = kalemOzetBarCiz(filtreli)
+  document.getElementById("fkGovdeAlan").innerHTML = kalemTablosuCizFason(filtreli)
+  var bar = document.getElementById("fkTopluBar")
+  if (bar) bar.classList.remove("goster")
   requestAnimationFrame(function(){ stickyCheck("fkStickyTop", "fkStickyPlaceholder") })
 }
 
@@ -2565,34 +2594,43 @@ function kalemOzetBarCiz(kalemler) {
   '</div>'
 }
 
+function _durumEtiket(s) {
+  if (s === 'Nakil') return 'Nakil / Akkuyu'
+  if (s === 'Tadilat') return 'Tadilat / Fason'
+  return s || '— Belirlenmedi —'
+}
+
 function kalemTablosuCizFason(kalemler) {
   if (!kalemler.length) return '<div class="bos-durum"><i class="fa-solid fa-inbox"></i>Filtreye uyan kalem yok</div>'
   var farkSecenekleri = ['', 'Kantar Farkı', 'Bilinmeyen', 'Sipariş Fazlası']
   var durumSecenekleri = ['', 'Stok', 'Çıkış', 'Tadilat', 'Nakil', 'Aspro']
+  var duzenlenebilir = !!MEVCUT_YETKI.fason_kalem_guncelle
+  var silinebilir = !!MEVCUT_YETKI.fason_kalem_sil
+  var ro = duzenlenebilir ? '' : ' disabled'
   var html = '<div class="fk-grid-wrap">'
   kalemler.forEach(function(k) {
     var seciliMi = SECILI_FASON_KALEMLER.indexOf(k.id) !== -1
     html += '<div class="fk-grid-cols fk-grid-row">' +
-      '<div><input type="checkbox" class="fk-check" data-kalem-id="' + k.id + '"' + (seciliMi ? ' checked' : '') + ' onchange="fasonKalemSecimGuncelle(' + k.id + ', this.checked)"></div>' +
-      '<div><input type="text" class="fk-input" value="' + escHtml(k.malzeme_tanim) + '" onchange="kalemAlaniKaydet(' + k.id + ", 'malzeme_tanim', this.value)\"></div>" +
-      '<div><input type="text" class="fk-input" value="' + escHtml(k.sap_kodu || '') + '" onchange="kalemAlaniKaydet(' + k.id + ", 'sap_kodu', this.value)\"></div>" +
-      '<div><input type="text" class="fk-input fk-num" value="' + fSayiTR(k.stok_miktari) + '" placeholder="—" onchange="kalemAlaniKaydet(' + k.id + ", 'stok_miktari', this.value)\"></div>" +
-      '<div><input type="text" class="fk-input fk-num' + (_girisFarkiHesapla(k) > 0.01 ? ' fk-fark-var' : '') + '" value="' + fSayiTR(k.giris_miktari) + '" placeholder="—" title="' + (_girisFarkiHesapla(k) > 0.01 ? 'OTIS Giriş ile fark: ' + fSayiTR(_girisFarkiHesapla(k)) : '') + '" onchange="kalemAlaniKaydet(' + k.id + ", 'giris_miktari', this.value)\"></div>" +
-      '<div><input type="text" class="fk-input fk-num" value="' + fSayiTR(k.otis_stok) + '" placeholder="—" onchange="kalemAlaniKaydet(' + k.id + ", 'otis_stok', this.value)\"></div>" +
-      '<div><input type="text" class="fk-input fk-num' + (_girisFarkiHesapla(k) > 0.01 ? ' fk-fark-var' : '') + '" value="' + fSayiTR(k.otis_giris) + '" placeholder="—" title="' + (_girisFarkiHesapla(k) > 0.01 ? 'Giriş ile fark: ' + fSayiTR(_girisFarkiHesapla(k)) : '') + '" onchange="kalemAlaniKaydet(' + k.id + ", 'otis_giris', this.value)\"></div>" +
-      '<div><input type="text" class="fk-input fk-num" value="' + fSayiTR(k.toplam_fiyat) + '" placeholder="—" onchange="kalemAlaniKaydet(' + k.id + ", 'toplam_fiyat', this.value)\"></div>" +
-      '<div><select class="fk-input" onchange="kalemAlaniKaydet(' + k.id + ", 'fark_sebebi', this.value)\">" +
+      '<div><input type="checkbox" class="fk-check" data-kalem-id="' + k.id + '"' + (seciliMi ? ' checked' : '') + (silinebilir ? '' : ' disabled') + ' onchange="fasonKalemSecimGuncelle(' + k.id + ', this.checked)"></div>' +
+      '<div><input type="text" class="fk-input" value="' + escHtml(k.malzeme_tanim) + '"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'malzeme_tanim', this.value)\"></div>" +
+      '<div><input type="text" class="fk-input" value="' + escHtml(k.sap_kodu || '') + '"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'sap_kodu', this.value)\"></div>" +
+      '<div><input type="text" class="fk-input fk-num" value="' + fSayiTR(k.stok_miktari) + '" placeholder="—"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'stok_miktari', this.value)\"></div>" +
+      '<div><input type="text" class="fk-input fk-num' + (_girisFarkiHesapla(k) > 0.01 ? ' fk-fark-var' : '') + '" value="' + fSayiTR(k.giris_miktari) + '" placeholder="—" title="' + (_girisFarkiHesapla(k) > 0.01 ? 'OTIS Giriş ile fark: ' + fSayiTR(_girisFarkiHesapla(k)) : '') + '"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'giris_miktari', this.value)\"></div>" +
+      '<div><input type="text" class="fk-input fk-num" value="' + fSayiTR(k.otis_stok) + '" placeholder="—"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'otis_stok', this.value)\"></div>" +
+      '<div><input type="text" class="fk-input fk-num' + (_girisFarkiHesapla(k) > 0.01 ? ' fk-fark-var' : '') + '" value="' + fSayiTR(k.otis_giris) + '" placeholder="—" title="' + (_girisFarkiHesapla(k) > 0.01 ? 'Giriş ile fark: ' + fSayiTR(_girisFarkiHesapla(k)) : '') + '"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'otis_giris', this.value)\"></div>" +
+      '<div><input type="text" class="fk-input fk-num" value="' + fSayiTR(k.toplam_fiyat) + '" placeholder="—"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'toplam_fiyat', this.value)\"></div>" +
+      '<div><select class="fk-input"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'fark_sebebi', this.value)\">" +
         farkSecenekleri.map(function(s){
           return '<option value="' + s + '"' + (k.fark_sebebi === s ? ' selected' : '') + '>' + (s || '—') + '</option>'
         }).join('') +
       '</select></div>' +
-      '<div><select class="fk-input" onchange="kalemAlaniKaydet(' + k.id + ", 'durum', this.value)\">" +
+      '<div><select class="fk-input"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'durum', this.value)\">" +
         durumSecenekleri.map(function(s){
-          return '<option value="' + s + '"' + ((k.durum || '') === s ? ' selected' : '') + '>' + (s || '— Belirlenmedi —') + '</option>'
+          return '<option value="' + s + '"' + ((k.durum || '') === s ? ' selected' : '') + '>' + _durumEtiket(s) + '</option>'
         }).join('') +
       '</select></div>' +
-      '<div><input type="text" class="fk-input" value="' + escHtml(k.cikis_irsaliye_no || '') + '" placeholder="—" onchange="kalemAlaniKaydet(' + k.id + ", 'cikis_irsaliye_no', this.value)\"></div>" +
-      '<div><button class="fk-sil-btn" onclick="kalemSilOnayla(' + k.id + ')" title="Sil"><i class="fa-solid fa-trash"></i></button></div>' +
+      '<div><input type="text" class="fk-input" value="' + escHtml(k.cikis_irsaliye_no || '') + '" placeholder="—"' + ro + ' onchange="kalemAlaniKaydet(' + k.id + ", 'cikis_irsaliye_no', this.value)\"></div>" +
+      '<div>' + (silinebilir ? '<button class="fk-sil-btn" onclick="kalemSilOnayla(' + k.id + ')" title="Sil"><i class="fa-solid fa-trash"></i></button>' : '') + '</div>' +
     '</div>'
   })
   html += '</div>'
@@ -2742,7 +2780,8 @@ function fkTopluAlanDegisti() {
   var alan = document.getElementById("fkTopluAlan").value
   document.getElementById("fkTopluDurumSelect").style.display = alan === "durum" ? "" : "none"
   document.getElementById("fkTopluCikisIrs").style.display = alan === "durum" ? "" : "none"
-  document.getElementById("fkTopluDeger").style.display = alan === "durum" ? "none" : ""
+  document.getElementById("fkTopluFarkSelect").style.display = alan === "fark_sebebi" ? "" : "none"
+  document.getElementById("fkTopluDeger").style.display = (alan === "durum" || alan === "fark_sebebi") ? "none" : ""
 }
 
 async function fasonTopluDuzenle() {
@@ -2754,6 +2793,8 @@ async function fasonTopluDuzenle() {
     var cikisIrs = document.getElementById("fkTopluCikisIrs").value.trim()
     body = { durum: durumDeger }
     if (durumDeger === "Çıkış") body.cikis_irsaliye_no = cikisIrs
+  } else if (alan === "fark_sebebi") {
+    body = { fark_sebebi: document.getElementById("fkTopluFarkSelect").value }
   } else {
     var degerHam = document.getElementById("fkTopluDeger").value
     if (degerHam.trim() === "") { if (typeof bildirim === "function") bildirim("Değer gir", "Uyarı", "uyari"); return }
@@ -2867,9 +2908,9 @@ async function zmm068Gonder() {
     var d = await r.json()
     if (d.durum === "ok") {
       var html = '<div class="import-sonuc"><b><i class="fa-solid fa-check-circle"></i> Başarılı!</b><br>' + escHtml(d.mesaj) + '</div>'
-      if (d.atlanan_irsaliyeler && d.atlanan_irsaliyeler.length) {
-        html += '<div style="margin-top:8px;font-size:11px;color:var(--text3)"><b>Sistemde olmayan irsaliyeler (ilk 30):</b><br>' +
-          d.atlanan_irsaliyeler.map(escHtml).join(', ') + '</div>'
+      if (d.otomatik_olusturulan_irsaliye && d.otomatik_olusturulan_irsaliye.length) {
+        html += '<div style="margin-top:8px;font-size:11px;color:var(--amber)"><b>Otomatik oluşturulan irsaliyeler (firma ataması bekliyor, ilk 30):</b><br>' +
+          d.otomatik_olusturulan_irsaliye.map(escHtml).join(', ') + '</div>'
       }
       document.getElementById("zmm068SonucAlani").innerHTML = html
       if (typeof toast === "function") toast(d.mesaj, "basari")

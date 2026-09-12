@@ -91,9 +91,9 @@ def _connect_db(db_yol):
 
 
 def _aktif_db_yolu():
-    # admin kullanıcısı hızlı yerel veritabanını kullanır (senkronizasyon onun elinde).
+    # admin rolü hızlı yerel veritabanını kullanır (senkronizasyon onun elinde).
     # Diğer herkes doğrudan K:'deki (admin'in yedeklediği) veritabanını okur/yazar.
-    if session.get("kullanici") == "admin":
+    if session.get("rol") == "admin":
         return DB_YOL
     if os.path.isdir(ORTAK_KLASOR):
         return os.path.join(ORTAK_KLASOR, "fason.db")
@@ -517,6 +517,8 @@ def api_fason_kalem_liste(irs_id):
 def api_fason_kalem_ekle(irs_id):
     if not session.get("kullanici"):
         return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if not _fason_yetki_var_mi("fason_kalem_ekle"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     d = request.get_json() or {}
     malzeme_tanim = (d.get("malzeme_tanim") or "").strip()
     if not malzeme_tanim:
@@ -560,6 +562,8 @@ def api_fason_kalem_ekle(irs_id):
 def api_fason_kalem_guncelle(kalem_id):
     if not session.get("kullanici"):
         return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if not _fason_yetki_var_mi("fason_kalem_guncelle"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     d = request.get_json() or {}
 
     def sayi(v):
@@ -602,6 +606,8 @@ def api_fason_kalem_guncelle(kalem_id):
 def api_fason_kalem_sil(kalem_id):
     if not session.get("kullanici"):
         return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    if not _fason_yetki_var_mi("fason_kalem_sil"):
+        return jsonify({"durum": "hata", "mesaj": "Bu işlem için yetkiniz yok"}), 403
     conn = get_db()
     try:
         row = conn.execute("SELECT malzeme_tanim FROM fason_kalem WHERE id = ?", (kalem_id,)).fetchone()
@@ -1343,7 +1349,7 @@ def api_fason_import_log():
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500   
 
 # ═════════════════════════════════════════════════
-# KAYIT DÜZENLEME (tüm alanlar) — sadece admin kullanıcısı
+# KAYIT DÜZENLEME (tüm alanlar) — sadece admin rolü
 # ═════════════════════════════════════════════════
 
 @fason_bp.route("/api/fason/duzenle/<int:irs_id>", methods=["POST"])
@@ -1494,14 +1500,13 @@ def api_fason_zmm068_import():
         conn = get_db()
         toplam_satir = 0
         eslesen_irsaliye = 0
-        eslesmeyen_irsaliye = 0
         yeni_kalem = 0
         guncellenen_kalem = 0
-        atlanan = []
 
         # irsaliye_no -> irsaliye_id cache
         irsaliye_cache = {}
         temizlenen_genel_kalem = set()
+        otomatik_olusturulan_irsaliye = set()
 
         try:
             for row in rows_iter:
@@ -1515,13 +1520,19 @@ def api_fason_zmm068_import():
                     r = conn.execute(
                         "SELECT id FROM fason_irsaliye WHERE irsaliye_no = ?", (irsaliye_no,)
                     ).fetchone()
-                    irsaliye_cache[irsaliye_no] = r["id"] if r else None
+                    if r:
+                        irsaliye_cache[irsaliye_no] = r["id"]
+                    else:
+                        # Sistemde kayıtlı değil — firma bilgisi olmadan (sonra elle atanmak üzere)
+                        # otomatik bir irsaliye kaydı oluştur, atlama.
+                        yeni_id = conn.execute("""
+                            INSERT INTO fason_irsaliye (irsaliye_no, giren_kullanici, aciklama)
+                            VALUES (?, ?, ?)
+                        """, (irsaliye_no, session.get("kullanici", ""), "ZMM068 içe aktarmadan otomatik oluşturuldu — firma ataması gerekiyor")).lastrowid
+                        irsaliye_cache[irsaliye_no] = yeni_id
+                        otomatik_olusturulan_irsaliye.add(irsaliye_no)
 
                 irs_id = irsaliye_cache[irsaliye_no]
-                if irs_id is None:
-                    eslesmeyen_irsaliye += 1
-                    atlanan.append(irsaliye_no)
-                    continue
 
                 # Gerçek malzeme verisi geldiğinde, migration'dan kalan boş "Genel Kalem" plasholder'ını sil
                 if irs_id not in temizlenen_genel_kalem:
@@ -1579,19 +1590,22 @@ def api_fason_zmm068_import():
         log_kaydet(
             "ZMM068 Import",
             f"{dosya.filename}: {yeni_kalem} yeni kalem, {guncellenen_kalem} güncellendi, "
-            f"{eslesen_irsaliye} irsaliye eşleşti, {eslesmeyen_irsaliye} satır eşleşmedi",
+            f"{eslesen_irsaliye} irsaliye eşleşti, {len(otomatik_olusturulan_irsaliye)} irsaliye otomatik oluşturuldu (firma ataması gerekiyor)",
             None, dosya.filename
         )
+
+        mesaj = f"{yeni_kalem} yeni kalem, {guncellenen_kalem} güncellendi"
+        if otomatik_olusturulan_irsaliye:
+            mesaj += f" ({len(otomatik_olusturulan_irsaliye)} irsaliye sistemde yoktu, otomatik oluşturuldu — firma ataması yapman gerekiyor)"
 
         return jsonify({
             "durum": "ok",
             "toplam_satir": toplam_satir,
             "eslesen_irsaliye": eslesen_irsaliye,
-            "eslesmeyen_satir": eslesmeyen_irsaliye,
+            "otomatik_olusturulan_irsaliye": sorted(otomatik_olusturulan_irsaliye)[:30],
             "yeni_kalem": yeni_kalem,
             "guncellenen_kalem": guncellenen_kalem,
-            "atlanan_irsaliyeler": sorted(set(atlanan))[:30],
-            "mesaj": f"{yeni_kalem} yeni kalem, {guncellenen_kalem} güncellendi ({eslesmeyen_irsaliye} satır sistemde olmayan irsaliyeye ait, atlandı)"
+            "mesaj": mesaj
         })
     except Exception as e:
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500

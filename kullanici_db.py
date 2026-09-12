@@ -64,6 +64,7 @@ VARSAYILAN_ROLLER = {
         "fason_gor": True, "fason_ekle": True, "fason_duzenle": True,
         "fason_import": True, "fason_import_gecmisi": True, "fason_mukerrer": True,
         "fason_sil_tumu": True, "hammadde_gor": True,
+        "fason_kalem_ekle": True, "fason_kalem_guncelle": True, "fason_kalem_sil": True,
         "islem_gecmisi_gor": True,
     },
     "yonetici": {
@@ -76,6 +77,7 @@ VARSAYILAN_ROLLER = {
         "fason_gor": True, "fason_ekle": True, "fason_duzenle": True,
         "fason_import": True, "fason_import_gecmisi": True, "fason_mukerrer": True,
         "fason_sil_tumu": True, "hammadde_gor": True,
+        "fason_kalem_ekle": False, "fason_kalem_guncelle": False, "fason_kalem_sil": False,
         "islem_gecmisi_gor": True,
     },
     "sevkiyatci": {
@@ -88,6 +90,7 @@ VARSAYILAN_ROLLER = {
         "fason_gor": False, "fason_ekle": False, "fason_duzenle": False,
         "fason_import": False, "fason_import_gecmisi": False, "fason_mukerrer": False,
         "fason_sil_tumu": False, "hammadde_gor": False,
+        "fason_kalem_ekle": False, "fason_kalem_guncelle": False, "fason_kalem_sil": False,
         "islem_gecmisi_gor": False,
     },
     "fasoncu": {
@@ -100,6 +103,7 @@ VARSAYILAN_ROLLER = {
         "fason_gor": True, "fason_ekle": True, "fason_duzenle": True,
         "fason_import": True, "fason_import_gecmisi": True, "fason_mukerrer": False,
         "fason_sil_tumu": False, "hammadde_gor": False,
+        "fason_kalem_ekle": False, "fason_kalem_guncelle": False, "fason_kalem_sil": False,
         "islem_gecmisi_gor": False,
     },
     "hammaddeci": {
@@ -112,6 +116,7 @@ VARSAYILAN_ROLLER = {
         "fason_gor": False, "fason_ekle": False, "fason_duzenle": False,
         "fason_import": False, "fason_import_gecmisi": False, "fason_mukerrer": False,
         "fason_sil_tumu": False, "hammadde_gor": True,
+        "fason_kalem_ekle": False, "fason_kalem_guncelle": False, "fason_kalem_sil": False,
         "islem_gecmisi_gor": False,
     },
     "goruntuleyici": {
@@ -124,6 +129,7 @@ VARSAYILAN_ROLLER = {
         "fason_gor": True, "fason_ekle": False, "fason_duzenle": False,
         "fason_import": False, "fason_import_gecmisi": False, "fason_mukerrer": False,
         "fason_sil_tumu": False, "hammadde_gor": False,
+        "fason_kalem_ekle": False, "fason_kalem_guncelle": False, "fason_kalem_sil": False,
         "islem_gecmisi_gor": False,
     },
     "sayim": {
@@ -136,6 +142,7 @@ VARSAYILAN_ROLLER = {
         "fason_gor": False, "fason_ekle": False, "fason_duzenle": False,
         "fason_import": False, "fason_import_gecmisi": False, "fason_mukerrer": False,
         "fason_sil_tumu": False, "hammadde_gor": False,
+        "fason_kalem_ekle": False, "fason_kalem_guncelle": False, "fason_kalem_sil": False,
         "islem_gecmisi_gor": False,
     },
     "yasakli": {
@@ -148,6 +155,7 @@ VARSAYILAN_ROLLER = {
         "fason_gor": False, "fason_ekle": False, "fason_duzenle": False,
         "fason_import": False, "fason_import_gecmisi": False, "fason_mukerrer": False,
         "fason_sil_tumu": False, "hammadde_gor": False,
+        "fason_kalem_ekle": False, "fason_kalem_guncelle": False, "fason_kalem_sil": False,
         "islem_gecmisi_gor": False,
     },
 }
