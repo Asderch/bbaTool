@@ -1035,7 +1035,10 @@ function escHtml(s) {
     .replace(/'/g, "&#039;")
 }
 
-function cikisYap() { window.location.href = "/logout" }
+async function cikisYap() {
+  const s = await onayla("Çıkış yapmak istediğinize emin misiniz?", "Çıkış Yap", {onayText:"Çıkış Yap", tip:"uyari"})
+  if (s) window.location.href = "/logout"
+}
 
 async function topbarAvatarGuncelle() {
   try {

@@ -2025,7 +2025,7 @@ def api_fason_tum_kalemler():
 def api_fason_genel_kalem_temizle():
     if not session.get("kullanici"):
         return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
-    if session.get("kullanici") != "admin":
+    if session.get("rol") != "admin":
         return jsonify({"durum": "hata", "mesaj": "Sadece admin"}), 403
 
     conn = get_db()
@@ -2272,7 +2272,7 @@ def api_fason_stok_import():
 def api_fason_db_senkronize_et():
     if not session.get("kullanici"):
         return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
-    if session.get("kullanici") != "admin":
+    if session.get("rol") != "admin":
         return jsonify({"durum": "hata", "mesaj": "Sadece admin"}), 403
     try:
         if not os.path.isdir(ORTAK_KLASOR):
@@ -2291,3 +2291,88 @@ def api_fason_db_senkronize_et():
         })
     except Exception as e:
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+
+def fasoncu_insight_uret():
+    """
+    Fasoncu rolü için 'İçgörüler' panelinde gösterilecek, gerçek veriye
+    dayalı insight listesini üretir. Her insight: {tip, baslik, detay, link}
+    """
+    insightler = []
+    try:
+        conn = get_db()
+
+        # 1) Firma bazında "durumu belirlenmemiş" kalem sayısı (eşik: 100)
+        satirlar = conn.execute("""
+            SELECT COALESCE(f.ad, 'Firma atanmamış') AS firma_ad,
+                   COUNT(*) AS kalem_sayisi,
+                   COUNT(DISTINCT i.id) AS irsaliye_sayisi
+            FROM fason_kalem k
+            JOIN fason_irsaliye i ON k.irsaliye_id = i.id
+            LEFT JOIN fason_firma f ON i.firma_id = f.id
+            WHERE (k.durum IS NULL OR k.durum = '')
+            GROUP BY i.firma_id
+            HAVING kalem_sayisi > 100
+            ORDER BY kalem_sayisi DESC
+            LIMIT 3
+        """).fetchall()
+        for s in satirlar:
+            insightler.append({
+                "tip": "uyari",
+                "baslik": f"{s['firma_ad']} bekliyor",
+                "detay": f"{s['firma_ad']} firmasının {s['irsaliye_sayisi']} irsaliyede toplam {s['kalem_sayisi']} kalemi hâlâ 'Belirlenmedi' durumunda.",
+                "link": "/fason"
+            })
+
+        # 2) "Bugün ilgilenmen için harika bir gün" — az kalanı olan, çabucak bitirilebilecek firma
+        hizli = conn.execute("""
+            SELECT COALESCE(f.ad, 'Firma atanmamış') AS firma_ad,
+                   COUNT(*) AS kalem_sayisi
+            FROM fason_kalem k
+            JOIN fason_irsaliye i ON k.irsaliye_id = i.id
+            LEFT JOIN fason_firma f ON i.firma_id = f.id
+            WHERE (k.durum IS NULL OR k.durum = '')
+            GROUP BY i.firma_id
+            HAVING kalem_sayisi BETWEEN 1 AND 10
+            ORDER BY kalem_sayisi ASC
+            LIMIT 1
+        """).fetchone()
+        if hizli:
+            insightler.append({
+                "tip": "basari",
+                "baslik": "Hızlı bir kazanç seni bekliyor",
+                "detay": f"{hizli['firma_ad']} ile ilgilenmen için harika bir gün — sadece {hizli['kalem_sayisi']} kalem kaldı, hemen bitirebilirsin.",
+                "link": "/fason"
+            })
+
+        # 3) En eski, hâlâ belirlenmemiş irsaliye (30 günden eskiyse uyar)
+        eski = conn.execute("""
+            SELECT COALESCE(f.ad, 'Firma atanmamış') AS firma_ad, i.irsaliye_no, i.girilme_tarihi,
+                   CAST(julianday('now','localtime') - julianday(i.girilme_tarihi) AS INTEGER) AS gun_sayisi
+            FROM fason_irsaliye i
+            JOIN fason_kalem k ON k.irsaliye_id = i.id
+            LEFT JOIN fason_firma f ON i.firma_id = f.id
+            WHERE (k.durum IS NULL OR k.durum = '')
+            GROUP BY i.id
+            ORDER BY i.girilme_tarihi ASC
+            LIMIT 1
+        """).fetchone()
+        if eski and eski["gun_sayisi"] and eski["gun_sayisi"] > 30:
+            insightler.append({
+                "tip": "uyari",
+                "baslik": "Uzun süredir bekleyen bir irsaliye var",
+                "detay": f"{eski['irsaliye_no']} ({eski['firma_ad']}) {eski['gun_sayisi']} gündür 'Belirlenmedi' durumunda bekliyor.",
+                "link": "/fason"
+            })
+
+        conn.close()
+    except Exception as e:
+        insightler.append({"tip": "bilgi", "baslik": "İçgörüler hesaplanamadı", "detay": str(e), "link": None})
+
+    if not insightler:
+        insightler.append({
+            "tip": "basari",
+            "baslik": "Her şey yolunda",
+            "detay": "Şu an dikkat gerektiren bir durum yok — bekleyen kalem bulunmuyor.",
+            "link": None
+        })
+    return insightler

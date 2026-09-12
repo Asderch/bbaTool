@@ -98,7 +98,7 @@
     {% endif %}
   <div class="sidebar-footer">
     <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i> Açık Tema</button>
-    <button class="cikis-btn" onclick="window.location.href='/'"><i class="fa-solid fa-arrow-left"></i> Ana Menü</button>
+    <button class="cikis-btn" onclick="cikisYap()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
   </div>
 </nav>
 
@@ -743,6 +743,13 @@ async function excelAktar(){
 }
 
 window.addEventListener('scroll',()=>{const b=document.getElementById('scrollTopBtn'); if(b)b.classList.toggle('visible',scrollY>300);});
+</script>
+
+<script>
+async function cikisYap() {
+  const s = await onayla("Çıkış yapmak istediğinize emin misiniz?", "Çıkış Yap", {onayText:"Çıkış Yap", tip:"uyari"})
+  if (s) window.location.href = "/logout"
+}
 </script>
 </body>
 </html>

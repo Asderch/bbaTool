@@ -1186,3 +1186,63 @@ def api_hammadde_malzeme_detay():
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500
     finally:
         conn.close()
+
+def hammaddeci_insight_uret():
+    """Hammaddeci rolü için 'İçgörüler' panelinde gösterilecek insight listesi."""
+    insightler = []
+    try:
+        conn = get_db()
+
+        # 1) Lokasyonu (depo yeri) girilmemiş kalem sayısı
+        r = conn.execute("""
+            SELECT COUNT(*) AS adet
+            FROM hammadde_kalem
+            WHERE (lokasyon IS NULL OR lokasyon = '')
+        """).fetchone()
+        if r and r["adet"] and r["adet"] > 50:
+            insightler.append({
+                "tip": "uyari",
+                "baslik": "Lokasyonu girilmemiş kalemler var",
+                "detay": f"{r['adet']} hammadde kaleminin depo lokasyonu hâlâ boş.",
+                "link": "/hammadde"
+            })
+
+        # 2) Sertifikası olmayan kalem sayısı
+        r2 = conn.execute("""
+            SELECT COUNT(*) AS adet
+            FROM hammadde_kalem
+            WHERE (sertifika_no IS NULL OR sertifika_no = '')
+        """).fetchone()
+        if r2 and r2["adet"] and r2["adet"] > 50:
+            insightler.append({
+                "tip": "uyari",
+                "baslik": "Sertifika bilgisi eksik",
+                "detay": f"{r2['adet']} hammadde kaleminin sertifika numarası girilmemiş.",
+                "link": "/hammadde"
+            })
+
+        # 3) Son 7 günde eklenen irsaliye sayısı (bilgi amaçlı, olumlu ton)
+        r3 = conn.execute("""
+            SELECT COUNT(*) AS adet FROM hammadde_irsaliye
+            WHERE ilk_eklenme_tarihi >= datetime('now','localtime','-7 days')
+        """).fetchone()
+        if r3 and r3["adet"]:
+            insightler.append({
+                "tip": "bilgi",
+                "baslik": "Bu haftaki hareketlilik",
+                "detay": f"Son 7 günde {r3['adet']} yeni hammadde irsaliyesi girildi.",
+                "link": "/hammadde"
+            })
+
+        conn.close()
+    except Exception as e:
+        insightler.append({"tip": "bilgi", "baslik": "İçgörüler hesaplanamadı", "detay": str(e), "link": None})
+
+    if not insightler:
+        insightler.append({
+            "tip": "basari",
+            "baslik": "Her şey yolunda",
+            "detay": "Şu an dikkat gerektiren bir durum yok.",
+            "link": None
+        })
+    return insightler

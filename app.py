@@ -7,13 +7,13 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 _tanilama("flask import edildi")
 from agirlik_db import agirlik_bp, init_agirlik_db
 _tanilama("agirlik_db import edildi")
-from fason_db import fason_bp, init_fason_db
+from fason_db import fason_bp, init_fason_db, fasoncu_insight_uret
 _tanilama("fason_db import edildi")
 from mb52_backend import mb52_bp, mb52_init_db
 _tanilama("mb52_backend import edildi")
 from malzeme_kontrol import malzeme_bp, init_malzeme_db
 _tanilama("malzeme_kontrol import edildi")
-from hammadde_db import hammadde_bp, init_hammadde_db
+from hammadde_db import hammadde_bp, init_hammadde_db, hammaddeci_insight_uret
 _tanilama("hammadde_db import edildi")
 
 # ═══ KULLANICI YÖNETİMİ ═══
@@ -107,7 +107,7 @@ _tanilama("kullanici_dosyasini_hazirla bitti (modül yüklemesi tamamlandı)")
 
 from functools import wraps
 
-APP_VERSION = "6.1"
+APP_VERSION = "6.2"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -417,6 +417,30 @@ def logout(): session.clear(); return redirect(url_for("login"))
 def index():
     if not giris_yapildi_mi(): return redirect(url_for("login"))
     return render_template("index.html", ad=session.get("ad"))
+
+@app.route("/api/insights")
+def api_insights():
+    if not giris_yapildi_mi():
+        return jsonify({"durum": "hata"}), 401
+    rol = session.get("rol")
+    insightler = []
+    try:
+        if rol == "fasoncu":
+            insightler = fasoncu_insight_uret()
+        elif rol == "hammaddeci":
+            insightler = hammaddeci_insight_uret()
+        elif rol in ("admin", "yonetici"):
+            insightler = fasoncu_insight_uret() + hammaddeci_insight_uret()
+        else:
+            insightler = [{
+                "tip": "bilgi",
+                "baslik": "Henüz içgörü yok",
+                "detay": "Bu rol için şu an özel bir içgörü hazırlanmadı.",
+                "link": None
+            }]
+    except Exception as e:
+        insightler = [{"tip": "bilgi", "baslik": "İçgörüler yüklenemedi", "detay": str(e), "link": None}]
+    return jsonify({"durum": "ok", "insightler": insightler})
 
 @app.route("/agirlik-hesaplama")
 def hesaplama():

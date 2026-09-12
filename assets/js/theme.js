@@ -46,6 +46,17 @@ function temaButonlariGuncelle(tema) {
       topbarBtn.title = 'Koyu Temaya Geç';
     }
   }
+
+  // Sidebar / login logosu — dark temada koyu zeminde okunaklı olması için
+  // mint tonlu versiyona geçer, light temada orijinal iki tonlu marka logosu.
+  document.querySelectorAll('.sidebar-logo img, .login-side img').forEach(function(img){
+    if (tema === 'dark') {
+      if (!img.dataset.origSrc) img.dataset.origSrc = img.src;
+      img.src = '/assets/logo/bba-logo-mint.png';
+    } else if (img.dataset.origSrc) {
+      img.src = img.dataset.origSrc;
+    }
+  });
 }
 
 /* ---- BBA TOPBAR AVATAR — Giriş yapan kullanıcının baş harfleri ---- */

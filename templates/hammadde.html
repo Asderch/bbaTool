@@ -1113,5 +1113,12 @@ window.addEventListener("load", function() {
   listeYukle()
 })
 </script>
+
+<script>
+async function cikisYap() {
+  const s = await onayla("Çıkış yapmak istediğinize emin misiniz?", "Çıkış Yap", {onayText:"Çıkış Yap", tip:"uyari"})
+  if (s) window.location.href = "/logout"
+}
+</script>
 </body>
 </html>

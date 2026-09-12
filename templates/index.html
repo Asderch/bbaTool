@@ -10,18 +10,19 @@
   <script src="/assets/js/popup.js" defer></script>
   <style>
     /* ---- HOŞGELDİN BANNER ---- */
-.hosgeldin-kart{background:#0a0a0a;border:0.5px solid #262626;border-radius:var(--radius-lg);padding:16px 22px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden}
-.hosgeldin-kart::after{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(62,207,142,.08)}
+.hosgeldin-kart{background:#2f6b47;border:0.5px solid #3f8058;border-radius:var(--radius-lg);padding:16px 22px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden}
+.hosgeldin-kart::after{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.06)}
 .hosgeldin-kart .sol{color:#fff;z-index:1}
 .hosgeldin-kart .sol h1{font-size:16px;font-weight:700;margin:0;display:flex;align-items:baseline;gap:6px}
-.hosgeldin-kart .sol h1 .ust{font-size:12px;font-weight:400;opacity:.55}
+.hosgeldin-kart .sol h1 .ust{font-size:12px;font-weight:400;opacity:.65}
 .hosgeldin-kart .sol .alt-satir{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:10.5px}
-.hosgeldin-kart .sol .rol{padding:2px 8px;border-radius:999px;font-weight:700;background:rgba(62,207,142,.15);color:#5fe0a8;letter-spacing:.3px}
-.hosgeldin-kart .sol .ayrac{opacity:.3}
-.hosgeldin-kart .sol .tarih-bilgi{opacity:.45}
+.hosgeldin-kart .sol .rol{padding:2px 8px;border-radius:999px;font-weight:700;background:rgba(255,255,255,.2);color:#fff;letter-spacing:.3px}
+.hosgeldin-kart .sol .ayrac{opacity:.4}
+.hosgeldin-kart .sol .tarih-bilgi{opacity:.6}
 .hosgeldin-kart .sag{z-index:1;display:flex;gap:10px;align-items:center}
-.hosgeldin-kart .sag img{height:34px;width:auto;opacity:.85}
+.hosgeldin-kart .sag img{height:34px;width:auto;opacity:.95}
 [data-theme="light"] .hosgeldin-kart{background:#0d3d2c;border-color:#0d3d2c}
+[data-theme="light"] .hosgeldin-kart::after{background:rgba(255,255,255,.08)}
 [data-theme="light"] .hosgeldin-kart .sol .rol{background:rgba(255,255,255,.18);color:#fff}
 
     /* ---- GENEL ÖZET KPI ---- */
@@ -208,6 +209,19 @@
 .hd-ad{color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hd-sayi{font-weight:700;color:var(--text);font-family:monospace}
 
+.notif-panel{display:none;position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;overflow-y:auto;background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg,16px);box-shadow:var(--shadow-lg);z-index:200;padding:6px}
+.notif-panel.goster{display:block}
+.notif-panel-baslik{font-size:12px;font-weight:700;color:var(--text);padding:10px 12px 8px;border-bottom:0.5px solid var(--border);margin-bottom:4px}
+.notif-yukleniyor,.notif-bos{padding:20px 12px;text-align:center;color:var(--text3);font-size:12px}
+.notif-item{padding:10px 12px;border-radius:var(--radius,10px);margin-bottom:2px;cursor:pointer;transition:background .15s}
+.notif-item:hover{background:var(--bg-hover)}
+.notif-item-ust{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.notif-item-ikon{width:18px;text-align:center;font-size:12px;flex-shrink:0}
+.notif-item.tip-uyari .notif-item-ikon{color:var(--amber)}
+.notif-item.tip-basari .notif-item-ikon{color:var(--green)}
+.notif-item.tip-bilgi .notif-item-ikon{color:var(--blue)}
+.notif-item-baslik{font-size:12px;font-weight:700;color:var(--text)}
+.notif-item-detay{font-size:11px;color:var(--text2);line-height:1.4;padding-left:25px}
     </style>
 </head>
 <body>
@@ -259,7 +273,13 @@
 <div class="topbar">
   <div><div class="topbar-breadcrumb"><span class="bc-current">Home Page</span></div><div class="topbar-title">Ana Sayfa</div><div class="topbar-sub">Genel bakış ve hızlı erişim - Overview and Quick Access</div></div>
   <div class="topbar-actions">
-    <button class="topbar-notif" title="Bildirimler"><i class="fa-solid fa-bell"></i><span class="notif-dot"></span></button>
+    <div class="notif-wrap" style="position:relative">
+      <button class="topbar-notif" id="notifBtn" title="İçgörüler" onclick="notifPanelAcKapat()"><i class="fa-solid fa-bell"></i><span class="notif-dot" id="notifDot" style="display:none"></span></button>
+      <div id="notifPanel" class="notif-panel">
+        <div class="notif-panel-baslik">İçgörüler</div>
+        <div id="notifPanelIcerik"><div class="notif-yukleniyor">Yükleniyor...</div></div>
+      </div>
+    </div>
     <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
     <div class="topbar-avatar" id="topbarAvatar" title="Profil">BA</div>
   </div>
@@ -273,7 +293,7 @@
       <div class="alt-satir"><span class="rol" id="rolEtiket">-</span><span class="ayrac">·</span><span class="tarih-bilgi" id="tarihBilgi"></span></div>
     </div>
     <div class="sag">
-      <img src="/assets/logo/bba-logo-mini.png" alt="BBA">
+      <img src="/assets/logo/bba-logo-mono.png" alt="BBA">
     </div>
   </div>
 
@@ -382,6 +402,49 @@ function renderAttentionStrip(){
   }
 }
 
+var NOTIF_ICON = { uyari: "fa-triangle-exclamation", basari: "fa-circle-check", bilgi: "fa-circle-info" };
+
+function _notifEsc(s) {
+  var d = document.createElement("div"); d.innerText = (s == null ? "" : String(s)); return d.innerHTML
+}
+
+function notifPanelAcKapat() {
+  var p = document.getElementById("notifPanel");
+  p.classList.toggle("goster");
+}
+document.addEventListener("click", function(e){
+  var wrap = document.querySelector(".notif-wrap");
+  if (wrap && !wrap.contains(e.target)) {
+    var p = document.getElementById("notifPanel");
+    if (p) p.classList.remove("goster");
+  }
+});
+
+async function notifIcgorulerYukle() {
+  var icerik = document.getElementById("notifPanelIcerik");
+  var dot = document.getElementById("notifDot");
+  try {
+    var r = await fetch("/api/insights");
+    var d = await r.json();
+    var liste = (d && d.insightler) || []
+    if (dot) dot.style.display = liste.some(function(i){ return i.tip === "uyari" }) ? "" : "none"
+    if (!liste.length) {
+      icerik.innerHTML = '<div class="notif-bos">Şu an içgörü yok</div>'
+      return
+    }
+    icerik.innerHTML = liste.map(function(i){
+      var ikon = NOTIF_ICON[i.tip] || "fa-circle-info"
+      var tik = i.link ? ' onclick="window.location.href=\'' + i.link + '\'"' : ''
+      return '<div class="notif-item tip-' + i.tip + '"' + tik + '>' +
+        '<div class="notif-item-ust"><i class="fa-solid ' + ikon + ' notif-item-ikon"></i><span class="notif-item-baslik">' + _notifEsc(i.baslik) + '</span></div>' +
+        '<div class="notif-item-detay">' + _notifEsc(i.detay) + '</div>' +
+      '</div>'
+    }).join('')
+  } catch(e) {
+    icerik.innerHTML = '<div class="notif-bos">İçgörüler yüklenemedi</div>'
+  }
+}
+
 const ROL_ADLARI = {
   admin: "ADMIN",
   yonetici: "COMMANDER",
@@ -435,6 +498,8 @@ window.addEventListener("load", async ()=>{
 
   // Tarih bilgisi
   document.getElementById("tarihBilgi").innerText = tarihGunAy();
+
+  notifIcgorulerYukle();
 
   // Kullanıcı bilgileri
   let yetkiler = {};
