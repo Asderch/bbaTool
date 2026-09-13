@@ -15,8 +15,8 @@
     .toolbar-sol{display:flex;gap:8px;flex-wrap:wrap}
     .ekle-row{display:grid;grid-template-columns:1fr 1.5fr 1fr 1.5fr 1fr 80px 80px;gap:8px;align-items:end;margin-bottom:8px}
     .ekle-grup{display:flex;flex-direction:column;gap:2px}.ekle-grup label{font-size:10px;font-weight:600;color:var(--text3)}.ekle-grup input,.ekle-grup select{margin-bottom:0;padding:7px 9px;font-size:12px}
-    .import-btn{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
-    .sablon-btn{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+    .import-btn{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(99,102,241,.2)}
+    .sablon-btn{background:var(--green-dim);color:var(--green);border:1px solid rgba(134,180,143,.2)}
     .import-table {width: 100%;border-collapse: collapse;table-layout: fixed;}
     .import-table th,
     .import-table td {padding: 14px 16px;text-align: left;vertical-align: middle;box-sizing: border-box;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}
@@ -37,6 +37,12 @@
     .import-table th:nth-child(7),
     .import-table td:nth-child(7) {width: 90px;text-align: center;}
     @media(max-width:768px){.ekle-row{grid-template-columns:1fr 1fr}.plan-bk{flex-direction:column;text-align:center}.ozet-strip{flex-direction:column}}
+    .btn.toplu-gonder{background:var(--green);color:#fff;border:none}
+    .btn.toplu-gonder:hover{background:var(--primary-light);color:#fff;border-color:transparent}
+    .btn.toplu-iptal{background:var(--red);color:#fff;border:none}
+    .btn.toplu-iptal:hover{opacity:.88;color:#fff;border-color:transparent;background:var(--red)}
+    .btn.toplu-devret{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(99,102,241,.2)}
+    .btn.toplu-devret:hover{background:var(--blue);color:#fff;border-color:transparent}
   </style>
 </head>
 <body>
@@ -75,7 +81,7 @@
     <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
     {% endif %}
   <div class="sidebar-footer">
-    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaSeciciAcKapat(this)">
   <i class="fa-solid fa-sun"></i> Açık Tema
 </button>
     <button class="cikis-btn" onclick="cikisYap()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
@@ -83,7 +89,7 @@
 </nav>
 <div class="main-area">
 <div class="topbar">
-  <div><div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span>Sevkiyat / Planlar<span class="bc-sep">›</span><span class="bc-current">Sevkiyat Detay</span></div><div class="topbar-title" id="topbarPlanAdi">Sevkiyat Detay</div><div class="topbar-sub">Plan detayları ve kalem yönetimi</div></div>
+  <div><div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span><a href="/sevkiyat-planlar">Sevkiyat / Planlar</a><span class="bc-sep">›</span><span class="bc-current">Sevkiyat Detay</span></div><div class="topbar-title" id="topbarPlanAdi">Sevkiyat Detay</div><div class="topbar-sub">Plan detayları ve kalem yönetimi</div></div>
   <div class="topbar-actions">
     <button class="btn cikti-btn excel" onclick="excelCikti()"><i class="fa-solid fa-file-excel"></i> Excel</button>
     <button class="btn cikti-btn pdf" onclick="pdfCikti()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
@@ -105,6 +111,7 @@
       <div class="ozet-mini kalan"><div class="sayi" id="oKalan">0</div><div class="et">Kalan</div></div>
       <div class="ozet-mini devreden"><div class="sayi" id="oDevreden">0</div><div class="et">Devreden</div></div>
     </div>
+    <a href="/sevkiyat-planlar" class="geri-btn"><i class="fa-solid fa-arrow-left"></i> Plan Listesine Dön</a>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn" id="ekleBtn" onclick="ekleGoster()"><i class="fa-solid fa-plus"></i> Kalem Ekle</button>
@@ -132,13 +139,13 @@
       <button class="btn temizle" onclick="ekleGizle()" style="font-size:12px;padding:6px 12px;margin-top:8px"><i class="fa-solid fa-xmark"></i> Kapat</button>
     </div>
     <div class="toolbar"><div class="toolbar-sol">
-      <button class="btn" onclick="topluGonderimBaslat()" style="background:var(--green)">
+      <button class="btn toplu-gonder" onclick="topluGonderimBaslat()">
         <i class="fa-solid fa-truck-fast"></i> Toplu Gönderim
       </button>
-      <button class="btn" onclick="topluDevretBaslat()">
+      <button class="btn toplu-devret" onclick="topluDevretBaslat()">
         <i class="fa-solid fa-share"></i> Seçilenleri Devret
       </button>
-      <button class="btn" onclick="topluKalanIptalBaslat()" style="background:var(--red)">
+      <button class="btn toplu-iptal" onclick="topluKalanIptalBaslat()">
         <i class="fa-solid fa-ban"></i> Toplu Kalan İptal
       </button>
       <button class="filtre-btn aktif" onclick="filtrele('tumu',this)">Tümü</button>
@@ -214,7 +221,7 @@
     let planData=null,
 kalemler=[],
 mevcutFiltre="tumu",
-kullaniciRol="hazirlayan",
+kullaniciRol="hazirlayan",kullaniciYetki={},
 gondKalemId=null,
 devirKalemId=null
 
@@ -225,7 +232,7 @@ malgrubu:null
 }
 
 
-    window.addEventListener("load",async()=>{try{const r=await fetch("/api/kullanici-bilgi");const b=await r.json();kullaniciRol=b.rol}catch(e){};detayYukle()})
+    window.addEventListener("load",async()=>{try{const r=await fetch("/api/kullanici-bilgi");const b=await r.json();kullaniciRol=b.rol;kullaniciYetki=b.yetkiler||{}}catch(e){};detayYukle()})
 
 
     function ekleGoster(){document.getElementById("ekleKart").classList.add("goster")}
@@ -466,7 +473,7 @@ Mal Grubu
           isl+=`<button class="ib gonder" onclick="gondBaslat(${k.id})"><i class="fa-solid fa-truck"></i> Gönder</button> `;
           isl+=`<button class="ib devret" onclick="devirBaslat(${k.id})"><i class="fa-solid fa-share"></i> Devret</button> `;
           if(kalan>0)isl+=`<button class="ib iptal" onclick="kalanIptal(${k.id})" title="Kalan miktarı iptal et"><i class="fa-solid fa-ban"></i> Kalan İptal</button> `;
-          if(k.durum==="Bekliyor"&&kullaniciRol==="admin")isl+=`<button class="ib sil" onclick="kalemSil(${k.id})"><i class="fa-solid fa-trash"></i></button> `;
+          if(k.durum==="Bekliyor"&&kullaniciYetki.kalem_sil)isl+=`<button class="ib sil" onclick="kalemSil(${k.id})"><i class="fa-solid fa-trash"></i></button> `;
 isl += `<button class="ib duzenle" onclick="duzenleBaslat(${k.id})">
 <i class="fa-solid fa-pen"></i>
 </button> `
@@ -704,7 +711,7 @@ Kalan: <strong>${fN(k.kalan_miktar)} ${k.birim}</strong>`
       if(kalan > 0){
         isl += `<button class="ib iptal" onclick="kalanIptal(${k.id})" title="Kalan miktarı iptal et"><i class="fa-solid fa-ban"></i> Kalan İptal</button> `
       }
-      if(k.durum==="Bekliyor" && kullaniciRol==="admin"){
+      if(k.durum==="Bekliyor" && kullaniciYetki.kalem_sil){
         isl += `<button class="ib sil" onclick="kalemSil(${k.id})"><i class="fa-solid fa-trash"></i></button> `
       }
       isl += `<button class="ib duzenle" onclick="duzenleBaslat(${k.id})"><i class="fa-solid fa-pen"></i></button> `

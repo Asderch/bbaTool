@@ -3,21 +3,21 @@
 :root {
   --primary:      #86B48F;
   --primary-light:#A3CBAA;
-  --primary-dim:  #1e3527;
-  --bg:           #0f1a14;
-  --bg-content:   #111f18;
-  --bg-white:     #16261d;
-  --bg-card:      #16261d;
-  --bg-hover:     #1b2e22;
-  --border:       #263b2d;
-  --border-light: #1e2f24;
-  --text:         #F7FBF8;
-  --text2:        #a8c4b1;
-  --text3:        #77947f;
+  --primary-dim:  #182019;
+  --bg:           #0a0a0a;
+  --bg-content:   #0a0a0a;
+  --bg-white:     #131313;
+  --bg-card:      #131313;
+  --bg-hover:     #1a1a1a;
+  --border:       #232323;
+  --border-light: #1c1c1c;
+  --text:         #f5f5f5;
+  --text2:        #999999;
+  --text3:        #666666;
   --blue:         #6366f1;
   --blue-dim:     #1a1a35;
   --green:        #86B48F;
-  --green-dim:    #1e3527;
+  --green-dim:    #182019;
   --amber:        #eab308;
   --amber-dim:    #2e2510;
   --red:          #ef4444;
@@ -36,15 +36,16 @@
   --shadow:       0 0 0 1px var(--border), inset 0 1px 0 rgba(255,255,255,.05);
   --shadow-lg:    0 20px 50px rgba(0,0,0,.5), 0 0 0 1px var(--border);
   --transition:   .15s ease;
-  --sidebar-bg:         #0e1d15;
-  --sidebar-border:     #22392a;
-  --sidebar-text:       #8fae9a;
-  --sidebar-text-hover: #F7FBF8;
-  --sidebar-active-bg:  #1a3324;
-  --sidebar-active-color:#F7FBF8;
-  --sidebar-section:    #6f9280;
-  --sidebar-logo-text:  #F7FBF8;
-  --sidebar-logo-sub:   #6f9280;
+  --sidebar-bg:         #0a0a0a;
+  --sidebar-border:     #1c1c1c;
+  --sidebar-text:       #999999;
+  --sidebar-text-hover: #f5f5f5;
+  --sidebar-active-bg:  #f5f5f5;
+  --sidebar-hover-bg:   #161616;
+  --sidebar-active-color:#0a0a0a;
+  --sidebar-section:    #666666;
+  --sidebar-logo-text:  #f5f5f5;
+  --sidebar-logo-sub:   #666666;
 }
 
 [data-theme="light"] {
@@ -87,6 +88,7 @@
   --sidebar-text:       #3d6b56;
   --sidebar-text-hover: #0d3d2c;
   --sidebar-active-bg:  #ffffff;
+  --sidebar-hover-bg:   #dcece2;
   --sidebar-active-color:#0d3d2c;
   --sidebar-section:    #6b9080;
   --sidebar-logo-text:  #0d3d2c;
@@ -104,7 +106,13 @@
 [data-theme="light"] td{border-bottom-color:var(--border)}
 [data-theme="light"] tr:hover td{background:#fafafa}
 [data-theme="light"] tr:nth-child(even) td{background:#fcfcfc}
-[data-theme="light"] .plan-bk{background:#0e1d15;color:rgba(255,255,255,.9);border-color:#22392a}
+[data-theme="light"] .plan-bk{background:#0d3d2c;color:rgba(255,255,255,.9);border-color:#0d3d2c}
+[data-tema-ailesi="amber"] .plan-bk{background:#8a5a2e;color:rgba(255,255,255,.9);border-color:#a86a35}
+[data-tema-ailesi="amber"][data-theme="light"] .plan-bk{background:#7a4a1f;color:rgba(255,255,255,.9);border-color:#7a4a1f}
+[data-tema-ailesi="indigo"] .plan-bk{background:#3d4a8a;color:rgba(255,255,255,.9);border-color:#4d5aa0}
+[data-tema-ailesi="indigo"][data-theme="light"] .plan-bk{background:#2f3a75;color:rgba(255,255,255,.9);border-color:#2f3a75}
+[data-tema-ailesi="orkide"] .plan-bk{background:#5c3f9e;color:rgba(255,255,255,.9);border-color:#6e4fb5}
+[data-tema-ailesi="orkide"][data-theme="light"] .plan-bk{background:#4a2f87;color:rgba(255,255,255,.9);border-color:#4a2f87}
 [data-theme="light"] .plan-bk h2{color:#fff}
 [data-theme="light"] .modal-ic,[data-theme="light"] .mg-modal{background:#fff;border-color:var(--border)}
 [data-theme="light"] .popup-kutu{background:#fff;border-color:var(--border)}
@@ -116,7 +124,7 @@
 [data-theme="light"] .login-main h1{color:var(--text)}
 [data-theme="light"] .login-main .sub{color:var(--text3)}
 [data-theme="light"] .login-main .input-ikon input{background:#f5f5f5;border-color:var(--border);color:var(--text)}
-body.splash-body{background:#0e1d15 !important}
+body.splash-body{background:#0a0a0a !important}
 [data-theme="light"] .filtre-btn,[data-theme="light"] .tip-filtre-btn,[data-theme="light"] .mg-filtre-btn{background:#fff;border-color:var(--border);color:var(--text2)}
 [data-theme="light"] .filtre-btn.aktif,[data-theme="light"] .tip-filtre-btn.aktif{background:var(--green-dim);border-color:var(--green);color:var(--green)}
 [data-theme="light"] .tarih-filtre button{background:#fff;border-color:var(--border);color:var(--text2)}
@@ -161,7 +169,7 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--
 .sidebar-logo span{font-size:10px;color:var(--sidebar-logo-sub)}
 .nav-section{padding:16px 16px 6px;font-size:9px;color:var(--sidebar-section);letter-spacing:1px;text-transform:uppercase;font-weight:600}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;margin:1px 8px;border-radius:8px;cursor:pointer;color:var(--sidebar-text);font-size:12px;font-weight:500;transition:all .2s ease;text-decoration:none}
-.nav-item:hover{background:var(--sidebar-active-bg);color:var(--sidebar-text-hover);transform:translateX(2px)}
+.nav-item:hover{background:var(--sidebar-hover-bg);color:var(--sidebar-text-hover);transform:translateX(2px)}
 .nav-item.active{background:var(--sidebar-active-bg);color:var(--sidebar-active-color);font-weight:600;border-radius:8px}
 .nav-item i{width:16px;text-align:center;font-size:12px;opacity:.45}
 .nav-item.active i{opacity:1;color:var(--sidebar-active-color)}
@@ -264,7 +272,7 @@ input::placeholder{color:var(--text3)}
 .hareket-satir .h-detay{font-size:9px;color:var(--text3);font-style:italic}
 .devir-notu{font-size:9px;color:var(--amber);display:block;margin-top:1px}.fazla-gonderim{color:var(--purple);font-weight:700}
 
-.plan-bk{background:#0e1d15;color:rgba(255,255,255,.9);padding:18px 22px;border-radius:var(--radius-lg);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border:0.5px solid #22392a}
+.plan-bk{background:#2f6b47;color:rgba(255,255,255,.9);padding:18px 22px;border-radius:var(--radius-lg);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border:0.5px solid #3f8058}
 .plan-bk h2{margin:0;font-size:16px;color:#fff}.plan-bk .bilgi{font-size:11px;opacity:.7}.plan-bk .yb{font-size:26px;font-weight:800}
 
 .do{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
@@ -313,7 +321,7 @@ input::placeholder{color:var(--text3)}
 .sil-btn{padding:4px 10px;font-size:10px;border-radius:8px;background:var(--red-dim);color:var(--red);border:0.5px solid rgba(239,68,68,.2);display:none}.sil-btn.gorunur{display:inline-flex}.sil-btn:hover{background:var(--red);color:#fff}
 .cikti-btns{display:flex;gap:6px}.cikti-btn{padding:5px 10px;border-radius:8px;font-size:10px;font-weight:600}.cikti-btn.excel{background:var(--green-dim);color:var(--green);border:0.5px solid rgba(134,180,143,.2)}.cikti-btn.pdf{background:var(--red-dim);color:var(--red);border:0.5px solid rgba(239,68,68,.2)}
 
-body.splash-body{margin:0;height:100vh;background:#0e1d15;display:flex;align-items:center;justify-content:center;padding:0}
+body.splash-body{margin:0;height:100vh;background:#0a0a0a;display:flex;align-items:center;justify-content:center;padding:0}
 .splash-container{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .splash-title{font-size:22px;font-weight:700;margin-bottom:8px;color:#fff}.splash-subtitle{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:28px}
 .progress-bar{width:240px;height:3px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin:auto}.progress{height:100%;width:0%;background:var(--primary);animation:loading 5s linear forwards}
@@ -327,7 +335,7 @@ body.splash-body{margin:0;height:100vh;background:#0e1d15;display:flex;align-ite
 .butonlar{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 
 .panel{background:var(--bg-white);border:0.5px solid var(--border);width:100%;max-width:520px;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
-.panel-header{background:#0e1d15;padding:30px 32px 24px;text-align:center}
+.panel-header{background:#0a0a0a;padding:30px 32px 24px;text-align:center}
 .panel-header img{height:100px;width:auto;max-width:240px;display:block;margin:0 auto 14px;object-fit:contain}
 .panel-header .hosgeldin{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:4px}.panel-header .kullanici-adi{font-size:22px;font-weight:800;color:#fff}
 .panel-header .rol-etiket{display:inline-block;margin-top:8px;padding:4px 12px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(255,255,255,.1);color:rgba(255,255,255,.8)}
@@ -344,7 +352,7 @@ body.splash-body{margin:0;height:100vh;background:#0e1d15;display:flex;align-ite
 .rol-rozet.yasakli { background: rgba(217,70,239,0.15); color: #d946ef; }
 
 .login-kart{background:var(--bg-white);border:0.5px solid var(--border);width:100%;max-width:520px;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
-.login-header{background:#0e1d15;padding:30px 32px 26px;text-align:center}
+.login-header{background:#0a0a0a;padding:30px 32px 26px;text-align:center}
 .login-header img{width:180px;max-width:72%;height:auto;display:block;margin:0 auto 18px}.login-header .baslik{font-size:17px;font-weight:700;color:#fff;margin-bottom:3px}.login-header .alt-baslik{font-size:11px;color:rgba(255,255,255,.55)}
 .login-body{padding:24px 30px}.input-grup{margin-bottom:12px}.input-grup label{display:block;margin-bottom:5px}
 .input-ikon{position:relative}.input-ikon i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px}.input-ikon input{padding-left:36px;margin-bottom:0;min-height:42px}
@@ -429,3 +437,292 @@ body.splash-body{margin:0;height:100vh;background:#0e1d15;display:flex;align-ite
 
 .nav-item.yakinda{ opacity:.45; }
 .nav-item.yakinda:hover{ opacity:.7; }
+/* ---- TEMA SEÇİM MENÜSÜ (sidebar + topbar ortak) ---- */
+.tema-secici-panel{position:fixed;z-index:500;background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius,10px);box-shadow:var(--shadow-lg);padding:6px;min-width:150px}
+.tema-secici-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:12.5px;color:var(--text);cursor:pointer;transition:background .15s}
+.tema-secici-item:hover{background:var(--bg-hover)}
+.tema-secici-item.aktif{color:var(--primary);font-weight:600}
+.tema-secici-item i:first-child{width:14px;text-align:center;font-size:12px}
+.tema-secici-tik{margin-left:auto;font-size:11px}
+
+/* ==========================================================
+   TEMA AİLESİ: AMBER (koyu zemin + sıcak turuncu vurgu)
+   ========================================================== */
+[data-tema-ailesi="amber"] {
+  --primary:      #C9803F;
+  --primary-light:#D99B5C;
+  --primary-dim:  #2a1f16;
+  --bg:           #0a0a0a;
+  --bg-content:   #0a0a0a;
+  --bg-white:     #121212;
+  --bg-card:      #121212;
+  --bg-hover:     #1a1a1a;
+  --border:       #262626;
+  --border-light: #1e1e1e;
+  --text:         #f5f5f5;
+  --text2:        #999999;
+  --text3:        #666666;
+  --blue:         #6366f1;
+  --blue-dim:     #1a1a35;
+  --green:        #C9803F;
+  --green-dim:    #2a1f16;
+  --amber:        #C9803F;
+  --amber-dim:    #2a1f16;
+  --red:          #ef4444;
+  --red-dim:      #2a1515;
+  --purple:       #a78bfa;
+  --purple-dim:   #1e1530;
+  --teal:         #2dd4bf;
+  --teal-dim:     #0f2a28;
+  --pink:         #f472b6;
+  --pink-dim:     #2a1525;
+  --radius:       18px;
+  --radius-lg:    24px;
+  --radius-kpi:   18px;
+  --radius-pill:  999px;
+  --shadow-sm:    0 0 0 1px var(--border), inset 0 1px 0 rgba(255,255,255,.04);
+  --shadow:       0 0 0 1px var(--border), inset 0 1px 0 rgba(255,255,255,.05);
+  --shadow-lg:    0 20px 50px rgba(0,0,0,.5), 0 0 0 1px var(--border);
+  --transition:   .15s ease;
+  --sidebar-bg:         #0a0a0a;
+  --sidebar-border:     #1e1e1e;
+  --sidebar-text:       #999999;
+  --sidebar-text-hover: #f5f5f5;
+  --sidebar-active-bg:  #1a1512;
+  --sidebar-hover-bg:   #1a1a1a;
+  --sidebar-active-color:#f5f5f5;
+  --sidebar-section:    #666666;
+  --sidebar-logo-text:  #f5f5f5;
+  --sidebar-logo-sub:   #666666;
+}
+
+[data-tema-ailesi="amber"][data-theme="light"] {
+  --primary:      #A8622A;
+  --primary-light:#C9803F;
+  --primary-dim:  #fbe9d7;
+  --bg:           #fffcf7;
+  --bg-content:   #ffffff;
+  --bg-white:     #ffffff;
+  --bg-card:      #ffffff;
+  --bg-hover:     #fbe9d7;
+  --border:       #ecdfd0;
+  --border-light: #f5ece0;
+  --text:         #2b1d0e;
+  --text2:        #8a6e52;
+  --text3:        #b3a08c;
+  --blue:         #4f46e5;
+  --blue-dim:     #eef2ff;
+  --green:        #A8622A;
+  --green-dim:    #fbe9d7;
+  --amber:        #A8622A;
+  --amber-dim:    #fbe9d7;
+  --red:          #dc2626;
+  --red-dim:      #fef2f2;
+  --purple:       #7c3aed;
+  --purple-dim:   #f5f3ff;
+  --teal:         #0d9488;
+  --teal-dim:     #f0fdfa;
+  --pink:         #db2777;
+  --pink-dim:     #fdf2f8;
+  --shadow-sm:    0 1px 2px rgba(43,29,14,.05), 0 1px 4px rgba(43,29,14,.06);
+  --shadow:       0 2px 6px rgba(43,29,14,.07), 0 1px 3px rgba(43,29,14,.08);
+  --shadow-lg:    0 10px 30px rgba(0,0,0,.08);
+  --sidebar-bg:         #fdf3e7;
+  --sidebar-border:     #f0e0cc;
+  --sidebar-text:       #8a6e52;
+  --sidebar-text-hover: #2b1d0e;
+  --sidebar-active-bg:  #ffffff;
+  --sidebar-hover-bg:   #f5ece0;
+  --sidebar-active-color:#2b1d0e;
+  --sidebar-section:    #b3a08c;
+  --sidebar-logo-text:  #2b1d0e;
+  --sidebar-logo-sub:   #b3a08c;
+}
+
+/* ==========================================================
+   TEMA AİLESİ: INDIGO (koyu zemin + mavi vurgu)
+   ========================================================== */
+[data-tema-ailesi="indigo"] {
+  --primary:      #6B7FD9;
+  --primary-light:#8B9BE8;
+  --primary-dim:  #1a1e2e;
+  --bg:           #0a0a0a;
+  --bg-content:   #0a0a0a;
+  --bg-white:     #121212;
+  --bg-card:      #121212;
+  --bg-hover:     #1a1a1a;
+  --border:       #232326;
+  --border-light: #1c1c1e;
+  --text:         #f5f5f5;
+  --text2:        #999999;
+  --text3:        #666666;
+  --blue:         #6B7FD9;
+  --blue-dim:     #1a1e2e;
+  --green:        #6B7FD9;
+  --green-dim:    #1a1e2e;
+  --amber:        #eab308;
+  --amber-dim:    #2e2510;
+  --red:          #ef4444;
+  --red-dim:      #2a1515;
+  --purple:       #a78bfa;
+  --purple-dim:   #1e1530;
+  --teal:         #2dd4bf;
+  --teal-dim:     #0f2a28;
+  --pink:         #f472b6;
+  --pink-dim:     #2a1525;
+  --radius:       18px;
+  --radius-lg:    24px;
+  --radius-kpi:   18px;
+  --radius-pill:  999px;
+  --shadow-sm:    0 0 0 1px var(--border), inset 0 1px 0 rgba(255,255,255,.04);
+  --shadow:       0 0 0 1px var(--border), inset 0 1px 0 rgba(255,255,255,.05);
+  --shadow-lg:    0 20px 50px rgba(0,0,0,.5), 0 0 0 1px var(--border);
+  --transition:   .15s ease;
+  --sidebar-bg:         #0a0a0a;
+  --sidebar-border:     #1e1e21;
+  --sidebar-text:       #999999;
+  --sidebar-text-hover: #f5f5f5;
+  --sidebar-active-bg:  #171a26;
+  --sidebar-hover-bg:   #1a1a1a;
+  --sidebar-active-color:#f5f5f5;
+  --sidebar-section:    #666666;
+  --sidebar-logo-text:  #f5f5f5;
+  --sidebar-logo-sub:   #666666;
+}
+
+[data-tema-ailesi="indigo"][data-theme="light"] {
+  --primary:      #4B5FC0;
+  --primary-light:#6B7FD9;
+  --primary-dim:  #eaedfb;
+  --bg:           #fcfcff;
+  --bg-content:   #ffffff;
+  --bg-white:     #ffffff;
+  --bg-card:      #ffffff;
+  --bg-hover:     #eaedfb;
+  --border:       #dfe1ef;
+  --border-light: #eef0f8;
+  --text:         #171933;
+  --text2:        #565c8a;
+  --text3:        #9498b8;
+  --blue:         #4B5FC0;
+  --blue-dim:     #eaedfb;
+  --green:        #4B5FC0;
+  --green-dim:    #eaedfb;
+  --amber:        #ca8a04;
+  --amber-dim:    #fefce8;
+  --red:          #dc2626;
+  --red-dim:      #fef2f2;
+  --purple:       #7c3aed;
+  --purple-dim:   #f5f3ff;
+  --teal:         #0d9488;
+  --teal-dim:     #f0fdfa;
+  --pink:         #db2777;
+  --pink-dim:     #fdf2f8;
+  --shadow-sm:    0 1px 2px rgba(23,25,51,.05), 0 1px 4px rgba(23,25,51,.06);
+  --shadow:       0 2px 6px rgba(23,25,51,.07), 0 1px 3px rgba(23,25,51,.08);
+  --shadow-lg:    0 10px 30px rgba(0,0,0,.08);
+  --sidebar-bg:         #eef0fb;
+  --sidebar-border:     #dde0f3;
+  --sidebar-text:       #565c8a;
+  --sidebar-text-hover: #171933;
+  --sidebar-active-bg:  #ffffff;
+  --sidebar-hover-bg:   #dde0f3;
+  --sidebar-active-color:#171933;
+  --sidebar-section:    #9498b8;
+  --sidebar-logo-text:  #171933;
+  --sidebar-logo-sub:   #9498b8;
+}
+
+/* ==========================================================
+   TEMA AİLESİ: ORKİDE (koyu zemin + mor vurgu)
+   ========================================================== */
+[data-tema-ailesi="orkide"] {
+  --primary:      #A78BFA;
+  --primary-light:#C4B0FC;
+  --primary-dim:  #211a33;
+  --bg:           #0a0a0a;
+  --bg-content:   #0a0a0a;
+  --bg-white:     #121212;
+  --bg-card:      #121212;
+  --bg-hover:     #1a1a1a;
+  --border:       #26232c;
+  --border-light: #1e1c22;
+  --text:         #f5f5f5;
+  --text2:        #999999;
+  --text3:        #666666;
+  --blue:         #6366f1;
+  --blue-dim:     #1a1a35;
+  --green:        #A78BFA;
+  --green-dim:    #211a33;
+  --amber:        #eab308;
+  --amber-dim:    #2e2510;
+  --red:          #ef4444;
+  --red-dim:      #2a1515;
+  --purple:       #A78BFA;
+  --purple-dim:   #211a33;
+  --teal:         #2dd4bf;
+  --teal-dim:     #0f2a28;
+  --pink:         #f472b6;
+  --pink-dim:     #2a1525;
+  --radius:       18px;
+  --radius-lg:    24px;
+  --radius-kpi:   18px;
+  --radius-pill:  999px;
+  --shadow-sm:    0 0 0 1px var(--border), inset 0 1px 0 rgba(255,255,255,.04);
+  --shadow:       0 0 0 1px var(--border), inset 0 1px 0 rgba(255,255,255,.05);
+  --shadow-lg:    0 20px 50px rgba(0,0,0,.5), 0 0 0 1px var(--border);
+  --transition:   .15s ease;
+  --sidebar-bg:         #0a0a0a;
+  --sidebar-border:     #1e1c22;
+  --sidebar-text:       #999999;
+  --sidebar-text-hover: #f5f5f5;
+  --sidebar-active-bg:  #1e1826;
+  --sidebar-hover-bg:   #1a1a1a;
+  --sidebar-active-color:#f5f5f5;
+  --sidebar-section:    #666666;
+  --sidebar-logo-text:  #f5f5f5;
+  --sidebar-logo-sub:   #666666;
+}
+
+[data-tema-ailesi="orkide"][data-theme="light"] {
+  --primary:      #7C5CE0;
+  --primary-light:#A78BFA;
+  --primary-dim:  #f2edfd;
+  --bg:           #fdfcff;
+  --bg-content:   #ffffff;
+  --bg-white:     #ffffff;
+  --bg-card:      #ffffff;
+  --bg-hover:     #f2edfd;
+  --border:       #e6def8;
+  --border-light: #f3eefc;
+  --text:         #211640;
+  --text2:        #6b5a99;
+  --text3:        #a698c4;
+  --blue:         #4f46e5;
+  --blue-dim:     #eef2ff;
+  --green:        #7C5CE0;
+  --green-dim:    #f2edfd;
+  --amber:        #ca8a04;
+  --amber-dim:    #fefce8;
+  --red:          #dc2626;
+  --red-dim:      #fef2f2;
+  --purple:       #7C5CE0;
+  --purple-dim:   #f2edfd;
+  --teal:         #0d9488;
+  --teal-dim:     #f0fdfa;
+  --pink:         #db2777;
+  --pink-dim:     #fdf2f8;
+  --shadow-sm:    0 1px 2px rgba(33,22,64,.05), 0 1px 4px rgba(33,22,64,.06);
+  --shadow:       0 2px 6px rgba(33,22,64,.07), 0 1px 3px rgba(33,22,64,.08);
+  --shadow-lg:    0 10px 30px rgba(0,0,0,.08);
+  --sidebar-bg:         #f4effc;
+  --sidebar-border:     #e9e1f7;
+  --sidebar-text:       #6b5a99;
+  --sidebar-text-hover: #211640;
+  --sidebar-active-bg:  #ffffff;
+  --sidebar-hover-bg:   #e9e1f7;
+  --sidebar-active-color:#211640;
+  --sidebar-section:    #a698c4;
+  --sidebar-logo-text:  #211640;
+  --sidebar-logo-sub:   #a698c4;
+}

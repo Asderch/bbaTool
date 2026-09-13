@@ -22,6 +22,12 @@
 .hosgeldin-kart .sag{z-index:1;display:flex;gap:10px;align-items:center}
 .hosgeldin-kart .sag img{height:34px;width:auto;opacity:.95}
 [data-theme="light"] .hosgeldin-kart{background:#0d3d2c;border-color:#0d3d2c}
+[data-tema-ailesi="amber"] .hosgeldin-kart{background:#8a5a2e;border-color:#a86a35}
+[data-tema-ailesi="amber"][data-theme="light"] .hosgeldin-kart{background:#7a4a1f;border-color:#7a4a1f}
+[data-tema-ailesi="indigo"] .hosgeldin-kart{background:#3d4a8a;border-color:#4d5aa0}
+[data-tema-ailesi="indigo"][data-theme="light"] .hosgeldin-kart{background:#2f3a75;border-color:#2f3a75}
+[data-tema-ailesi="orkide"] .hosgeldin-kart{background:#5c3f9e;border-color:#6e4fb5}
+[data-tema-ailesi="orkide"][data-theme="light"] .hosgeldin-kart{background:#4a2f87;border-color:#4a2f87}
 [data-theme="light"] .hosgeldin-kart::after{background:rgba(255,255,255,.08)}
 [data-theme="light"] .hosgeldin-kart .sol .rol{background:rgba(255,255,255,.18);color:#fff}
 
@@ -261,7 +267,7 @@
     {% endif %}
 
   <div class="sidebar-footer">
-    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i> Açık Tema</button>
+    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaSeciciAcKapat(this)"><i class="fa-solid fa-sun"></i> Açık Tema</button>
     <button class="cikis-btn" onclick="cikisYap()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
   </div>
 

@@ -52,7 +52,7 @@
     <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
     {% endif %}
   <div class="sidebar-footer">
-    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaToggle()">
+    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaSeciciAcKapat(this)">
   <i class="fa-solid fa-sun"></i> Açık Tema
 </button>
     <button class="cikis-btn" onclick="cikisYap()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
@@ -144,6 +144,7 @@
 
 <script>
   let kullaniciRol = "hazirlayan";
+  let kullaniciYetki = {};
   let aktifTipFiltre = "Tümü";
   let tumPlanlariGoster = false;
 
@@ -152,6 +153,7 @@
       const r = await fetch("/api/kullanici-bilgi");
       const b = await r.json();
       kullaniciRol = b.rol;
+      kullaniciYetki = b.yetkiler || {};
     } catch(e) {}
     planlariYukle();
   });
@@ -267,7 +269,7 @@
 
   async function planlariYukle() {
     try {
-      const r = await fetch("/api/sevkiyat/plan-liste");
+      const r = await fetch("/api/sevkiyat/plan-liste" + (tumPlanlariGoster ? "?hepsi=1" : ""));
       let planlar = await r.json();
 
       console.log("API'den gelen planlar:", planlar);
@@ -329,7 +331,7 @@
 
         const yuzde = Number(p.yuzde || 0);
         const bc = yuzde < 30 ? "dusuk" : yuzde < 70 ? "orta" : "iyi";
-        const sg = kullaniciRol === "admin" ? "gorunur" : "";
+        const sg = kullaniciYetki.plan_sil ? "gorunur" : "";
         const kartClass = tamamlandiMi ? "plan-kart tamamlandi" : "plan-kart";
         const durumYazi = tamamlandiMi ? "Tamamlandı" : (p.durum || "Aktif");
 

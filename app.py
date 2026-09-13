@@ -107,7 +107,7 @@ _tanilama("kullanici_dosyasini_hazirla bitti (modül yüklemesi tamamlandı)")
 
 from functools import wraps
 
-APP_VERSION = "6.2"
+APP_VERSION = "6.4"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -230,114 +230,154 @@ def get_db():
     return conn
 
 def veritabani_olustur():
+    import time as _t
+    _b = _t.time()
+    def _tan(etiket):
+        print(f"[SEVK-TANI] {etiket}: {_t.time()-_b:.2f} sn", flush=True)
+
     conn=get_db()
+    _tan("_connect (get_db) tamam")
+
+    # ---- HIZLI YOL: şema zaten güncelse tüm CREATE/ALTER/INDEX dansını atla ----
+    # (her SQL ifadesi ağ üzerinde ~0.3-0.4 sn'lik sabit maliyete sahip; 20+ ifadeyi
+    #  tek tek/toplu göndermek fark etmiyor — asıl kazanç bu adımların HİÇ çalışmaması)
+    try:
+        gerekli_tablo = {"sevkiyat_plan", "sevkiyat_kalem", "sevkiyat_hareket", "personel", "izin_kayit", "islem_log"}
+        mevcut_tablo = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        gerekli_index = {"idx_kalem_plan_id", "idx_kalem_durum", "idx_kalem_mal_grubu", "idx_kalem_plan_durum",
+                          "idx_hareket_kalem_id", "idx_hareket_islem", "idx_plan_tipi", "idx_plan_bitis",
+                          "idx_plan_durum", "idx_izin_personel", "idx_log_modul", "idx_log_tarih"}
+        mevcut_index = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='index'").fetchall()}
+        _tan("hızlı yol: sqlite_master kontrolü tamam")
+
+        if gerekli_tablo.issubset(mevcut_tablo) and gerekli_index.issubset(mevcut_index):
+            hareket_kolon = {row[1] for row in conn.execute("PRAGMA table_info(sevkiyat_hareket)").fetchall()}
+            kalem_kolon = {row[1] for row in conn.execute("PRAGMA table_info(sevkiyat_kalem)").fetchall()}
+            personel_kolon = {row[1] for row in conn.execute("PRAGMA table_info(personel)").fetchall()}
+            _tan("hızlı yol: kolon kontrolleri tamam")
+            if ("detay" in hareket_kolon
+                    and {"hedef_plan_id", "hedef_plan_adi"}.issubset(kalem_kolon)
+                    and {"sicil_no", "cinsiyet"}.issubset(personel_kolon)):
+                conn.close()
+                _tan("hızlı yol: şema zaten güncel, atlandı")
+                return
+    except Exception as e:
+        _tan(f"hızlı yol kontrolü başarısız, normal akışa devam: {e}")
+
     try: conn.execute("SELECT planlanan_miktar FROM sevkiyat_kalem LIMIT 1")
     except:
         conn.execute("DROP TABLE IF EXISTS sevkiyat_hareket")
         conn.execute("DROP TABLE IF EXISTS sevkiyat_kalem")
         conn.execute("DROP TABLE IF EXISTS sevkiyat_plan")
-    conn.execute("""CREATE TABLE IF NOT EXISTS sevkiyat_plan (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, plan_adi TEXT NOT NULL, plan_tipi TEXT NOT NULL,
-        baslangic TEXT NOT NULL, bitis TEXT NOT NULL, olusturan TEXT NOT NULL,
-        olusturan_ad TEXT NOT NULL, tarih TEXT NOT NULL, durum TEXT DEFAULT 'Aktif')""")
-    conn.execute("""CREATE TABLE IF NOT EXISTS sevkiyat_kalem (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, plan_id INTEGER NOT NULL,
-        yuklenici_firma TEXT, siparis_no TEXT, mal_grubu TEXT, malzeme_tanimi TEXT NOT NULL,
-        planlanan_miktar REAL NOT NULL, gonderilen_miktar REAL DEFAULT 0, birim TEXT DEFAULT 'KG',
-        tir_plaka TEXT, durum TEXT DEFAULT 'Bekliyor',
-        devreden_plan_id INTEGER, devreden_plan_adi TEXT,
-        hedef_plan_id INTEGER, hedef_plan_adi TEXT,
-        not_ TEXT,
-        FOREIGN KEY (plan_id) REFERENCES sevkiyat_plan(id))""")
-    conn.execute("""CREATE TABLE IF NOT EXISTS sevkiyat_hareket (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, kalem_id INTEGER NOT NULL,
-        islem TEXT NOT NULL, miktar REAL NOT NULL, tir_plaka TEXT,
-        yapan TEXT, yapan_ad TEXT, tarih TEXT NOT NULL,
-        detay TEXT,
-        FOREIGN KEY (kalem_id) REFERENCES sevkiyat_kalem(id))""")
+    _tan("ilk SELECT/DROP kontrolü tamam")
 
-    # detay kolonu yoksa ekle (mevcut db için)
-    try:
-        conn.execute("SELECT detay FROM sevkiyat_hareket LIMIT 1")
-    except:
-        try:
-            conn.execute("ALTER TABLE sevkiyat_hareket ADD COLUMN detay TEXT")
-        except:
-            pass
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS sevkiyat_plan (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, plan_adi TEXT NOT NULL, plan_tipi TEXT NOT NULL,
+            baslangic TEXT NOT NULL, bitis TEXT NOT NULL, olusturan TEXT NOT NULL,
+            olusturan_ad TEXT NOT NULL, tarih TEXT NOT NULL, durum TEXT DEFAULT 'Aktif');
 
-    # hedef_plan kolonları (devreden kalem nereye gitti)
-    for col in ["hedef_plan_id", "hedef_plan_adi"]:
-        try:
-            conn.execute(f"ALTER TABLE sevkiyat_kalem ADD COLUMN {col} TEXT")
-        except:
-            pass
+        CREATE TABLE IF NOT EXISTS sevkiyat_kalem (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, plan_id INTEGER NOT NULL,
+            yuklenici_firma TEXT, siparis_no TEXT, mal_grubu TEXT, malzeme_tanimi TEXT NOT NULL,
+            planlanan_miktar REAL NOT NULL, gonderilen_miktar REAL DEFAULT 0, birim TEXT DEFAULT 'KG',
+            tir_plaka TEXT, durum TEXT DEFAULT 'Bekliyor',
+            devreden_plan_id INTEGER, devreden_plan_adi TEXT,
+            hedef_plan_id INTEGER, hedef_plan_adi TEXT,
+            not_ TEXT,
+            FOREIGN KEY (plan_id) REFERENCES sevkiyat_plan(id));
 
-    # ---- PERSONEL TABLOSU ----
-    conn.execute("""CREATE TABLE IF NOT EXISTS personel (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sicil_no TEXT,
-        ad_soyad TEXT NOT NULL,
-        departman TEXT DEFAULT 'Ambar',
-        pozisyon TEXT,
-        yaka TEXT DEFAULT 'Mavi',
-        lokasyon TEXT,
-        ise_giris TEXT,
-        cinsiyet TEXT,
-        toplam_izin INTEGER DEFAULT 14,
-        kullanilan_izin REAL DEFAULT 0,
-        aktif INTEGER DEFAULT 1,
-        not_ TEXT
-    )""")
+        CREATE TABLE IF NOT EXISTS sevkiyat_hareket (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, kalem_id INTEGER NOT NULL,
+            islem TEXT NOT NULL, miktar REAL NOT NULL, tir_plaka TEXT,
+            yapan TEXT, yapan_ad TEXT, tarih TEXT NOT NULL,
+            detay TEXT,
+            FOREIGN KEY (kalem_id) REFERENCES sevkiyat_kalem(id));
 
-    # Mevcut DB için yeni kolonları ekle
-    for col, tip in [("sicil_no", "TEXT"), ("cinsiyet", "TEXT")]:
-        try:
-            conn.execute(f"ALTER TABLE personel ADD COLUMN {col} {tip}")
-        except:
-            pass
+        CREATE TABLE IF NOT EXISTS personel (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sicil_no TEXT,
+            ad_soyad TEXT NOT NULL,
+            departman TEXT DEFAULT 'Ambar',
+            pozisyon TEXT,
+            yaka TEXT DEFAULT 'Mavi',
+            lokasyon TEXT,
+            ise_giris TEXT,
+            cinsiyet TEXT,
+            toplam_izin INTEGER DEFAULT 14,
+            kullanilan_izin REAL DEFAULT 0,
+            aktif INTEGER DEFAULT 1,
+            not_ TEXT
+        );
 
-    conn.execute("""CREATE TABLE IF NOT EXISTS izin_kayit (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        personel_id INTEGER NOT NULL,
-        baslangic TEXT NOT NULL,
-        bitis TEXT NOT NULL,
-        gun_sayisi REAL NOT NULL,
-        izin_turu TEXT DEFAULT 'Yıllık İzin',
-        aciklama TEXT,
-        ekleyen TEXT,
-        ekleyen_ad TEXT,
-        tarih TEXT NOT NULL,
-        FOREIGN KEY (personel_id) REFERENCES personel(id)
-    )""")
+        CREATE TABLE IF NOT EXISTS izin_kayit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            personel_id INTEGER NOT NULL,
+            baslangic TEXT NOT NULL,
+            bitis TEXT NOT NULL,
+            gun_sayisi REAL NOT NULL,
+            izin_turu TEXT DEFAULT 'Yıllık İzin',
+            aciklama TEXT,
+            ekleyen TEXT,
+            ekleyen_ad TEXT,
+            tarih TEXT NOT NULL,
+            FOREIGN KEY (personel_id) REFERENCES personel(id)
+        );
 
-    # ---- İŞLEM LOG TABLOSU ----
-    conn.execute("""CREATE TABLE IF NOT EXISTS islem_log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        modul TEXT NOT NULL,
-        islem TEXT NOT NULL,
-        detay TEXT,
-        ilgili_id INTEGER,
-        ilgili_ad TEXT,
-        yapan TEXT,
-        yapan_ad TEXT,
-        tarih TEXT NOT NULL
-    )""")
+        CREATE TABLE IF NOT EXISTS islem_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            modul TEXT NOT NULL,
+            islem TEXT NOT NULL,
+            detay TEXT,
+            ilgili_id INTEGER,
+            ilgili_ad TEXT,
+            yapan TEXT,
+            yapan_ad TEXT,
+            tarih TEXT NOT NULL
+        );
+    """)
+    _tan("1. executescript (6 tablo) tamam")
 
-    # ---- PERFORMANS İNDEXLERİ ----
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_kalem_plan_id ON sevkiyat_kalem(plan_id)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_kalem_durum ON sevkiyat_kalem(durum)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_kalem_mal_grubu ON sevkiyat_kalem(mal_grubu)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_kalem_plan_durum ON sevkiyat_kalem(plan_id, durum)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_hareket_kalem_id ON sevkiyat_hareket(kalem_id)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_hareket_islem ON sevkiyat_hareket(islem)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_plan_tipi ON sevkiyat_plan(plan_tipi)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_plan_bitis ON sevkiyat_plan(bitis)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_plan_durum ON sevkiyat_plan(durum)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_izin_personel ON izin_kayit(personel_id)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_log_modul ON islem_log(modul)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_log_tarih ON islem_log(tarih)")
+    # ---- Mevcut DB'ler için eksik kolonları TEK PRAGMA ile tespit edip topluca ekle ----
+    def mevcut_kolonlar(tablo):
+        return {row[1] for row in conn.execute(f"PRAGMA table_info({tablo})").fetchall()}
+
+    hareket_kolon = mevcut_kolonlar("sevkiyat_hareket")
+    if "detay" not in hareket_kolon:
+        conn.execute("ALTER TABLE sevkiyat_hareket ADD COLUMN detay TEXT")
+    _tan("hareket kolon kontrolü tamam")
+
+    kalem_kolon = mevcut_kolonlar("sevkiyat_kalem")
+    eksik_kalem = [c for c in ("hedef_plan_id", "hedef_plan_adi") if c not in kalem_kolon]
+    if eksik_kalem:
+        conn.executescript(";\n".join(f"ALTER TABLE sevkiyat_kalem ADD COLUMN {c} TEXT" for c in eksik_kalem) + ";")
+    _tan("kalem kolon kontrolü tamam")
+
+    personel_kolon = mevcut_kolonlar("personel")
+    eksik_personel = [(c, t) for c, t in [("sicil_no", "TEXT"), ("cinsiyet", "TEXT")] if c not in personel_kolon]
+    if eksik_personel:
+        conn.executescript(";\n".join(f"ALTER TABLE personel ADD COLUMN {c} {t}" for c, t in eksik_personel) + ";")
+    _tan("personel kolon kontrolü tamam")
+
+    # ---- PERFORMANS İNDEXLERİ (toplu) ----
+    conn.executescript("""
+        CREATE INDEX IF NOT EXISTS idx_kalem_plan_id ON sevkiyat_kalem(plan_id);
+        CREATE INDEX IF NOT EXISTS idx_kalem_durum ON sevkiyat_kalem(durum);
+        CREATE INDEX IF NOT EXISTS idx_kalem_mal_grubu ON sevkiyat_kalem(mal_grubu);
+        CREATE INDEX IF NOT EXISTS idx_kalem_plan_durum ON sevkiyat_kalem(plan_id, durum);
+        CREATE INDEX IF NOT EXISTS idx_hareket_kalem_id ON sevkiyat_hareket(kalem_id);
+        CREATE INDEX IF NOT EXISTS idx_hareket_islem ON sevkiyat_hareket(islem);
+        CREATE INDEX IF NOT EXISTS idx_plan_tipi ON sevkiyat_plan(plan_tipi);
+        CREATE INDEX IF NOT EXISTS idx_plan_bitis ON sevkiyat_plan(bitis);
+        CREATE INDEX IF NOT EXISTS idx_plan_durum ON sevkiyat_plan(durum);
+        CREATE INDEX IF NOT EXISTS idx_izin_personel ON izin_kayit(personel_id);
+        CREATE INDEX IF NOT EXISTS idx_log_modul ON islem_log(modul);
+        CREATE INDEX IF NOT EXISTS idx_log_tarih ON islem_log(tarih);
+    """)
+    _tan("2. executescript (12 index) tamam")
 
     conn.commit(); conn.close()
+    _tan("commit tamam")
 
 
 def log_kaydet(modul, islem, detay="", ilgili_id=None, ilgili_ad=""):
@@ -740,15 +780,18 @@ def personel_liste():
         conn = get_db()
         personeller = conn.execute("SELECT * FROM personel ORDER BY id").fetchall()
 
+        # N+1 sorgu yerine TÜM izin kayıtlarını tek seferde çek, personel_id'ye göre grupla
+        # (ağ sürücüsünde her personel için ayrı sorgu atmak çok yavaştı — bkz. 2026-09 performans incelemesi)
+        tum_izinler = conn.execute("SELECT * FROM izin_kayit ORDER BY baslangic DESC").fetchall()
+        izinler_by_personel = {}
+        for i in tum_izinler:
+            izinler_by_personel.setdefault(i["personel_id"], []).append(i)
+
         result = []
         bugun = date.today()
 
         for p in personeller:
-            # İzin kayıtlarını al
-            izinler = conn.execute(
-                "SELECT * FROM izin_kayit WHERE personel_id=? ORDER BY baslangic DESC",
-                (p["id"],)
-            ).fetchall()
+            izinler = izinler_by_personel.get(p["id"], [])
 
             kullanilan = sum(i["gun_sayisi"] for i in izinler)
             toplam_izin = p["toplam_izin"] if p["toplam_izin"] is not None else 14
@@ -996,8 +1039,8 @@ def kullanici_bilgi():
 def kullanici_yonetimi_sayfa():
     if not giris_yapildi_mi():
         return redirect(url_for("login"))
-    # Sadece "admin" kullanıcı adı ile giriş yapan görebilir
-    if session.get("kullanici") != "admin":
+    # Sadece admin rolü görebilir
+    if session.get("rol") != "admin":
         return redirect(url_for("index"))
     return render_template("kullanici-yonetimi.html")
 
@@ -1088,35 +1131,55 @@ def sevkiyat_plan_liste():
 
     try:
         conn = get_db()
-        plans = conn.execute("SELECT * FROM sevkiyat_plan ORDER BY id DESC").fetchall()
+        # "Tamamlananları Göster" kapalıyken resmen "Kapatıldı" olan eski planları
+        # sorguya hiç dahil etme — hem plan listesi hem de altındaki kalem taraması küçülür.
+        # Not: Bu sadece resmen KAPATILAN planları eler; "tüm kalemleri gönderilmiş ama
+        # hâlâ Aktif" planlar durumlarını hesaplamak için yine de taranmak zorunda.
+        hepsi_getir = request.args.get("hepsi") == "1"
+        if hepsi_getir:
+            plans = conn.execute("SELECT * FROM sevkiyat_plan ORDER BY id DESC").fetchall()
+        else:
+            plans = conn.execute("SELECT * FROM sevkiyat_plan WHERE durum != 'Kapatıldı' ORDER BY id DESC").fetchall()
+
+        plan_ids_hepsi = [p["id"] for p in plans]
+
+        # N+1 sorgu yerine TÜM planların toplam/durum özetini iki toplu sorguda çek
+        # (ağ sürücüsünde her plan için 2 ayrı sorgu atmak — 300+ planda 600+ istek — çok yavaştı)
+        if plan_ids_hepsi:
+            ph = ",".join(["?"] * len(plan_ids_hepsi))
+            toplam_satirlari = conn.execute(f"""
+                SELECT plan_id, COUNT(*) as c, SUM(planlanan_miktar) as pm, SUM(gonderilen_miktar) as gm
+                FROM sevkiyat_kalem
+                WHERE plan_id IN ({ph})
+                GROUP BY plan_id
+            """, plan_ids_hepsi).fetchall()
+
+            durum_satirlari = conn.execute(f"""
+                SELECT plan_id, durum, COUNT(*) as adet,
+                       SUM(
+                           CASE
+                               WHEN planlanan_miktar - gonderilen_miktar > 0
+                               THEN planlanan_miktar - gonderilen_miktar
+                               ELSE 0
+                           END
+                       ) as kg
+                FROM sevkiyat_kalem
+                WHERE plan_id IN ({ph})
+                GROUP BY plan_id, durum
+            """, plan_ids_hepsi).fetchall()
+        else:
+            toplam_satirlari = []
+            durum_satirlari = []
+        toplam_by_plan = {r["plan_id"]: r for r in toplam_satirlari}
+        durum_by_plan = {}
+        for r in durum_satirlari:
+            durum_by_plan.setdefault(r["plan_id"], []).append(r)
 
         result = []
 
         for p in plans:
-            toplam = conn.execute("""
-                SELECT 
-                    COUNT(*) as c,
-                    SUM(planlanan_miktar) as pm,
-                    SUM(gonderilen_miktar) as gm
-                FROM sevkiyat_kalem
-                WHERE plan_id=?
-            """, (p["id"],)).fetchone()
-
-            durum_sayac = conn.execute("""
-                SELECT
-                    durum,
-                    COUNT(*) as adet,
-                    SUM(
-                        CASE
-                            WHEN planlanan_miktar - gonderilen_miktar > 0
-                            THEN planlanan_miktar - gonderilen_miktar
-                            ELSE 0
-                        END
-                    ) as kg
-                FROM sevkiyat_kalem
-                WHERE plan_id=?
-                GROUP BY durum
-            """, (p["id"],)).fetchall()
+            toplam = toplam_by_plan.get(p["id"])
+            durum_sayac = durum_by_plan.get(p["id"], [])
 
             ozet = {
                 r["durum"]: {
@@ -1126,9 +1189,9 @@ def sevkiyat_plan_liste():
                 for r in durum_sayac
             }
 
-            toplam_kalem = toplam["c"] or 0
-            pm = toplam["pm"] or 0
-            gercek_gm = toplam["gm"] or 0
+            toplam_kalem = (toplam["c"] if toplam else 0) or 0
+            pm = (toplam["pm"] if toplam else 0) or 0
+            gercek_gm = (toplam["gm"] if toplam else 0) or 0
 
             gosterilen_gonderilen = min(gercek_gm, pm)
             fazla_gonderim = max(gercek_gm - pm, 0)
@@ -1192,13 +1255,21 @@ def sevkiyat_plan_detay(plan_id):
             (plan_id,)
         ).fetchall()
 
+        # N+1 sorgu yerine bu plandaki TÜM kalemlerin hareketlerini tek sorguda çek
+        tum_hareketler = conn.execute("""
+            SELECT h.* FROM sevkiyat_hareket h
+            JOIN sevkiyat_kalem k ON h.kalem_id = k.id
+            WHERE k.plan_id=?
+            ORDER BY h.id
+        """, (plan_id,)).fetchall()
+        hareketler_by_kalem = {}
+        for h in tum_hareketler:
+            hareketler_by_kalem.setdefault(h["kalem_id"], []).append(h)
+
         kalem_liste = []
 
         for k in kalemler:
-            hareketler = conn.execute(
-                "SELECT * FROM sevkiyat_hareket WHERE kalem_id=? ORDER BY id",
-                (k["id"],)
-            ).fetchall()
+            hareketler = hareketler_by_kalem.get(k["id"], [])
 
             planlanan = k["planlanan_miktar"] or 0
             gercek_gonderilen = k["gonderilen_miktar"] or 0
@@ -1919,18 +1990,29 @@ def sevkiyat_dashboard_api():
                 mg_filtre_sql = f" AND mal_grubu IN ({placeholders})"
                 mg_params = mg_list
 
-        for p in planlar:
-            t = conn.execute(
-                "SELECT COUNT(*) as c, SUM(planlanan_miktar) as pm, SUM(gonderilen_miktar) as gm FROM sevkiyat_kalem WHERE plan_id=?" + mg_filtre_sql,
-                [p["id"]] + mg_params
-            ).fetchone()
+        # N+1 sorgu yerine TÜM planların toplam/durum özetini iki toplu sorguda çek
+        # (aynı desen plan-liste'de bulunup düzeltilmişti — burada da vardı)
+        plan_ids_hepsi = [p["id"] for p in planlar]
+        toplam_by_plan = {}
+        durum_by_plan = {}
+        if plan_ids_hepsi:
+            ph2 = ",".join(["?"] * len(plan_ids_hepsi))
+            toplam_rows = conn.execute(
+                f"SELECT plan_id, COUNT(*) as c, SUM(planlanan_miktar) as pm, SUM(gonderilen_miktar) as gm FROM sevkiyat_kalem WHERE plan_id IN ({ph2})" + mg_filtre_sql + " GROUP BY plan_id",
+                plan_ids_hepsi + mg_params
+            ).fetchall()
+            toplam_by_plan = {r["plan_id"]: r for r in toplam_rows}
 
-            ds = conn.execute("""
-                SELECT durum, COUNT(*) as adet, SUM(planlanan_miktar - gonderilen_miktar) as kg
-                FROM sevkiyat_kalem
-                WHERE plan_id=?""" + mg_filtre_sql + """
-                GROUP BY durum
-            """, [p["id"]] + mg_params).fetchall()
+            durum_rows_hepsi = conn.execute(
+                f"SELECT plan_id, durum, COUNT(*) as adet, SUM(planlanan_miktar - gonderilen_miktar) as kg FROM sevkiyat_kalem WHERE plan_id IN ({ph2})" + mg_filtre_sql + " GROUP BY plan_id, durum",
+                plan_ids_hepsi + mg_params
+            ).fetchall()
+            for r in durum_rows_hepsi:
+                durum_by_plan.setdefault(r["plan_id"], []).append(r)
+
+        for p in planlar:
+            t = toplam_by_plan.get(p["id"])
+            ds = durum_by_plan.get(p["id"], [])
 
             ozet = {
                 r["durum"]: {
@@ -1940,8 +2022,8 @@ def sevkiyat_dashboard_api():
                 for r in ds
             }
 
-            pm = t["pm"] or 0
-            gercek_gm = t["gm"] or 0
+            pm = (t["pm"] if t else 0) or 0
+            gercek_gm = (t["gm"] if t else 0) or 0
             
             gm = min(gercek_gm, pm)
             fazla_gm = max(gercek_gm - pm, 0)
@@ -1966,7 +2048,7 @@ def sevkiyat_dashboard_api():
                 "baslangic": p["baslangic"],
                 "bitis": p["bitis"],
                 "durum": p["durum"],
-                "toplam_kalem": t["c"],
+                "toplam_kalem": (t["c"] if t else 0) or 0,
                 "planlanan_kg": pm,
                 "gercek_gonderilen_kg": gercek_gm,
                 "fazla_gonderim_kg": fazla_gm,
