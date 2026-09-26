@@ -1,3 +1,18 @@
+import sys as _sys_erken
+
+# Windows konsolu bazen cp1252 gibi eski bir kod sayfasi kullanir ve bu,
+# print() ile Turkce karakter (s, i, g, vb.) yazdirmaya calisildiginda
+# "UnicodeEncodeError: 'charmap' codec can't encode character" hatasiyla
+# programin acilista cokmesine sebep olur. Konsolu UTF-8'e zorluyoruz;
+# reconfigure yoksa (cok eski Python) veya stdout/stderr yoksa (ornegin
+# konsolsuz/--windowed derleme) sessizce gec.
+for _stream in (_sys_erken.stdout, _sys_erken.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 import time as _tanilama_time
 _t0 = _tanilama_time.time()
 def _tanilama(etiket):
@@ -15,6 +30,8 @@ from malzeme_kontrol import malzeme_bp, init_malzeme_db
 _tanilama("malzeme_kontrol import edildi")
 from hammadde_db import hammadde_bp, init_hammadde_db, hammaddeci_insight_uret
 _tanilama("hammadde_db import edildi")
+from saha_doluluk_db import saha_bp, init_saha_doluluk_db
+_tanilama("saha_doluluk_db import edildi")
 
 # ═══ KULLANICI YÖNETİMİ ═══
 from kullanici_db import (
@@ -41,6 +58,7 @@ import base64
 import sys
 import sqlite3
 import json
+import math
 from datetime import datetime, date, timedelta
 
 # ----------------------
@@ -83,6 +101,9 @@ _tanilama("init_fason_db bitti")
 app.register_blueprint(hammadde_bp)
 init_hammadde_db()
 _tanilama("init_hammadde_db bitti")
+app.register_blueprint(saha_bp)
+init_saha_doluluk_db()
+_tanilama("init_saha_doluluk_db bitti")
 app.register_blueprint(versiyon_bp)
 versiyon_dosyasini_hazirla()
 _tanilama("versiyon_dosyasini_hazirla bitti")
@@ -107,7 +128,7 @@ _tanilama("kullanici_dosyasini_hazirla bitti (modül yüklemesi tamamlandı)")
 
 from functools import wraps
 
-APP_VERSION = "6.4"
+APP_VERSION = "6.6"
 APP_ADI     = "Warehouse Data"      # Sidebar logo başlığı için
 APP_PREP    = "Berkcan Burak Akar"  # Footer için
 
@@ -592,6 +613,7 @@ def nakil_dashboard_export():
   --bg:#0e1116;--bg-content:#13161c;--bg-white:#1a1e27;--bg-card:#1a1e27;
   --bg-hover:#21262f;--border:#282e3a;--border-light:#21262f;
   --text:#cdd1da;--text2:#7e8698;--text3:#4e5568;
+  --primary:#3dbc8e;--primary-light:#5fd0a5;
   --blue:#5b8def;--blue-dim:#1a2540;--green:#3dbc8e;--green-dim:#142b22;
   --amber:#c9922e;--amber-dim:#2a2010;--red:#c75050;--red-dim:#2a1515;
   --purple:#8070b8;--purple-dim:#1e1a30;--teal:#4a9e94;--teal-dim:#142826;
@@ -1124,6 +1146,14 @@ def fason_import_gecmisi_sayfa():
         return redirect(url_for("fason_sayfa"))
     return render_template("fason-import-gecmisi.html")
 
+@app.route("/fason/rapor")
+def fason_rapor_sayfa():
+    if not giris_yapildi_mi():
+        return redirect(url_for("login"))
+    if not yetki_var_mi("fason_gor"):
+        return redirect(url_for("index"))
+    return render_template("fason-rapor.html")
+
 @app.route("/api/sevkiyat/plan-liste")
 def sevkiyat_plan_liste():
     if not giris_yapildi_mi():
@@ -1385,11 +1415,37 @@ def sevkiyat_plan_kapat():
         return jsonify({"durum":"hata","mesaj":str(e)}), 500
 
 # ---- KALEM API ----
+
+# Tek kalem/hareket için makul üst sınır. Bunun üzerindeki bir miktar
+# (yanlış girilmiş bir sıfır fazlası, kopyala-yapıştır hatası, bozuk import
+# satırı vb.) neredeyse kesin bir veri hatasıdır — "Fazla Gönderim" KPI'ında
+# görülen 3.3e+123 gibi anlamsız değerlerin önüne bu geçer.
+MAKUL_MIKTAR_SINIRI = 500_000
+
+def _miktar_dogrula(deger, alan_adi="Miktar"):
+    """Kullanıcıdan gelen bir miktarı sayıya çevirir ve makul aralıkta olduğunu doğrular.
+    Sorun varsa ValueError fırlatır (çağıran yer bunu 400 olarak döner)."""
+    try:
+        sayi = float(deger)
+    except (TypeError, ValueError):
+        raise ValueError(f"{alan_adi} sayısal bir değer olmalı.")
+    if not math.isfinite(sayi):
+        raise ValueError(f"{alan_adi} geçerli bir sayı değil.")
+    if sayi < 0:
+        raise ValueError(f"{alan_adi} negatif olamaz.")
+    if sayi > MAKUL_MIKTAR_SINIRI:
+        raise ValueError(f"{alan_adi} çok büyük görünüyor ({sayi:,.0f}). Lütfen kontrol edip tekrar girin.")
+    return sayi
+
 @app.route("/api/sevkiyat/kalem-ekle", methods=["POST"])
 @yetki_gerekli("kalem_ekle")
 def sevkiyat_kalem_ekle():
     try:
         d = request.json
+        try:
+            miktar = _miktar_dogrula(d["miktar"], "Miktar")
+        except ValueError as ve:
+            return jsonify({"durum":"hata","mesaj":str(ve)}), 400
         conn = get_db()
         conn.execute(
             "INSERT INTO sevkiyat_kalem (plan_id,yuklenici_firma,siparis_no,mal_grubu,malzeme_tanimi,planlanan_miktar,birim) VALUES (?,?,?,?,?,?,?)",
@@ -1399,13 +1455,13 @@ def sevkiyat_kalem_ekle():
                 d.get("siparis_no",""),
                 d.get("mal_grubu",""),
                 d["malzeme_tanimi"],
-                d["miktar"],
+                miktar,
                 d.get("birim","KG")
             )
         )
         conn.commit()
         conn.close()
-        log_kaydet("Sevkiyat", "Kalem Ekleme", f"{d['malzeme_tanimi']} - {d['miktar']} {d.get('birim','KG')}", d["plan_id"], d["malzeme_tanimi"])
+        log_kaydet("Sevkiyat", "Kalem Ekleme", f"{d['malzeme_tanimi']} - {miktar} {d.get('birim','KG')}", d["plan_id"], d["malzeme_tanimi"])
         return jsonify({"durum":"ok"})
     except Exception as e:
         return jsonify({"durum":"hata","mesaj":str(e)}), 500
@@ -1416,9 +1472,18 @@ def sevkiyat_kalem_toplu_ekle():
     try:
         d = request.json
         pid = d["plan_id"]
+
+        kalemler_dogrulanmis = []
+        for k in d["kalemler"]:
+            try:
+                k_miktar = _miktar_dogrula(k["miktar"], f"{k.get('malzeme_tanimi','Kalem')} miktarı")
+            except ValueError as ve:
+                return jsonify({"durum":"hata","mesaj":str(ve)}), 400
+            kalemler_dogrulanmis.append((k, k_miktar))
+
         conn = get_db()
 
-        for k in d["kalemler"]:
+        for k, k_miktar in kalemler_dogrulanmis:
             conn.execute(
                 "INSERT INTO sevkiyat_kalem (plan_id,yuklenici_firma,siparis_no,mal_grubu,malzeme_tanimi,planlanan_miktar,birim) VALUES (?,?,?,?,?,?,?)",
                 (
@@ -1427,7 +1492,7 @@ def sevkiyat_kalem_toplu_ekle():
                     k.get("siparis_no",""),
                     k.get("mal_grubu",""),
                     k["malzeme_tanimi"],
-                    k["miktar"],
+                    k_miktar,
                     k.get("birim","KG")
                 )
             )
@@ -1476,6 +1541,11 @@ def sevkiyat_kalem_sil():
 def sevkiyat_kalem_guncelle():
     try:
         d = request.json
+        try:
+            yeni_planlanan = _miktar_dogrula(d["planlanan_miktar"], "Planlanan miktar")
+        except ValueError as ve:
+            return jsonify({"durum":"hata","mesaj":str(ve)}), 400
+
         conn = get_db()
 
         eski = conn.execute("SELECT * FROM sevkiyat_kalem WHERE id=?", (d["id"],)).fetchone()
@@ -1493,7 +1563,7 @@ def sevkiyat_kalem_guncelle():
             d["siparis_no"],
             d["mal_grubu"],
             d["malzeme_tanimi"],
-            d["planlanan_miktar"],
+            yeni_planlanan,
             d["id"]
         ))
 
@@ -1502,8 +1572,8 @@ def sevkiyat_kalem_guncelle():
         if eski:
             if eski["malzeme_tanimi"] != d["malzeme_tanimi"]:
                 degisiklikler.append(f"Malzeme: {eski['malzeme_tanimi']} → {d['malzeme_tanimi']}")
-            if float(eski["planlanan_miktar"]) != float(d["planlanan_miktar"]):
-                degisiklikler.append(f"Miktar: {eski['planlanan_miktar']} → {d['planlanan_miktar']}")
+            if float(eski["planlanan_miktar"]) != yeni_planlanan:
+                degisiklikler.append(f"Miktar: {eski['planlanan_miktar']} → {yeni_planlanan}")
             if (eski["yuklenici_firma"] or "") != d["yuklenici_firma"]:
                 degisiklikler.append(f"Yüklenici: {eski['yuklenici_firma'] or '-'} → {d['yuklenici_firma'] or '-'}")
             if (eski["mal_grubu"] or "") != d["mal_grubu"]:
@@ -1532,7 +1602,10 @@ def sevkiyat_kalem_gonder():
     try:
         d = request.json
         kid = d["id"]
-        miktar = float(d["miktar"])
+        try:
+            miktar = _miktar_dogrula(d["miktar"], "Miktar")
+        except ValueError as ve:
+            return jsonify({"durum":"hata","mesaj":str(ve)}), 400
         tir_plaka = d.get("tir_plaka","")
 
         conn = get_db()
@@ -1760,7 +1833,11 @@ def sevkiyat_toplu_gonder():
 
         for g in gonderimler:
             kid = g["id"]
-            miktar = float(g.get("miktar", 0))
+            try:
+                miktar = _miktar_dogrula(g.get("miktar", 0), f"Kalem #{kid} miktarı")
+            except ValueError as ve:
+                hatalar.append(str(ve))
+                continue
 
             if miktar <= 0:
                 continue
@@ -1854,10 +1931,10 @@ def sevkiyat_hareket_guncelle():
     try:
         d = request.json
         hareket_id = d["hareket_id"]
-        yeni_miktar = float(d["yeni_miktar"])
-
-        if yeni_miktar < 0:
-            return jsonify({"durum":"hata","mesaj":"Miktar negatif olamaz."}), 400
+        try:
+            yeni_miktar = _miktar_dogrula(d["yeni_miktar"], "Miktar")
+        except ValueError as ve:
+            return jsonify({"durum":"hata","mesaj":str(ve)}), 400
 
         conn = get_db()
         hareket = conn.execute("SELECT * FROM sevkiyat_hareket WHERE id=?", (hareket_id,)).fetchone()

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fason Raporu</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v={{ APP_VERSION }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="/assets/js/theme.js?v={{ APP_VERSION }}"></script>
+<script src="/assets/js/popup.js" defer></script>
+<style>
+.nd-main{margin-left:220px;min-height:100vh;background:var(--bg-content);display:flex;flex-direction:column}
+.nd-topbar{background:rgba(31,31,31,.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:0.5px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;gap:8px;flex-wrap:wrap}
+[data-theme="light"] .nd-topbar{background:rgba(255,255,255,.8)}
+.nd-topbar-left{display:flex;align-items:center;gap:12px}
+.nd-topbar-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.nd-topbar-sub{font-size:11px;color:var(--text3)}
+.nd-topbar-right{display:flex;align-items:center;gap:6px}
+.nd-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-white);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.nd-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--bg-hover)}
+/* "Geri" <a class="nd-btn"> tarayıcı varsayılan link stilini (altı çizili, mavi renk)
+   devralmasın — button'larla aynı görünsün. */
+a.nd-btn, a.nd-btn:visited{text-decoration:none !important;color:var(--text2) !important}
+a.nd-btn:hover{text-decoration:none !important;border-color:var(--primary) !important;color:var(--primary) !important;background:var(--bg-hover) !important}
+.nd-content{padding:20px 24px;flex:1}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.kpi-card{background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;transition:all .2s ease}
+.kpi-card:hover{border-color:var(--primary);box-shadow:0 4px 16px rgba(62,207,142,.06);transform:translateY(-1px)}
+.kpi-card.accent-blue{border-top:2px solid var(--blue)}.kpi-card.accent-teal{border-top:2px solid var(--teal)}.kpi-card.accent-red{border-top:2px solid var(--red)}.kpi-card.accent-amber{border-top:2px solid var(--amber)}.kpi-card.accent-green{border-top:2px solid var(--green)}.kpi-card.accent-purple{border-top:2px solid var(--purple)}
+.kpi-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:5px}
+.kpi-value{font-size:22px;font-weight:700;color:var(--text);line-height:1}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.kpi-fark-detay{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.fark-yon{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px}
+.fark-fazla{color:var(--red);background:rgba(239,68,68,.14)}
+.fark-eksik{color:var(--blue);background:rgba(59,130,246,.14)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.grid-6040{display:grid;grid-template-columns:2fr 3fr;gap:14px;margin-bottom:14px}
+.card{background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px;transition:border-color .2s}
+.card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.card-sub{font-size:11px;color:var(--text3);margin-bottom:14px}
+.chart-wrap{position:relative;width:100%}
+.donut-legend{display:flex;flex-direction:column;gap:5px;justify-content:center}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text2)}
+.legend-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.rapor-filtre{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:16px;background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px}
+.rapor-filtre-grup{display:flex;flex-direction:column;gap:3px}
+.rapor-filtre-grup label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
+.rapor-filtre-grup input,.rapor-filtre-grup select{padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-hover);color:var(--text);font-size:12px;font-family:inherit}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.search-box{background:var(--bg-hover);border:0.5px solid var(--border);border-radius:var(--radius);padding:7px 12px;color:var(--text);font-size:12px;width:260px;outline:none;font-family:inherit;transition:border-color .15s}
+.search-box:focus{border-color:var(--primary)}
+.search-box::placeholder{color:var(--text3)}
+.table-wrap{overflow-x:auto}
+.table-wrap table{width:100%;border-collapse:collapse;font-size:12px}
+.table-wrap th{background:var(--bg-hover);color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;padding:8px 10px;text-align:left;font-size:10px;border-bottom:0.5px solid var(--border);position:sticky;top:0}
+.table-wrap td{padding:8px 10px;border-bottom:0.5px solid var(--border);color:var(--text);font-size:12px}
+.table-wrap tr:hover td{background:var(--bg-hover)}
+.r{text-align:right}
+.fark-rozet{color:var(--red);font-weight:700}
+.no-data{text-align:center;color:var(--text3);padding:50px 20px;font-size:12px}
+.no-data i{font-size:28px;margin-bottom:10px;display:block;opacity:.25}
+@media(max-width:900px){.grid-2,.grid-6040{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="sidebar">
+  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>v{{ APP_VERSION }}</span></div>
+  <div class="nav-section">Main Data</div>
+  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+  <div class="nav-section">Sevkiyat</div>
+  <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+  <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+  <div class="nav-section">Araçlar</div>
+  <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+  {% if personel_yetki %}
+  <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+  {% endif %}
+  {% if fason_gor_yetki %}
+  <a href="/fason" class="nav-item active"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+  {% endif %}
+  {% if hammadde_gor_yetki %}
+  <a href="/hammadde" class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
+  {% endif %}
+  <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+  <div class="nav-section">Raporlama</div>
+  <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+  <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+  <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+  <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
+  <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+    {% if session.rol == "admin" %}
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
+    <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
+    {% endif %}
+  <div class="sidebar-footer">
+    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaSeciciAcKapat(this)"><i class="fa-solid fa-sun"></i> Açık Tema</button>
+    <button class="cikis-btn" onclick="cikisYap()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
+  </div>
+</nav>
+<div class="nd-main">
+  <div class="nd-topbar">
+    <div class="nd-topbar-left">
+      <div>
+        <div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span><a href="/fason">Fason Takip</a><span class="bc-sep">›</span><span class="bc-current">Rapor</span></div>
+        <div class="nd-topbar-title">Fason Raporu</div>
+        <div class="nd-topbar-sub">Canlı veriden — irsaliye/kalem bazlı</div>
+      </div>
+    </div>
+    <div class="nd-topbar-right">
+      <a class="nd-btn" href="/fason"><i class="fa-solid fa-arrow-left"></i> Geri</a>
+      <button class="nd-btn" onclick="verileriYukle()"><i class="fa-solid fa-arrows-rotate"></i> Yenile</button>
+      <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
+      <div class="topbar-avatar" title="Profil">{{ (session.kullanici or "?")[:2]|upper }}</div>
+    </div>
+  </div>
+
+  <div class="nd-content">
+    <div id="raporYok" class="no-data" style="display:none">
+      <i class="fa-solid fa-chart-line"></i><div>Rapor verisi yüklenemedi. "Yenile" ile tekrar deneyin.</div>
+    </div>
+
+    <div id="raporIcerik">
+      <div class="kpi-grid" id="kpiAlani"></div>
+
+      <div class="grid-6040">
+        <div class="card">
+          <div class="card-title">Durum Dağılımı</div>
+          <div class="card-sub">Kalem sayısı bazında</div>
+          <div style="display:flex;align-items:center;gap:20px;padding-top:6px">
+            <div class="chart-wrap" style="height:200px;width:200px;flex-shrink:0"><canvas id="chartDurum"></canvas></div>
+            <div class="donut-legend" id="durumLegend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Durum Bazlı Miktar</div>
+          <div class="card-sub">Giriş miktarı toplamı</div>
+          <div class="chart-wrap" style="height:260px"><canvas id="chartDurumMiktar"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid-6040">
+        <div class="card">
+          <div class="card-title">Firma Bazlı</div>
+          <div class="card-sub">İrsaliye sayısı</div>
+          <div class="chart-wrap" style="height:280px"><canvas id="chartFirma"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Firma Detay</div>
+          <div class="card-sub">Kalem, giriş miktarı ve tutar</div>
+          <div class="table-wrap" style="max-height:280px;overflow-y:auto">
+            <table>
+              <thead><tr><th>Firma</th><th class="r">İrsaliye</th><th class="r">Giriş</th><th class="r">Tutar</th></tr></thead>
+              <tbody id="firmaTB"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="card-title" style="margin-bottom:0">Kantar Farkı Olan Kalemler</div>
+            <div class="card-sub" id="kantarOzet" style="margin-bottom:0">Yükleniyor…</div>
+          </div>
+          <input class="search-box" id="kantarAra" placeholder="Malzeme, irsaliye no, firma, durum ara (ör. stok, çıkış)..." oninput="kantarAraDebounce()">
+        </div>
+        <div class="table-wrap" style="max-height:420px;overflow-y:auto">
+          <table>
+            <thead><tr><th>İrsaliye No</th><th>Firma</th><th>Malzeme</th><th>SAP Kodu</th><th class="r">Giriş</th><th class="r">OTIS Giriş</th><th class="r">Fark</th><th>Sebep</th><th>Durum</th></tr></thead>
+            <tbody id="kantarTB"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function $(id){return document.getElementById(id)}
+let ch = {};
+const CL=['#86B48F','#eab308','#ef4444','#6366f1','#a78bfa','#f472b6','#2dd4bf'];
+const DURUM_RENK={'Stok':'#6366f1','Çıkış':'#eab308','Çıkış (A63)':'#f472b6','Tadilat':'#a78bfa','Nakil':'#2dd4bf','Aspro':'#ef4444','Belirlenmedi':'#4e5568'};
+
+// Grafiklerin eksen/ızgara renkleri açık ve koyu temada farklı olmalı — sabit
+// (beyaz bazlı) renk açık temada görünmüyordu. Aktif temayı okuyup buna göre üretiyoruz.
+function acikTemaMi(){
+  return document.documentElement.getAttribute('data-theme') === 'light';
+}
+function temaRenkleri(){
+  if (acikTemaMi()){
+    return {
+      grid: 'rgba(0,0,0,.06)',
+      ax: 'rgba(0,0,0,.5)',
+      tt: {backgroundColor:'#1f1f1f',titleColor:'#f5f5f5',bodyColor:'#cfcfcf',borderColor:'#2a2a2a',borderWidth:1,padding:10,cornerRadius:8,titleFont:{weight:600},bodyFont:{size:11}}
+    };
+  }
+  return {
+    grid: 'rgba(255,255,255,.04)',
+    ax: 'rgba(255,255,255,.3)',
+    tt: {backgroundColor:'#1f1f1f',titleColor:'#ededed',bodyColor:'#a0a0a0',borderColor:'#2a2a2a',borderWidth:1,padding:10,cornerRadius:8,titleFont:{weight:600},bodyFont:{size:11}}
+  };
+}
+let CT = temaRenkleri();
+function tazeleOpsiyonlar(){
+  CT = temaRenkleri();
+  return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:CT.tt},scales:{x:{ticks:{color:CT.ax,font:{size:10}},grid:{color:CT.grid}},y:{ticks:{color:CT.ax,font:{size:10}},grid:{color:CT.grid}}}};
+}
+let bO = tazeleOpsiyonlar();
+
+function mk(id,c){const el=$(id);if(!el)return;if(ch[id])ch[id].destroy();ch[id]=new Chart(el,c)}
+function fSayi(n){return (n||0).toLocaleString('tr-TR',{maximumFractionDigits:1})}
+function fPara(n){return '$' + fSayi(n)}
+
+async function cikisYap() {
+  const s = await onayla("Çıkış yapmak istediğinize emin misiniz?", "Çıkış Yap", {onayText:"Çıkış Yap", tip:"uyari"})
+  if (s) window.location.href = "/logout"
+}
+
+// Tema değişince (sidebar/topbar toggle, theme.js tarafından data-theme'i değiştirir)
+// tüm grafikleri güncel renklerle yeniden çiz.
+new MutationObserver(function(){
+  bO = tazeleOpsiyonlar();
+  verileriYukle();
+}).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+async function verileriYukle(){
+  try{
+    const [ozetR, durumR] = await Promise.all([
+      fetch('/api/fason/rapor/ozet'),
+      fetch('/api/fason/rapor/durum-dagilimi'),
+    ]);
+    if(!ozetR.ok || !durumR.ok) throw new Error('sunucu hatasi');
+    const ozet = await ozetR.json();
+    const durum = await durumR.json();
+
+    $('kpiAlani').innerHTML = `
+      <div class="kpi-card accent-purple"><div class="kpi-label">Toplam İrsaliye</div><div class="kpi-value">${ozet.toplam_irsaliye}</div></div>
+      <div class="kpi-card accent-blue"><div class="kpi-label">Toplam Kalem</div><div class="kpi-value">${ozet.toplam_kalem}</div></div>
+      <div class="kpi-card accent-green"><div class="kpi-label">Toplam Giriş</div><div class="kpi-value">${fSayi(ozet.toplam_giris_miktari)}</div><div class="kpi-sub">OTIS: ${fSayi(ozet.toplam_otis_giris_miktari)}</div></div>
+      <div class="kpi-card accent-red">
+        <div class="kpi-label">Kantar Farklı Kalem</div>
+        <div class="kpi-value">${ozet.kantar_farkli_kalem}</div>
+        <div class="kpi-fark-detay">
+          <span class="fark-yon fark-fazla"><i class="fa-solid fa-arrow-up"></i> ${fSayi(ozet.kantar_farkli_fazla_kg)} kg</span>
+          <span class="fark-yon fark-eksik"><i class="fa-solid fa-arrow-down"></i> ${fSayi(ozet.kantar_farkli_eksik_kg)} kg</span>
+        </div>
+      </div>
+      <div class="kpi-card accent-amber"><div class="kpi-label">Stokta Bekleyen</div><div class="kpi-value">${fSayi(ozet.stokta_bekleyen_kg)} kg</div><div class="kpi-sub">${fPara(ozet.stokta_bekleyen_tutar)}</div></div>
+      <div class="kpi-card accent-teal"><div class="kpi-label">Toplam Tutar</div><div class="kpi-value">${fPara(ozet.toplam_tutar)}</div></div>
+    `;
+
+    const renkler = durum.map(d => DURUM_RENK[d.durum] || '#4e5568');
+    mk('chartDurum',{type:'doughnut',data:{labels:durum.map(d=>d.durum),datasets:[{data:durum.map(d=>d.adet),backgroundColor:renkler,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:CT.tt}}});
+    $('durumLegend').innerHTML = durum.map((d,i)=>`<div class="legend-item"><span class="legend-dot" style="background:${renkler[i]}"></span>${d.durum} (${d.adet})</div>`).join('');
+
+    mk('chartDurumMiktar',{type:'bar',data:{labels:durum.map(d=>d.durum),datasets:[{data:durum.map(d=>d.miktar),backgroundColor:renkler,borderRadius:5,borderSkipped:false}]},options:{...bO,indexAxis:'y'}});
+
+    $('raporIcerik').style.display = 'block';
+    $('raporYok').style.display = 'none';
+  }catch(e){
+    console.error(e);
+    $('raporIcerik').style.display = 'none';
+    $('raporYok').style.display = 'block';
+    return;
+  }
+
+  await firmaAnalizYukle();
+  await kantarFarkiYukle();
+}
+
+function escHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function firmaAnalizYukle(){
+  const r = await fetch('/api/fason/rapor/firma-analiz');
+  if (!r.ok) return;
+  const veri = await r.json();
+
+  const ilkN = veri.slice(0, 10);
+  mk('chartFirma',{
+    type:'bar',
+    data:{labels:ilkN.map(f=>f.firma), datasets:[{data:ilkN.map(f=>f.irsaliye_sayisi), backgroundColor:CL[0]+'cc', borderRadius:5, borderSkipped:false}]},
+    options:{...bO, indexAxis:'y'}
+  });
+
+  $('firmaTB').innerHTML = veri.map(f => `
+    <tr><td>${escHtml(f.firma)}</td><td class="r">${f.irsaliye_sayisi}</td><td class="r">${fSayi(f.toplam_giris)}</td><td class="r">${fPara(f.toplam_tutar)}</td></tr>
+  `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3)">Veri yok</td></tr>';
+}
+
+let kantarAraZamanlayici = null;
+function kantarAraDebounce(){
+  clearTimeout(kantarAraZamanlayici);
+  kantarAraZamanlayici = setTimeout(kantarFarkiYukle, 300);
+}
+
+async function kantarFarkiYukle(){
+  const p = new URLSearchParams();
+  const ara = $('kantarAra').value.trim();
+  if (ara) p.set('ara', ara);
+  p.set('limit', 200);
+
+  const r = await fetch('/api/fason/rapor/kantar-farki?' + p.toString());
+  if (!r.ok) return;
+  const veri = await r.json();
+
+  $('kantarOzet').textContent = ara
+    ? `${veri.gosterilen} sonuç ("${ara}" için)`
+    : `Toplam ${veri.toplam} kalemde fark var — en büyük ${veri.gosterilen} tanesi gösteriliyor`;
+
+  $('kantarTB').innerHTML = veri.kalemler.map(k => `
+    <tr>
+      <td>${escHtml(k.irsaliye_no)}</td>
+      <td>${escHtml(k.firma_ad)}</td>
+      <td>${escHtml(k.malzeme_tanim)}</td>
+      <td>${escHtml(k.sap_kodu) || '—'}</td>
+      <td class="r">${fSayi(k.giris_miktari)}</td>
+      <td class="r">${fSayi(k.otis_giris)}</td>
+      <td class="r fark-rozet">${fSayi(k.fark)}</td>
+      <td>${escHtml(k.fark_sebebi) || '—'}</td>
+      <td>${escHtml(k.durum) || '—'}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3)">Sonuç yok</td></tr>';
+}
+
+verileriYukle();
+</script>
+</body>
+</html>

@@ -169,6 +169,11 @@ def _migrate_ek_kolonlar(conn, yerel=True):
     ek_kolonlar = [
         ("otis_malzeme_tanim", "TEXT"), ("otis_sap_kodu", "TEXT"),
         ("durum", "TEXT DEFAULT 'Stok'"), ("cikis_irsaliye_no", "TEXT DEFAULT ''"),
+        # Rapor ekranındaki giriş/çıkış trendi için: 'durum' her değiştiğinde bu alan da
+        # güncellenir (bkz. api_fason_kalem_guncelle). Bu kolon eklenmeden ÖNCE zaten
+        # "Çıkış"/"Çıkış (A63)" olan kayıtlarda boş kalır — geçmişe dönük tarih bilinmiyor,
+        # o kayıtlar tekrar güncellenene kadar trend grafiğine dahil edilmez.
+        ("durum_tarihi", "TEXT"),
     ]
     eksik_kalem = [(ad, tip) for ad, tip in ek_kolonlar if ad not in mevcut_kalem]
     if eksik_kalem:
@@ -178,6 +183,8 @@ def _migrate_ek_kolonlar(conn, yerel=True):
     # 'durum' kolonunda index yoksa aşağıdaki UPDATE (ve durum'a göre filtreleyen her sorgu)
     # tüm tabloyu tarar — ağ sürücüsünde bu saniyeler sürebilir. Index'i garantiye al.
     conn.execute("CREATE INDEX IF NOT EXISTS idx_kalem_durum ON fason_kalem(durum)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_kalem_durum_tarihi ON fason_kalem(durum_tarihi)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_kalem_irsaliye_tarihi ON fason_kalem(irsaliye_tarihi)")
     print(f"[FASON-TANI]   kalem alter + durum index (varsa) tamam: {_t.time()-_b:.2f} sn", flush=True)
     # Stok miktarı hiç girilmemiş kalemlerde "Stok" durumu otomatik atanmış olabilir — temizle.
     # Bu tek seferlik bir veri temizliği; 'durum' kolonu varsayılan olarak 'Stok' geldiği için
@@ -588,10 +595,16 @@ def api_fason_kalem_guncelle(kalem_id):
                 v = sayi(d[a]) if a in sayisal else (d[a] or "").strip() if isinstance(d[a], str) else d[a]
                 set_parts.append(f"{a} = ?")
                 vals.append(v)
-        if "durum" in d and d["durum"] not in ("Stok", "Çıkış", "Tadilat", "Nakil", "Aspro"):
-            return jsonify({"durum": "hata", "mesaj": "Geçersiz durum değeri"}), 400          
+        if "durum" in d and d["durum"] not in ("Stok", "Çıkış", "Çıkış (A63)", "Tadilat", "Nakil", "Aspro"):
+            return jsonify({"durum": "hata", "mesaj": "Geçersiz durum değeri"}), 400
         if not set_parts:
             return jsonify({"durum": "hata", "mesaj": "Güncellenecek alan yok"}), 400
+
+        # Rapor ekranındaki giriş/çıkış trendi durum_tarihi'ne dayanıyor — durum fiilen
+        # değiştiyse (aynı değere tekrar set etmek sayılmaz) o anı damgala.
+        if "durum" in d and d["durum"] != mevcut["durum"]:
+            set_parts.append("durum_tarihi = datetime('now','localtime')")
+
         vals.append(kalem_id)
         conn.execute(f"UPDATE fason_kalem SET {', '.join(set_parts)} WHERE id = ?", vals)
         conn.commit()
@@ -1507,6 +1520,11 @@ def api_fason_zmm068_import():
         irsaliye_cache = {}
         temizlenen_genel_kalem = set()
         otomatik_olusturulan_irsaliye = set()
+        # Bu ÇALIŞMA (import) içinde daha önce işlenen kalemler — aynı dosyada
+        # aynı malzemeye ait birden fazla satır varsa (SAP'ın aynı kalemi bölmesi
+        # gibi durumlarda) miktarları TOPLAMAK için; farklı bir import çalışmasında
+        # (dosya tekrar yüklendiğinde) buradan sıfırlandığı için miktar ikiye katlanmaz.
+        bu_calismada_islenen = {}
 
         try:
             for row in rows_iter:
@@ -1563,14 +1581,34 @@ def api_fason_zmm068_import():
                         (irs_id, malzeme_tanim)
                     ).fetchone()
 
+                tekrar_anahtari = (irs_id, sap_kodu or malzeme_tanim)
+                bu_dosyada_tekrar = tekrar_anahtari in bu_calismada_islenen
+
                 if mevcut:
-                    conn.execute("""
-                        UPDATE fason_kalem
-                        SET sap_kodu = ?, giris_miktari = ?, toplam_fiyat = ?,
-                            para_birimi = ?, birim_fiyat = ?, belge_tarihi = ?
-                        WHERE id = ?
-                    """, (sap_kodu, giris_miktari, toplam_fiyat, para_birimi,
-                          birim_fiyat, belge_tarihi, mevcut["id"]))
+                    if bu_dosyada_tekrar:
+                        # Aynı dosyada aynı malzemenin ikinci (veya sonraki) satırı — TOPLA
+                        onceki = conn.execute(
+                            "SELECT giris_miktari, toplam_fiyat FROM fason_kalem WHERE id = ?",
+                            (mevcut["id"],)
+                        ).fetchone()
+                        yeni_miktar = (onceki["giris_miktari"] or 0) + (giris_miktari or 0)
+                        yeni_fiyat = (onceki["toplam_fiyat"] or 0) + (toplam_fiyat or 0)
+                        conn.execute("""
+                            UPDATE fason_kalem
+                            SET sap_kodu = ?, giris_miktari = ?, toplam_fiyat = ?,
+                                para_birimi = ?, birim_fiyat = ?, belge_tarihi = ?
+                            WHERE id = ?
+                        """, (sap_kodu, yeni_miktar, yeni_fiyat, para_birimi,
+                              birim_fiyat, belge_tarihi, mevcut["id"]))
+                    else:
+                        # Dosyada ilk kez görülüyor — önceki bir importtan kalma değeri güncelle (üzerine yaz)
+                        conn.execute("""
+                            UPDATE fason_kalem
+                            SET sap_kodu = ?, giris_miktari = ?, toplam_fiyat = ?,
+                                para_birimi = ?, birim_fiyat = ?, belge_tarihi = ?
+                            WHERE id = ?
+                        """, (sap_kodu, giris_miktari, toplam_fiyat, para_birimi,
+                              birim_fiyat, belge_tarihi, mevcut["id"]))
                     guncellenen_kalem += 1
                 else:
                     conn.execute("""
@@ -1581,6 +1619,8 @@ def api_fason_zmm068_import():
                     """, (irs_id, malzeme_tanim, sap_kodu, giris_miktari,
                           toplam_fiyat, para_birimi, birim_fiyat, belge_tarihi))
                     yeni_kalem += 1
+
+                bu_calismada_islenen[tekrar_anahtari] = True
 
             eslesen_irsaliye = len(set(k for k, v in irsaliye_cache.items() if v is not None))
             conn.commit()
@@ -2143,7 +2183,7 @@ def api_fason_irsaliye_stok_export(irs_id):
                 for c_idx in range(1, 11):
                     ws.cell(row=idx, column=c_idx).fill = PatternFill("solid", fgColor="F9FAFB")
 
-        durum_dv = DataValidation(type="list", formula1='"Stok,Çıkış,Tadilat,Nakil,Aspro"', allow_blank=True)
+        durum_dv = DataValidation(type="list", formula1='"Stok,Çıkış,Çıkış (A63),Tadilat,Nakil,Aspro"', allow_blank=True)
         ws.add_data_validation(durum_dv)
         durum_dv.add(f"J3:J{2 + len(kalemler)}")
 
@@ -2231,11 +2271,11 @@ def api_fason_stok_import():
                 # Otomatik durum kuralı: Excel'de "Yeni Durum" elle girilmediyse,
                 # çıkış irsaliyesi girildiyse ya da stok 0'landıysa otomatik "Çıkış" say
                 yeni_durum = mevcut["durum"] or "Stok"
-                if durum_deger in ("Stok", "Çıkış", "Tadilat", "Nakil", "Aspro"):
+                if durum_deger in ("Stok", "Çıkış", "Çıkış (A63)", "Tadilat", "Nakil", "Aspro"):
                     yeni_durum = durum_deger
-                elif cikis_irs_deger:
+                elif mevcut["durum"] != "Çıkış (A63)" and cikis_irs_deger:
                     yeni_durum = "Çıkış"
-                elif yeni_stok is not None and abs(yeni_stok) < 0.005:
+                elif mevcut["durum"] != "Çıkış (A63)" and yeni_stok is not None and abs(yeni_stok) < 0.005:
                     yeni_durum = "Çıkış"
 
                 yeni_cikis_irs = cikis_irs_deger or (mevcut["cikis_irsaliye_no"] or "")
@@ -2291,6 +2331,217 @@ def api_fason_db_senkronize_et():
         })
     except Exception as e:
         return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+
+
+# ══════════════════════════ RAPOR (canlı DB'den, salt okunur) ══════════════════════════
+
+_RAPOR_CIKIS_DURUMLARI = ("Çıkış", "Çıkış (A63)")
+
+
+@fason_bp.route("/api/fason/rapor/ozet", methods=["GET"])
+def api_fason_rapor_ozet():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    conn = get_db()
+    try:
+        toplam_irsaliye = conn.execute("SELECT COUNT(*) FROM fason_irsaliye").fetchone()[0]
+        toplam_kalem = conn.execute("SELECT COUNT(*) FROM fason_kalem").fetchone()[0]
+
+        toplamlar = conn.execute("""
+            SELECT
+                COALESCE(SUM(giris_miktari), 0) AS toplam_giris,
+                COALESCE(SUM(otis_giris), 0)    AS toplam_otis_giris,
+                COALESCE(SUM(toplam_fiyat), 0)  AS toplam_tutar
+            FROM fason_kalem
+        """).fetchone()
+
+        kantar_farkli_satir = conn.execute("""
+            SELECT COUNT(*) AS adet,
+                   COALESCE(SUM(ABS(COALESCE(otis_giris, 0) - COALESCE(giris_miktari, 0))), 0) AS toplam_kg,
+                   COALESCE(SUM(CASE WHEN COALESCE(giris_miktari, 0) > COALESCE(otis_giris, 0)
+                                      THEN giris_miktari - otis_giris ELSE 0 END), 0) AS fazla_kg,
+                   COALESCE(SUM(CASE WHEN COALESCE(otis_giris, 0) > COALESCE(giris_miktari, 0)
+                                      THEN otis_giris - giris_miktari ELSE 0 END), 0) AS eksik_kg
+            FROM fason_kalem
+            WHERE ABS(COALESCE(otis_giris, 0) - COALESCE(giris_miktari, 0)) > 0.01
+        """).fetchone()
+
+        stokta_bekleyen = conn.execute("""
+            SELECT COALESCE(SUM(giris_miktari), 0) AS toplam_kg,
+                   COALESCE(SUM(toplam_fiyat), 0)   AS toplam_tutar
+            FROM fason_kalem
+            WHERE durum IS NULL OR durum = '' OR durum = 'Stok'
+        """).fetchone()
+
+        return jsonify({
+            "toplam_irsaliye": toplam_irsaliye,
+            "toplam_kalem": toplam_kalem,
+            "toplam_giris_miktari": toplamlar["toplam_giris"],
+            "toplam_otis_giris_miktari": toplamlar["toplam_otis_giris"],
+            "toplam_tutar": toplamlar["toplam_tutar"],
+            "kantar_farkli_kalem": kantar_farkli_satir["adet"],
+            "kantar_farkli_toplam_kg": kantar_farkli_satir["toplam_kg"],
+            "kantar_farkli_fazla_kg": kantar_farkli_satir["fazla_kg"],
+            "kantar_farkli_eksik_kg": kantar_farkli_satir["eksik_kg"],
+            "stokta_bekleyen_kg": stokta_bekleyen["toplam_kg"],
+            "stokta_bekleyen_tutar": stokta_bekleyen["toplam_tutar"],
+        })
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/rapor/durum-dagilimi", methods=["GET"])
+def api_fason_rapor_durum_dagilimi():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    conn = get_db()
+    try:
+        rows = conn.execute("""
+            SELECT
+                CASE WHEN durum IS NULL OR durum = '' THEN 'Belirlenmedi' ELSE durum END AS durum,
+                COUNT(*) AS adet,
+                COALESCE(SUM(giris_miktari), 0) AS miktar
+            FROM fason_kalem
+            GROUP BY durum
+            ORDER BY adet DESC
+        """).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/rapor/trend", methods=["GET"])
+def api_fason_rapor_trend():
+    """Giriş (irsaliye_tarihi) ve çıkış (durum_tarihi, durum Çıkış/Çıkış (A63) olanlar)
+    için zaman serisi. Çıkış tarafı yalnızca durum_tarihi kolonu eklendikten SONRA
+    durumu değişen kalemleri kapsar — bkz. _migrate_ek_kolonlar üzerindeki not."""
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+
+    baslangic = request.args.get("baslangic", "").strip()
+    bitis = request.args.get("bitis", "").strip()
+    gruplama = request.args.get("gruplama", "ay").strip()
+    uzunluk = {"gun": 10, "hafta": 10, "ay": 7}.get(gruplama, 7)
+
+    conn = get_db()
+    try:
+        giris_sql = f"""
+            SELECT substr(irsaliye_tarihi, 1, {uzunluk}) AS donem,
+                   COUNT(*) AS adet, COALESCE(SUM(giris_miktari), 0) AS miktar
+            FROM fason_kalem
+            WHERE irsaliye_tarihi IS NOT NULL AND irsaliye_tarihi != ''
+        """
+        params_giris = []
+        if baslangic:
+            giris_sql += " AND irsaliye_tarihi >= ?"
+            params_giris.append(baslangic)
+        if bitis:
+            giris_sql += " AND irsaliye_tarihi <= ?"
+            params_giris.append(bitis)
+        giris_sql += " GROUP BY donem ORDER BY donem"
+        giris_rows = conn.execute(giris_sql, params_giris).fetchall()
+
+        yer_tutucu = ",".join("?" * len(_RAPOR_CIKIS_DURUMLARI))
+        cikis_sql = f"""
+            SELECT substr(durum_tarihi, 1, {uzunluk}) AS donem,
+                   COUNT(*) AS adet, COALESCE(SUM(giris_miktari), 0) AS miktar
+            FROM fason_kalem
+            WHERE durum IN ({yer_tutucu}) AND durum_tarihi IS NOT NULL AND durum_tarihi != ''
+        """
+        params_cikis = list(_RAPOR_CIKIS_DURUMLARI)
+        if baslangic:
+            cikis_sql += " AND durum_tarihi >= ?"
+            params_cikis.append(baslangic)
+        if bitis:
+            cikis_sql += " AND durum_tarihi <= ?"
+            params_cikis.append(bitis)
+        cikis_sql += " GROUP BY donem ORDER BY donem"
+        cikis_rows = conn.execute(cikis_sql, params_cikis).fetchall()
+
+        return jsonify({
+            "gruplama": gruplama,
+            "giris": [dict(r) for r in giris_rows],
+            "cikis": [dict(r) for r in cikis_rows],
+        })
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/rapor/firma-analiz", methods=["GET"])
+def api_fason_rapor_firma_analiz():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    conn = get_db()
+    try:
+        rows = conn.execute("""
+            SELECT COALESCE(f.ad, 'Firma Yok') AS firma,
+                   COUNT(DISTINCT i.id) AS irsaliye_sayisi,
+                   COALESCE(SUM(k.giris_miktari), 0) AS toplam_giris,
+                   COALESCE(SUM(k.toplam_fiyat), 0) AS toplam_tutar
+            FROM fason_kalem k
+            JOIN fason_irsaliye i ON i.id = k.irsaliye_id
+            LEFT JOIN fason_firma f ON f.id = i.firma_id
+            GROUP BY firma
+            ORDER BY irsaliye_sayisi DESC
+        """).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@fason_bp.route("/api/fason/rapor/kantar-farki", methods=["GET"])
+def api_fason_rapor_kantar_farki():
+    if not session.get("kullanici"):
+        return jsonify({"durum": "hata", "mesaj": "Giriş gerekli"}), 401
+    ara = request.args.get("ara", "").strip()
+    try:
+        limit = max(1, min(1000, int(request.args.get("limit", 200))))
+    except ValueError:
+        limit = 200
+
+    conn = get_db()
+    try:
+        sorgu = """
+            SELECT k.id, i.irsaliye_no, COALESCE(f.ad, 'Firma Yok') AS firma_ad,
+                   k.malzeme_tanim, k.sap_kodu, k.giris_miktari, k.otis_giris,
+                   k.fark_sebebi, k.durum,
+                   ABS(COALESCE(k.otis_giris, 0) - COALESCE(k.giris_miktari, 0)) AS fark
+            FROM fason_kalem k
+            JOIN fason_irsaliye i ON i.id = k.irsaliye_id
+            LEFT JOIN fason_firma f ON f.id = i.firma_id
+            WHERE ABS(COALESCE(k.otis_giris, 0) - COALESCE(k.giris_miktari, 0)) > 0.01
+              AND k.fark_sebebi = 'Kantar Farkı'
+        """
+        params = []
+        if ara:
+            # 'durum' da arama alanına dahil — kullanıcı "stok" ya da "çıkış" yazınca
+            # o durumdaki kalemler de eşleşsin diye (bkz. kullanıcı isteği).
+            sorgu += " AND (k.malzeme_tanim LIKE ? OR i.irsaliye_no LIKE ? OR f.ad LIKE ? OR k.durum LIKE ?)"
+            params += [f"%{ara}%"] * 4
+        sorgu += " ORDER BY fark DESC LIMIT ?"
+        params.append(limit)
+
+        rows = conn.execute(sorgu, params).fetchall()
+        toplam = conn.execute("""
+            SELECT COUNT(*) FROM fason_kalem
+            WHERE ABS(COALESCE(otis_giris, 0) - COALESCE(giris_miktari, 0)) > 0.01
+              AND fark_sebebi = 'Kantar Farkı'
+        """).fetchone()[0]
+
+        return jsonify({"toplam": toplam, "gosterilen": len(rows), "kalemler": [dict(r) for r in rows]})
+    except Exception as e:
+        return jsonify({"durum": "hata", "mesaj": str(e)}), 500
+    finally:
+        conn.close()
+
 
 def fasoncu_insight_uret():
     """

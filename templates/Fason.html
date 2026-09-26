@@ -190,6 +190,42 @@
   .arac-btn:hover { border-color: var(--primary); }
   .arac-btn.export:hover { color: #22c55e; }
   .arac-btn.import:hover { color: var(--blue); }
+  .arac-btn.arac-btn-vurgu {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  .arac-btn.arac-btn-vurgu:hover {
+    background: var(--primary);
+    filter: brightness(1.08);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  /* <a> etiketiyle kullanılan arac-btn'ler (ör. Rapor linki) tarayıcı varsayılan
+     link stilini (altı çizili, farklı hover rengi) devralmasın — buton gibi görünsün.
+     !important: /assets/css/style.css içinde <a> için tanımlı olabilecek genel
+     renk/altı çizili kurallarının önüne geçmek için (dış CSS bu satırdan önce
+     yükleniyor ama olası daha yüksek özgüllükte bir kural varsa yine de kazanabilir). */
+  a.arac-btn, a.arac-btn:visited {
+    text-decoration: none !important;
+    color: var(--text) !important;
+  }
+  a.arac-btn:hover {
+    text-decoration: none !important;
+    color: var(--text) !important;
+    border-color: var(--primary) !important;
+  }
+  /* Rapor butonu artık arac-btn-vurgu (Tüm Kalemler ile aynı öne çıkan stil) —
+     yukarıdaki genel a.arac-btn kuralı metin rengini ezmesin diye ayrıca override. */
+  a.arac-btn.arac-btn-vurgu, a.arac-btn.arac-btn-vurgu:visited {
+    color: #fff !important;
+  }
+  a.arac-btn.arac-btn-vurgu:hover {
+    color: #fff !important;
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    filter: brightness(1.08);
+  }
 
   /* ─── FİRMA STRIP (YENİ TASARIM) ─── */
 
@@ -1030,7 +1066,7 @@
     {% if hammadde_gor_yetki %}
     <a href="/hammadde" class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
     {% endif %}
-    <a href="/saha_doluluk" class="nav-item yakinda" onclick="event.preventDefault(); toast('Bu sayfa yakında','bilgi')"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+    <a href="/saha_doluluk" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
     <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
     <div class="nav-section">Raporlama</div>
     <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
@@ -1038,7 +1074,7 @@
     <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
     <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
     <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
-    {% if session.kullanici == "admin" %}
+    {% if session.rol == "admin" %}
     <div class="nav-section">Yönetim</div>
     <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
     <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
@@ -1107,11 +1143,17 @@
 
       <!-- ARAÇ BAR -->
       <div class="arac-bar">
+        <a class="arac-btn arac-btn-vurgu" href="/fason/rapor">
+          <i class="fa-solid fa-chart-column"></i> Rapor
+        </a>
+        <button class="arac-btn arac-btn-vurgu" onclick="tumKalemlerGoster()">
+          <i class="fa-solid fa-table-list"></i> Tüm Kalemler
+        </button>
         <button class="arac-btn export" onclick="excelExport()">
           <i class="fa-solid fa-file-arrow-down"></i> Excel'e Aktar
         </button>
 
-        {% if session.kullanici == "admin" %}
+        {% if session.rol == "admin" %}
         <button class="arac-btn" onclick="zmm068ModalAc()">
           <i class="fa-solid fa-file-arrow-up"></i> ZMM068 Yükle
         </button>
@@ -1124,19 +1166,18 @@
         <button class="arac-btn" onclick="tumIrsNolariKopyala()">
           <i class="fa-solid fa-copy"></i> İrsaliye No'ları Kopyala
         </button>
-        <button class="arac-btn" onclick="tumKalemlerGoster()">
-          <i class="fa-solid fa-table-list"></i> Tüm Kalemler
-        </button>
+        {% endif %}        
+        {% if session.rol == "admin" %}        
         <button class="arac-btn" onclick="window.location.href='/fason/import-gecmisi'">
           <i class="fa-solid fa-clock-rotate-right"></i> İçe Aktarma Geçmişi
         </button>
-        <button class="arac-btn" style="color:var(--amber);border-color:var(--amber)" onclick="genelKalemTemizle()" id="genelKalemTemizleBtn">
+        <button class="arac-btn" style="color:var(--amber);border-color:var(--amber);display:none" onclick="genelKalemTemizle()" id="genelKalemTemizleBtn">
           <i class="fa-solid fa-broom"></i> Çift Kalemleri Temizle
         </button>
         <button class="arac-btn" style="color:var(--amber);border-color:var(--amber)" onclick="fasonDbSenkronizeEt()">
           <i class="fa-solid fa-cloud-arrow-up"></i> K:'ya Gönder
         </button>
-        {% endif %}
+        {% endif %}        
       </div>
 
       <!-- SON IMPORT ÖZETİ -->
@@ -1456,6 +1497,7 @@ var STICKY_ACTIVE = {}
 var FASON_DURUM_META = {
   "Stok":         { renk: "red",    ikon: "fa-ban" },
   "Çıkış":        { renk: "green",  ikon: "fa-check" },
+  "Çıkış (A63)":  { renk: "pink",   ikon: "fa-right-from-bracket" },
   "Tadilat":      { renk: "purple", ikon: "fa-truck-ramp-box" },
   "Nakil":        { renk: "blue",   ikon: "fa-right-left" },
   "Aspro":        { renk: "teal",   ikon: "fa-paint-roller" },
@@ -1626,6 +1668,7 @@ function durumSelectDoldur() {
     '<option value="Belirlenmedi">Belirlenmedi</option>' +
     '<option value="Stok">Stok</option>' +
     '<option value="Çıkış">Çıkış</option>' +
+    '<option value="Çıkış (A63)">Çıkış (A63)</option>' +
     '<option value="Tadilat">Tadilat / Fason</option>' +
     '<option value="Nakil">Nakil / Akkuyu</option>' +
     '<option value="Aspro">Aspro</option>' +
@@ -1896,7 +1939,7 @@ async function importGonder() {
 }
 
 function ozetGuncelle() {
-  var kategoriler = ["Belirlenmedi", "Stok", "Çıkış", "Tadilat", "Nakil", "Aspro", "Kısmi Çıkış"]
+  var kategoriler = ["Belirlenmedi", "Stok", "Çıkış", "Çıkış (A63)", "Tadilat", "Nakil", "Aspro", "Kısmi Çıkış"]
   var sayilar = {}, tutarlar = {}
   kategoriler.forEach(function(k){ sayilar[k] = 0; tutarlar[k] = 0 })
 
@@ -2472,6 +2515,7 @@ function kalemDetayCiz() {
       '<option value="__bos__">— Belirlenmedi —</option>' +
       '<option value="Stok">Stok</option>' +
       '<option value="Çıkış">Çıkış</option>' +
+      '<option value="Çıkış (A63)">Çıkış (A63)</option>' +
       '<option value="Tadilat">Tadilat / Fason</option>' +
       '<option value="Nakil">Nakil / Akkuyu</option>' +
       '<option value="Aspro">Aspro</option>' +
@@ -2498,7 +2542,7 @@ function kalemDetayCiz() {
       '<option value="toplam_fiyat">Fiyat</option>' +
       '<option value="fark_sebebi">Fark Sebebi</option>' +
     '</select>' +
-    '<select id="fkTopluDurumSelect"><option value="Stok">Stok</option><option value="Çıkış">Çıkış</option><option value="Tadilat">Tadilat / Fason</option><option value="Nakil">Nakil / Akkuyu</option><option value="Aspro">Aspro</option></select>' +
+    '<select id="fkTopluDurumSelect"><option value="Stok">Stok</option><option value="Çıkış">Çıkış</option><option value="Çıkış (A63)">Çıkış (A63)</option><option value="Tadilat">Tadilat / Fason</option><option value="Nakil">Nakil / Akkuyu</option><option value="Aspro">Aspro</option></select>' +
     '<input type="text" id="fkTopluCikisIrs" placeholder="Çıkış İrsaliyesi No (opsiyonel)" style="display:none">' +
     '<select id="fkTopluFarkSelect" style="display:none"><option value="">— Fark Sebebi Yok —</option><option value="Kantar Farkı">Kantar Farkı</option><option value="Bilinmeyen">Bilinmeyen</option><option value="Sipariş Fazlası">Sipariş Fazlası</option></select>' +
     '<input type="text" id="fkTopluDeger" placeholder="Değer yaz..." style="display:none">' +
@@ -2606,7 +2650,7 @@ function _durumEtiket(s) {
 function kalemTablosuCizFason(kalemler) {
   if (!kalemler.length) return '<div class="bos-durum"><i class="fa-solid fa-inbox"></i>Filtreye uyan kalem yok</div>'
   var farkSecenekleri = ['', 'Kantar Farkı', 'Bilinmeyen', 'Sipariş Fazlası']
-  var durumSecenekleri = ['', 'Stok', 'Çıkış', 'Tadilat', 'Nakil', 'Aspro']
+  var durumSecenekleri = ['', 'Stok', 'Çıkış', 'Çıkış (A63)', 'Tadilat', 'Nakil', 'Aspro']
   var duzenlenebilir = !!MEVCUT_YETKI.fason_kalem_guncelle
   var silinebilir = !!MEVCUT_YETKI.fason_kalem_sil
   var ro = duzenlenebilir ? '' : ' disabled'
@@ -3158,6 +3202,21 @@ function tumKalemlerGoster() {
     '<div class="tk-filtre-bar">' +
       '<input type="text" id="tkAra" placeholder="Malzeme tanımına göre filtrele..." oninput="tumKalemlerFiltreDegisti()">' +
       '<input type="text" id="tkCikisIrsAra" placeholder="Çıkış irsaliyesine göre filtrele (örn: M012026000000639)..." oninput="tumKalemlerFiltreDegisti()">' +
+      '<select id="tkFarkFiltre" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-white);color:var(--text);font-size:12.5px" onchange="tumKalemlerTablosuCiz()">' +
+        '<option value="">Fark: Tümü</option>' +
+        '<option value="fark-var">Sadece Farkı Olanlar (SAP ≠ OTIS)</option>' +
+        '<option value="kantar-etiket">Sadece "Kantar Farkı" Etiketliler</option>' +
+      '</select>' +
+      '<select id="tkDurumFiltre" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-white);color:var(--text);font-size:12.5px" onchange="tumKalemlerTablosuCiz()">' +
+        '<option value="">Durum: Tümü</option>' +
+        '<option value="__bos__">— Belirlenmedi —</option>' +
+        '<option value="Stok">Stok</option>' +
+        '<option value="Çıkış">Çıkış</option>' +
+        '<option value="Çıkış (A63)">Çıkış (A63)</option>' +
+        '<option value="Tadilat">Tadilat / Fason</option>' +
+        '<option value="Nakil">Nakil / Akkuyu</option>' +
+        '<option value="Aspro">Aspro</option>' +
+      '</select>' +
       '<button class="fk-btn primary" onclick="tumKalemlerSapKopyala()"><i class="fa-solid fa-copy"></i> SAP Kodlarını Kopyala</button>' +
     '</div>' +
     '<div id="tkTabloAlan"><div class="bos-durum"><i class="fa-solid fa-spinner fa-spin"></i>Yükleniyor...</div></div>'
@@ -3190,14 +3249,29 @@ async function tumKalemlerGetir(ara, cikisIrsAra) {
 function tumKalemlerTablosuCiz() {
   var alan = document.getElementById("tkTabloAlan")
   if (!alan) return
-  if (!TUM_KALEMLER_LISTESI.length) {
+  var farkFiltre = document.getElementById("tkFarkFiltre") ? document.getElementById("tkFarkFiltre").value : ""
+  var durumFiltre = document.getElementById("tkDurumFiltre") ? document.getElementById("tkDurumFiltre").value : ""
+  var gosterilecek = TUM_KALEMLER_LISTESI.filter(function(k){
+    if (farkFiltre === "fark-var" && !(_girisFarkiHesapla(k) > 0.01)) return false
+    if (farkFiltre === "kantar-etiket" && k.fark_sebebi !== "Kantar Farkı") return false
+    if (durumFiltre) {
+      var d = k.durum || ""
+      if (durumFiltre === "__bos__") { if (d !== "") return false }
+      else if (d !== durumFiltre) return false
+    }
+    return true
+  })
+  if (!gosterilecek.length) {
     alan.innerHTML = '<div class="bos-durum"><i class="fa-solid fa-inbox"></i>Filtreye uyan kalem yok</div>'
     return
   }
   var html = '<div class="fk-tablo-wrap"><table class="fk-tablo"><thead><tr>' +
     '<th style="width:24px"></th><th>Malzeme Tanım</th><th>SAP Kodu</th><th>İrsaliye No</th><th>Firma</th><th>SAP Stok</th><th>SAP Giriş</th><th>OTIS Stok</th><th>OTIS Giriş</th><th>Durum</th><th>Çıkış İrs.</th>' +
   '</tr></thead><tbody>'
-  TUM_KALEMLER_LISTESI.forEach(function(k) {
+  gosterilecek.forEach(function(k) {
+    var farkVar = _girisFarkiHesapla(k) > 0.01
+    var farkClass = farkVar ? ' style="color:var(--red);font-weight:700"' : ''
+    var farkTitle = farkVar ? ' title="OTIS Giriş ile fark: ' + fSayiTR(_girisFarkiHesapla(k)) + (k.fark_sebebi ? ' · Sebep: ' + escHtml(k.fark_sebebi) : '') + '"' : ''
     html += '<tr>' +
       '<td><input type="checkbox" class="tk-check" data-sap="' + escHtml(k.sap_kodu || '') + '" onchange="tumKalemlerSecimGuncelle()"></td>' +
       '<td>' + escHtml(k.malzeme_tanim) + '</td>' +
@@ -3205,9 +3279,9 @@ function tumKalemlerTablosuCiz() {
       '<td><span class="fk-copy-btn" style="cursor:pointer;border:none;color:var(--primary)" onclick="tumKalemlerIrsaliyeyeGit(' + k.irsaliye_id + ')">' + escHtml(k.irsaliye_no) + '</span></td>' +
       '<td>' + escHtml(k.firma_ad || '—') + '</td>' +
       '<td>' + fmtNum(k.stok_miktari) + '</td>' +
-      '<td>' + fmtNum(k.giris_miktari) + '</td>' +
+      '<td' + farkClass + farkTitle + '>' + fmtNum(k.giris_miktari) + (farkVar ? ' <i class="fa-solid fa-triangle-exclamation" style="font-size:10px"></i>' : '') + '</td>' +
       '<td>' + fmtNum(k.otis_stok) + '</td>' +
-      '<td>' + fmtNum(k.otis_giris) + '</td>' +
+      '<td' + farkClass + farkTitle + '>' + fmtNum(k.otis_giris) + '</td>' +
       '<td>' + (k.durum ? '<span class="durum-rozet d-' + (FASON_DURUM_META[k.durum] || FASON_DURUM_META[""]).renk + '">' + escHtml(k.durum) + '</span>' : '<span style="color:var(--text3)">— Belirlenmedi —</span>') + '</td>' +
       '<td>' + (k.cikis_irsaliye_no ? '<span class="ham-link" onclick="tumKalemlerFiltreCikisIrsAta(\'' + escHtml(k.cikis_irsaliye_no).replace(/'/g,"\\'") + '\')" style="cursor:pointer;color:var(--primary)">' + escHtml(k.cikis_irsaliye_no) + '</span>' : '—') + '</td>' +
     '</tr>'

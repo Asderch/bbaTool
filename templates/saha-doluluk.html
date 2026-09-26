@@ -3,757 +3,512 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Saha Doluluk Yönetimi</title>
+<title>Saha Doluluk</title>
 <link rel="stylesheet" href="/assets/css/style.css?v={{ APP_VERSION }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="/assets/js/theme.js?v={{ APP_VERSION }}"></script>
+<script src="/assets/js/popup.js" defer></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+.nd-main{margin-left:220px;min-height:100vh;background:var(--bg-content);display:flex;flex-direction:column}
+.nd-topbar{background:rgba(31,31,31,.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:0.5px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;gap:8px;flex-wrap:wrap}
+[data-theme="light"] .nd-topbar{background:rgba(255,255,255,.8)}
+.nd-topbar-left{display:flex;align-items:center;gap:12px}
+.nd-topbar-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.nd-topbar-sub{font-size:11px;color:var(--text3)}
+.nd-topbar-right{display:flex;align-items:center;gap:6px}
+.nd-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-white);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.nd-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--bg-hover)}
+a.nd-btn, a.nd-btn:visited{text-decoration:none !important;color:var(--text2) !important}
+a.nd-btn:hover{text-decoration:none !important;border-color:var(--primary) !important;color:var(--primary) !important;background:var(--bg-hover) !important}
+.nd-btn.aktif{border-color:var(--primary);color:var(--primary);background:rgba(62,207,142,.1)}
+.nd-content{padding:20px 24px;flex:1}
 
-  * { margin:0; padding:0; box-sizing:border-box; }
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.kpi-card{background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px}
+.kpi-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:5px}
+.kpi-value{font-size:22px;font-weight:700;color:var(--text);line-height:1}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px}
 
-  :root {
-    --surface: var(--bg-card);
-    --surface2: var(--bg-hover);
-    --text-dim: var(--text2);
-    --accent: var(--blue);
-    --yellow: var(--amber);
-    --orange: #f97316; /* global temada karşılığı yok, sabit kaldı */
-  }
+.saha-filtre{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.saha-filtre-btn{padding:6px 14px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-white);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.saha-filtre-btn:hover{border-color:var(--primary);color:var(--primary)}
+.saha-filtre-btn.aktif{background:var(--primary);color:#fff;border-color:var(--primary)}
 
-  body {
-    font-family: 'Space Grotesk', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+.harita-card{background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:16px}
+.harita-wrap{position:relative;width:100%;overflow:hidden;border-radius:var(--radius);background:#1a1a1a}
+.harita-zoom{position:relative;width:100%;transform-origin:0 0;transition:transform .55s cubic-bezier(.4,0,.2,1)}
+.harita-zoom img{width:100%;display:block;user-select:none;-webkit-user-drag:none}
+.harita-zoom svg{position:absolute;top:0;left:0;width:100%;height:100%}
+.lok-poligon{cursor:pointer;stroke-width:1.5;transition:fill-opacity .15s}
+.lok-poligon:hover{fill-opacity:.75 !important;stroke-width:2.5}
+.lok-etiket{font-size:10px;font-weight:700;fill:#fff;paint-order:stroke;stroke:#000;stroke-width:2.5px;pointer-events:none;text-anchor:middle;dominant-baseline:middle}
+.duzenle-nokta{fill:#fff;stroke:#1f6feb;stroke-width:2;cursor:grab}
+.duzenle-nokta:active{cursor:grabbing}
 
-  .header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+.legend-bar{display:flex;align-items:center;gap:14px;margin-top:10px;flex-wrap:wrap;font-size:11px;color:var(--text2)}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
 
-  .header h1 {
-    font-size: 20px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center}
+.panel-overlay.acik{display:flex}
+.panel{background:var(--bg-white);border-radius:var(--radius-lg);padding:22px;width:360px;max-width:90vw;border:0.5px solid var(--border)}
+.panel h3{font-size:16px;font-weight:700;color:var(--text);margin-bottom:2px}
+.panel .panel-sub{font-size:11px;color:var(--text3);margin-bottom:18px}
+.panel label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:6px}
+.panel input[type=range]{width:100%;margin-bottom:6px}
+.panel input[type=number]{width:100%;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-hover);color:var(--text);font-size:16px;font-weight:700;font-family:inherit;margin-bottom:14px}
+.panel textarea{width:100%;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-hover);color:var(--text);font-size:12px;font-family:inherit;resize:vertical;min-height:60px;margin-bottom:14px}
+.panel-alt{font-size:10px;color:var(--text3);margin-bottom:16px}
+.panel-btn-satir{display:flex;gap:8px;justify-content:flex-end}
+.panel-btn{padding:8px 16px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-hover);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.panel-btn.kaydet{background:var(--primary);color:#fff;border-color:var(--primary)}
+.panel-btn:hover{filter:brightness(1.05)}
 
-  .header h1 .icon {
-    width: 32px;
-    height: 32px;
-    background: var(--accent);
-    border-radius:var(--radius);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-  }
-
-  .stats-bar {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-  }
-
-  .stat-chip {
-    background: var(--surface2);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .stat-chip .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
-
-  .main-container {
-    display: flex;
-    height: calc(100vh - 65px);
-  }
-
-  .map-container {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    background: var(--bg-content);
-  }
-
-  .map-wrapper {
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    position: relative;
-  }
-
-  .map-inner {
-    position: relative;
-    display: inline-block;
-    min-width: 100%;
-    min-height: 100%;
-  }
-
-  .map-inner img {
-    display: block;
-    width: 1400px;
-    height: auto;
-    opacity: 0.7;
-  }
-
-  .location-overlay {
-    position: absolute;
-    cursor: pointer;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    font-weight: 700;
-    color: #fff;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-    backdrop-filter: blur(2px);
-  }
-
-  .location-overlay:hover {
-    transform: scale(1.05);
-    border-color: #fff;
-    z-index: 50;
-    box-shadow: 0 0 20px rgba(255,255,255,0.3);
-  }
-
-  .location-overlay.selected {
-    border-color: var(--accent);
-    box-shadow: 0 0 20px rgba(59,130,246,0.5);
-    z-index: 51;
-  }
-
-  .sidebar {
-    width: 360px;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .sidebar-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sidebar-header h2 {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-
-  .sidebar-tabs {
-    display: flex;
-    gap: 4px;
-  }
-
-  .sidebar-tab {
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    background: transparent;
-    color: var(--text-dim);
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .sidebar-tab.active {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  .sidebar-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-  }
-
-  .location-card {
-    background: var(--surface2);
-    border-radius:var(--radius);
-    padding: 12px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .location-card:hover {
-    border-color: var(--border);
-  }
-
-  .location-card.selected {
-    border-color: var(--accent);
-    background: rgba(59,130,246,0.1);
-  }
-
-  .loc-indicator {
-    width: 36px;
-    height: 36px;
-    border-radius:var(--radius);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    color: #fff;
-    flex-shrink: 0;
-  }
-
-  .loc-info {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .loc-name {
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .loc-date {
-    font-size: 11px;
-    color: var(--text-dim);
-    margin-top: 2px;
-  }
-
-  .loc-percentage {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 16px;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  /* Edit Panel */
-  .edit-panel {
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 16px 20px;
-  }
-
-  .edit-panel h3 {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .slider-container {
-    margin-bottom: 12px;
-  }
-
-  .slider-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    margin-bottom: 6px;
-    color: var(--text-dim);
-  }
-
-  .slider-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 24px;
-  }
-
-  input[type="range"] {
-    width: 100%;
-    height: 8px;
-    background: var(--surface2);
-    border-radius: 4px;
-    outline: none;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    border: 2px solid #fff;
-  }
-
-  .btn-save {
-    width: 100%;
-    padding: 10px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius:var(--radius);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'Space Grotesk', sans-serif;
-  }
-
-  .btn-save:hover {
-    background: #2563eb;
-  }
-
-  .btn-reset {
-    width: 100%;
-    padding: 8px;
-    background: transparent;
-    color: var(--text-dim);
-    border: 1px solid var(--border);
-    border-radius:var(--radius);
-    font-size: 12px;
-    cursor: pointer;
-    margin-top: 6px;
-    font-family: 'Space Grotesk', sans-serif;
-  }
-
-  .progress-bar {
-    width: 100%;
-    height: 4px;
-    background: var(--surface2);
-    border-radius: 2px;
-    margin-top: 4px;
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.3s ease, background 0.3s ease;
-  }
-
-  .field-group-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 8px 4px 4px;
-    margin-top: 4px;
-  }
-
-  .zoom-controls {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    z-index: 60;
-  }
-
-  .zoom-btn {
-    width: 36px;
-    height: 36px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius:var(--radius);
-    color: var(--text);
-    font-size: 18px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
-
-  .zoom-btn:hover { background: var(--surface2); }
-
-  .toast {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--green);
-    color: #000;
-    padding: 10px 24px;
-    border-radius:var(--radius);
-    font-size: 13px;
-    font-weight: 600;
-    transition: transform 0.3s ease;
-    z-index: 200;
-  }
-
-  .toast.show { transform: translateX(-50%) translateY(0); }
-
-  @media (max-width: 900px) {
-    .main-container { flex-direction: column; }
-    .sidebar { width: 100%; height: 50vh; border-left: none; border-top: 1px solid var(--border); }
-    .map-inner img { width: 800px; }
-  }
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <h1>
-    <span class="icon">📦</span>
-    Saha Doluluk Yönetimi
-  </h1>
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-chip"><span class="dot" style="background:var(--green)"></span> Boş: <span id="statEmpty">0</span></div>
-    <div class="stat-chip"><span class="dot" style="background:var(--yellow)"></span> Kısmi: <span id="statPartial">0</span></div>
-    <div class="stat-chip"><span class="dot" style="background:var(--red)"></span> Dolu: <span id="statFull">0</span></div>
-    <div class="stat-chip">Ortalama: <span id="statAvg" style="font-family:'JetBrains Mono';font-weight:700">0%</span></div>
-    <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
+<div class="shell">
+<nav class="sidebar">
+  <div class="sidebar-logo"><img src="/assets/logo/bba-logo-mini.png" alt="BBA"><h2>Warehouse Data</h2><span>v{{ APP_VERSION }}</span></div>
+  <div class="nav-section">Main Data</div>
+  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Ana Menü</a>
+  <div class="nav-section">Sevkiyat</div>
+  <a href="/sevkiyat-planlar" class="nav-item"><i class="fa-solid fa-boxes-stacked"></i> Planlar</a>
+  <a href="/sevkiyat-dashboard" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+  <div class="nav-section">Araçlar</div>
+  <a href="/agirlik-hesaplama" class="nav-item"><i class="fa-solid fa-weight-scale"></i> Ağırlık Hesaplama</a>
+  {% if personel_yetki %}
+  <a href="/personel" class="nav-item"><i class="fa-solid fa-users"></i> Personel</a>
+  {% endif %}
+  {% if fason_gor_yetki %}
+  <a href="/fason" class="nav-item"><i class="fa-solid fa-truck-ramp-box"></i> Fason Takip</a>
+  {% endif %}
+  {% if hammadde_gor_yetki %}
+  <a href="/hammadde" class="nav-item"><i class="fa-solid fa-cubes-stacked"></i> Hammadde Takip</a>
+  {% endif %}
+  <a href="/saha_doluluk" class="nav-item active"><i class="fa-solid fa-calendar-check"></i> Doluluk</a>
+  <a href="/islem-gecmisi" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> İşlem Geçmişi</a>
+  <div class="nav-section">Raporlama</div>
+  <a href="/nakil-dashboard" class="nav-item"><i class="fa-solid fa-right-left"></i> Analytics Dashboard</a>
+  <a href="/fark-raporu" class="nav-item"><i class="fa-solid fa-scale-balanced"></i> Fark Raporu</a>
+  <a href="/mutabakat" class="nav-item"><i class="fa-solid fa-code-compare"></i> Mutabakat</a>
+  <a href="/stok-mutabakat" class="nav-item"><i class="fa-solid fa-warehouse"></i> Stok Mutabakatı</a>
+  <a href="/malzeme-kontrol" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Malzeme Kontrol</a>
+    {% if session.rol == "admin" %}
+    <div class="nav-section">Yönetim</div>
+    <a href="/kullanici-yonetimi" class="nav-item"><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</a>
+    <a href="/surum-yonetimi" class="nav-item"><i class="fa-solid fa-code-branch"></i> Sürüm Yönetimi</a>
+    <a href="/fason/durumlar" class="nav-item"><i class="fa-solid fa-sliders"></i> Fason Durumları</a>
+    {% endif %}
+  <div class="sidebar-footer">
+    <button class="tema-toggle" id="temaToggleSidebar" onclick="temaSeciciAcKapat(this)"><i class="fa-solid fa-sun"></i> Açık Tema</button>
+    <button class="cikis-btn" onclick="cikisYap()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
   </div>
-</div>
-<div class="main-container">
-  <div class="map-container">
-    <div class="map-wrapper" id="mapWrapper">
-      <div class="map-inner" id="mapInner">
-        <img id="ortofoto" alt="Ortofoto" />
-        <!-- Location overlays will be injected here -->
+</nav>
+<div class="nd-main">
+  <div class="nd-topbar">
+    <div class="nd-topbar-left">
+      <div>
+        <div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span><span class="bc-current">Saha Doluluk</span></div>
+        <div class="nd-topbar-title">Saha Doluluk</div>
+        <div class="nd-topbar-sub">Yeşilovacık sahası — lokasyon bazlı doluluk takibi</div>
       </div>
     </div>
-    <div class="zoom-controls">
-      <button class="zoom-btn" onclick="zoomIn()">+</button>
-      <button class="zoom-btn" onclick="zoomOut()">−</button>
-      <button class="zoom-btn" onclick="zoomReset()" style="font-size:12px">⟲</button>
+    <div class="nd-topbar-right">
+      {% if session.rol == "admin" %}
+      <button class="nd-btn" onclick="yeniAlanAc()"><i class="fa-solid fa-plus"></i> Yeni Alan</button>
+      <button class="nd-btn" id="duzenleBtn" onclick="duzenleModuAcKapat()"><i class="fa-solid fa-draw-polygon"></i> Alanları Düzenle</button>
+      {% endif %}
+      <a class="nd-btn" href="/"><i class="fa-solid fa-arrow-left"></i> Geri</a>
+      <button class="nd-btn" onclick="verileriYukle()"><i class="fa-solid fa-arrows-rotate"></i> Yenile</button>
+      <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
+      <div class="topbar-avatar" title="Profil">{{ (session.kullanici or "?")[:2]|upper }}</div>
     </div>
   </div>
 
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h2>Lokasyonlar</h2>
-      <div class="sidebar-tabs">
-        <button class="sidebar-tab active" onclick="filterField('all',this)">Tümü</button>
-        <button class="sidebar-tab" onclick="filterField('YSL 1',this)">YSL-1</button>
-        <button class="sidebar-tab" onclick="filterField('YSL 2',this)">YSL-2</button>
-        <button class="sidebar-tab" onclick="filterField('YSL 3',this)">YSL-3</button>
-        <button class="sidebar-tab" onclick="filterField('YSL 4',this)">YSL-4</button>
-      </div>
+  <div class="nd-content">
+    <div class="kpi-grid" id="kpiAlani"></div>
+
+    <div class="saha-filtre" id="sahaFiltre">
+      <button class="saha-filtre-btn aktif" data-saha="0" onclick="sahaSec(0, this)">Tüm Sahalar</button>
+      <button class="saha-filtre-btn" data-saha="1" onclick="sahaSec(1, this)">1. Saha</button>
+      <button class="saha-filtre-btn" data-saha="2" onclick="sahaSec(2, this)">2. Saha</button>
+      <button class="saha-filtre-btn" data-saha="3" onclick="sahaSec(3, this)">3. Saha</button>
+      <button class="saha-filtre-btn" data-saha="4" onclick="sahaSec(4, this)">4. Saha</button>
     </div>
-    <div class="sidebar-content" id="sidebarContent"></div>
-    <div class="edit-panel" id="editPanel" style="display:none">
-      <h3>✏️ <span id="editTitle"></span></h3>
-      <div class="slider-container">
-        <div class="slider-label">
-          <span>Doluluk Oranı</span>
-          <span class="slider-value" id="sliderValue">0%</span>
+
+    <div class="harita-card">
+      <div class="harita-wrap" id="haritaWrap">
+        <div class="harita-zoom" id="haritaZoom">
+          <img id="haritaResim" src="/assets/saha/yesilovacik-ortofoto.jpg" alt="Yeşilovacık Saha Ortofotosu" draggable="false">
+          <svg id="haritaSvg" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg>
         </div>
-        <input type="range" id="occupancySlider" min="0" max="100" value="0" oninput="onSliderChange(this.value)" />
       </div>
-      <button class="btn-save" onclick="saveOccupancy()">💾 Kaydet</button>
-      <button class="btn-reset" onclick="resetSelection()">İptal</button>
+      <div class="legend-bar" id="legendBar">
+        <div class="legend-item" style="margin-left:auto;color:var(--text3)" id="duzenleIpucu"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Doluluk güncelleme paneli -->
+<div class="panel-overlay" id="panelOverlay" onclick="if(event.target===this) panelKapat()">
+  <div class="panel">
+    <h3 id="panelKod">—</h3>
+    <div class="panel-sub" id="panelAlt">—</div>
+    <label>Doluluk Yüzdesi (%)</label>
+    <input type="range" id="panelSlider" min="0" max="100" step="5" oninput="panelSliderDegisti()">
+    <input type="number" id="panelSayi" min="0" max="100" oninput="panelSayiDegisti()">
+    <label>Not (opsiyonel)</label>
+    <textarea id="panelNot" placeholder="Örn. malzeme cinsi, tarih vb."></textarea>
+    <div class="panel-alt" id="panelSonGuncelleme"></div>
+    <div class="panel-btn-satir">
+      <button class="panel-btn" onclick="panelKapat()">Vazgeç</button>
+      <button class="panel-btn kaydet" onclick="panelKaydet()">Kaydet</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast">Kaydedildi!</div>
+<!-- Yeni alan ekleme paneli (sadece admin) -->
+<div class="panel-overlay" id="yeniAlanOverlay" onclick="if(event.target===this) yeniAlanKapat()">
+  <div class="panel">
+    <h3>Yeni Alan Ekle</h3>
+    <div class="panel-sub">Hurda sahası, timber stock area, çöplük gibi küçük/özel alanlar için</div>
+    <label>Kod / Kısa Ad</label>
+    <input type="text" id="yaKod" placeholder="Örn. Hurda Sahası" style="width:100%;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-hover);color:var(--text);font-size:13px;font-family:inherit;margin-bottom:14px">
+    <label>Açıklama (opsiyonel)</label>
+    <input type="text" id="yaAd" placeholder="Örn. 2. saha girişi yanı" style="width:100%;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-hover);color:var(--text);font-size:13px;font-family:inherit;margin-bottom:14px">
+    <label>Saha</label>
+    <select id="yaSaha" style="width:100%;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-hover);color:var(--text);font-size:13px;font-family:inherit;margin-bottom:16px">
+      <option value="1">1. Saha</option>
+      <option value="2">2. Saha</option>
+      <option value="3">3. Saha</option>
+      <option value="4">4. Saha</option>
+    </select>
+    <div class="panel-alt">Alan haritanın ortasına küçük bir kare olarak eklenir — "Alanları Düzenle" modunda köşelerini sürükleyerek gerçek konumuna oturt.</div>
+    <div class="panel-btn-satir">
+      <button class="panel-btn" onclick="yeniAlanKapat()">Vazgeç</button>
+      <button class="panel-btn kaydet" onclick="yeniAlanKaydet()">Ekle</button>
+    </div>
+  </div>
+</div>
 
 <script>
-// Location data with positions (percentage-based on the image)
-const LOCATIONS = {
-  // YSL-1 - ilk saha
-  "YSL 1-A": { x: 5,  y: 32, w: 4.5, h: 7, field: "YSL 1" },
-  "YSL 1-B": { x: 5,  y: 40, w: 4.5, h: 7, field: "YSL 1" },
-  "YSL 1-C": { x: 5,  y: 48, w: 4.5, h: 7, field: "YSL 1" },
-  "YSL 1-D": { x: 10, y: 32, w: 4.5, h: 7, field: "YSL 1" },
-  "YSL 1-E": { x: 10, y: 40, w: 4.5, h: 7, field: "YSL 1" },
-  "YSL 1-X": { x: 10, y: 48, w: 4.5, h: 7, field: "YSL 1" },
-  "YSL 1-F": { x: 5,  y: 56, w: 9.5, h: 6, field: "YSL 1" },
+function $(id){return document.getElementById(id)}
 
-  // YSL-2 - ana saha
-  "YSL 2-A": { x: 43,   y: 32, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-B": { x: 39.5, y: 32, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-C": { x: 36,   y: 32, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-D": { x: 32.5, y: 32, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-E": { x: 29,   y: 32, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-F": { x: 25.5, y: 32, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-G": { x: 32.5, y: 25, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-H": { x: 29,   y: 25, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-I": { x: 25.5, y: 25, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-J": { x: 47,   y: 32, w: 3.5, h: 6, field: "YSL 2" },
-  "YSL 2-K": { x: 47,   y: 25, w: 3.5, h: 6, field: "YSL 2" },
-
-  // YSL-3 - demir&boru saha
-  "YSL 3-A": { x: 25.5, y: 58, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-B": { x: 29,   y: 58, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-C": { x: 32.5, y: 58, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-D": { x: 36,   y: 58, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-E": { x: 39.5, y: 58, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-G": { x: 36,   y: 65, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-H": { x: 39.5, y: 65, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-N": { x: 47,   y: 58, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-I": { x: 43,   y: 65, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-J": { x: 46.5, y: 65, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-K": { x: 50,   y: 65, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-L": { x: 32.5, y: 72, w: 3.5, h: 6, field: "YSL 3" },
-  "YSL 3-M": { x: 36,   y: 72, w: 3.5, h: 6, field: "YSL 3" },
-
-  // YSL-4 - gömülü
-  "YSL 4-A": { x: 80, y: 48, w: 5, h: 2, field: "YSL 4" },
-  "YSL 4-B": { x: 91, y: 41, w: 2, h: 5, field: "YSL 4" },
-  "YSL 4-C": { x: 80, y: 37, w: 5, h: 2, field: "YSL 4" },
-  "YSL 4-D": { x: 69, y: 41, w: 2, h: 5, field: "YSL 4" },
-};
-
-// State
-let occupancyData = {};
-let selectedLocation = null;
-let currentFilter = 'all';
-let zoomLevel = 1;
-
-// Colors
-function getColor(pct) {
-  if (pct <= 0) return 'rgba(100,116,139,0.5)';
-  if (pct <= 30) return 'rgba(34,197,94,0.6)';
-  if (pct <= 60) return 'rgba(234,179,8,0.6)';
-  if (pct <= 85) return 'rgba(249,115,22,0.6)';
-  return 'rgba(239,68,68,0.7)';
+async function cikisYap() {
+  const s = await onayla("Çıkış yapmak istediğinize emin misiniz?", "Çıkış Yap", {onayText:"Çıkış Yap", tip:"uyari"})
+  if (s) window.location.href = "/logout"
 }
 
-function getTextColor(pct) {
-  if (pct <= 0) return 'var(--text-dim)';
-  if (pct <= 30) return 'var(--green)';
-  if (pct <= 60) return 'var(--yellow)';
-  if (pct <= 85) return 'var(--orange)';
-  return 'var(--red)';
+const SVG_NS = 'http://www.w3.org/2000/svg';
+let LOKASYONLAR = [];
+let SECILI_SAHA = 0;
+let DUZENLE_MODU = false;
+let PANEL_LOKASYON_ID = null;
+let SURUKLENEN = null; // {lokasyonId, noktaIndex}
+
+// Her %10'luk dilim için ayrı renk (0-10, 10-20, ... 90-100) — yeşilden kırmızıya geçiş
+const DOLULUK_RENKLERI = [
+  '#16a34a', // 0-10%
+  '#3fae2e', // 10-20%
+  '#67b81c', // 20-30%
+  '#8fbf12', // 30-40%
+  '#b3bd15', // 40-50%
+  '#d1a81c', // 50-60%
+  '#e08a1f', // 60-70%
+  '#e56b21', // 70-80%
+  '#e64a24', // 80-90%
+  '#dc2626'  // 90-100%
+];
+
+function renkAl(yuzde, veriVarMi){
+  if(!veriVarMi) return '#4e5568';
+  let dilim = Math.floor((yuzde || 0) / 10);
+  if(dilim > 9) dilim = 9;
+  if(dilim < 0) dilim = 0;
+  return DOLULUK_RENKLERI[dilim];
 }
 
-// Load/Save from localStorage
-function loadData() {
-  try {
-    const saved = localStorage.getItem('saha_doluluk_data');
-    if (saved) {
-      occupancyData = JSON.parse(saved);
-    } else {
-      Object.keys(LOCATIONS).forEach(key => {
-        occupancyData[key] = { percentage: 0, updatedAt: null };
-      });
-    }
-  } catch(e) {
-    Object.keys(LOCATIONS).forEach(key => {
-      occupancyData[key] = { percentage: 0, updatedAt: null };
-    });
+function legendCiz(){
+  const bar = $('legendBar');
+  const ipucu = $('duzenleIpucu');
+  let html = `<div class="legend-item"><span class="legend-dot" style="background:#4e5568"></span> Veri yok</div>`;
+  DOLULUK_RENKLERI.forEach((renk, i) => {
+    html += `<div class="legend-item"><span class="legend-dot" style="background:${renk}"></span> %${i*10}-${i*10+10}</div>`;
+  });
+  bar.insertAdjacentHTML('afterbegin', html);
+  bar.appendChild(ipucu);
+}
+
+async function verileriYukle(){
+  try{
+    const [lokR, ozetR] = await Promise.all([
+      fetch('/api/saha-doluluk/lokasyonlar'),
+      fetch('/api/saha-doluluk/ozet'),
+    ]);
+    if(!lokR.ok || !ozetR.ok) throw new Error('sunucu hatasi');
+    LOKASYONLAR = await lokR.json();
+    const ozet = await ozetR.json();
+    kpiCiz(ozet);
+    haritaCiz();
+  }catch(e){
+    console.error(e);
   }
-  // Ensure all locations exist
-  Object.keys(LOCATIONS).forEach(key => {
-    if (!occupancyData[key]) {
-      occupancyData[key] = { percentage: 0, updatedAt: null };
+}
+
+function kpiCiz(ozet){
+  const sahaAd = {1:'1. Saha', 2:'2. Saha', 3:'3. Saha', 4:'4. Saha'};
+  let sahaKartlari = '';
+  (ozet.saha_bazinda || []).forEach(s => {
+    sahaKartlari += `<div class="kpi-card"><div class="kpi-label">${sahaAd[s.saha_no] || ('Saha ' + s.saha_no)}</div><div class="kpi-value">${Math.round(s.ortalama)}%</div><div class="kpi-sub">${s.adet} lokasyon</div></div>`;
+  });
+  $('kpiAlani').innerHTML = `
+    <div class="kpi-card accent-purple"><div class="kpi-label">Toplam Lokasyon</div><div class="kpi-value">${ozet.toplam_lokasyon}</div></div>
+    <div class="kpi-card accent-green"><div class="kpi-label">Ortalama Doluluk</div><div class="kpi-value">${ozet.ortalama_doluluk}%</div></div>
+    ${sahaKartlari}
+  `;
+}
+
+function haritaCiz(){
+  const svg = $('haritaSvg');
+  svg.innerHTML = '';
+  const gosterilecek = LOKASYONLAR.filter(l => SECILI_SAHA === 0 || l.saha_no === SECILI_SAHA);
+
+  gosterilecek.forEach(lok => {
+    if(!lok.poligon || lok.poligon.length < 3) return;
+    const veriVarMi = !!lok.guncelleme_tarihi;
+    const renk = renkAl(lok.doluluk_yuzde, veriVarMi);
+    const noktalar = lok.poligon.map(p => `${(p[0]*1000).toFixed(1)},${(p[1]*1000).toFixed(1)}`).join(' ');
+
+    const poly = document.createElementNS(SVG_NS, 'polygon');
+    poly.setAttribute('points', noktalar);
+    poly.setAttribute('class', 'lok-poligon');
+    poly.setAttribute('fill', renk);
+    poly.setAttribute('fill-opacity', '0.55');
+    poly.setAttribute('stroke', renk);
+    poly.dataset.id = lok.id;
+    if(DUZENLE_MODU){
+      poly.addEventListener('click', () => alanSilConfirm(lok));
+    } else {
+      poly.addEventListener('click', () => panelAc(lok));
+    }
+    svg.appendChild(poly);
+
+    // Etiket — poligonun merkezine
+    const cx = lok.poligon.reduce((a,p)=>a+p[0],0) / lok.poligon.length * 1000;
+    const cy = lok.poligon.reduce((a,p)=>a+p[1],0) / lok.poligon.length * 1000;
+    const etiket = document.createElementNS(SVG_NS, 'text');
+    etiket.setAttribute('x', cx);
+    etiket.setAttribute('y', cy);
+    etiket.setAttribute('class', 'lok-etiket');
+    etiket.setAttribute('font-size', '9');
+    etiket.textContent = lok.kod.replace('YSL ', '');
+    svg.appendChild(etiket);
+
+    if(DUZENLE_MODU){
+      lok.poligon.forEach((p, i) => {
+        const nokta = document.createElementNS(SVG_NS, 'circle');
+        nokta.setAttribute('cx', p[0]*1000);
+        nokta.setAttribute('cy', p[1]*1000);
+        nokta.setAttribute('r', 6);
+        nokta.setAttribute('class', 'duzenle-nokta');
+        nokta.dataset.id = lok.id;
+        nokta.dataset.index = i;
+        nokta.addEventListener('pointerdown', (ev) => {
+          ev.stopPropagation();
+          SURUKLENEN = {lokasyonId: lok.id, noktaIndex: i};
+        });
+        svg.appendChild(nokta);
+      });
     }
   });
 }
 
-function saveData() {
-  try {
-    localStorage.setItem('saha_doluluk_data', JSON.stringify(occupancyData));
-  } catch(e) {}
+$('haritaSvg').addEventListener('pointermove', (ev) => {
+  if(!SURUKLENEN) return;
+  const svg = $('haritaSvg');
+  const rect = svg.getBoundingClientRect();
+  let x = (ev.clientX - rect.left) / rect.width;
+  let y = (ev.clientY - rect.top) / rect.height;
+  x = Math.max(0, Math.min(1, x));
+  y = Math.max(0, Math.min(1, y));
+  const lok = LOKASYONLAR.find(l => l.id === SURUKLENEN.lokasyonId);
+  if(!lok) return;
+  lok.poligon[SURUKLENEN.noktaIndex] = [x, y];
+  haritaCiz();
+});
+window.addEventListener('pointerup', async () => {
+  if(!SURUKLENEN) return;
+  const lok = LOKASYONLAR.find(l => l.id === SURUKLENEN.lokasyonId);
+  SURUKLENEN = null;
+  if(!lok) return;
+  try{
+    await fetch(`/api/saha-doluluk/lokasyon/${lok.id}/poligon`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({poligon: lok.poligon})
+    });
+  }catch(e){ console.error(e); }
+});
+
+function sahaSec(sahaNo, btn){
+  SECILI_SAHA = sahaNo;
+  document.querySelectorAll('.saha-filtre-btn').forEach(b => b.classList.remove('aktif'));
+  btn.classList.add('aktif');
+  haritaCiz();
+  haritaZoomUygula(sahaNo);
 }
 
-// Render overlays on map
-function renderOverlays() {
-  const container = document.getElementById('mapInner');
-  // Remove old overlays
-  container.querySelectorAll('.location-overlay').forEach(el => el.remove());
-
-  Object.entries(LOCATIONS).forEach(([name, loc]) => {
-    const pct = occupancyData[name]?.percentage || 0;
-    const div = document.createElement('div');
-    div.className = 'location-overlay' + (selectedLocation === name ? ' selected' : '');
-    div.style.left = loc.x + '%';
-    div.style.top = loc.y + '%';
-    div.style.width = loc.w + '%';
-    div.style.height = loc.h + '%';
-    div.style.background = getColor(pct);
-    div.textContent = name.replace('YSL ','').replace('YSL ','');
-    div.title = name + ' — ' + pct + '%';
-    div.onclick = () => selectLocation(name);
-    container.appendChild(div);
+function sahaSinirlariniBul(sahaNo){
+  let minX = 1, minY = 1, maxX = 0, maxY = 0, buldu = false;
+  LOKASYONLAR.filter(l => l.saha_no === sahaNo && l.poligon && l.poligon.length >= 3).forEach(l => {
+    l.poligon.forEach(p => {
+      buldu = true;
+      if(p[0] < minX) minX = p[0];
+      if(p[0] > maxX) maxX = p[0];
+      if(p[1] < minY) minY = p[1];
+      if(p[1] > maxY) maxY = p[1];
+    });
   });
+  return buldu ? {minX, minY, maxX, maxY} : null;
 }
 
-// Render sidebar list
-function renderSidebar() {
-  const content = document.getElementById('sidebarContent');
-  content.innerHTML = '';
+function haritaZoomUygula(sahaNo){
+  const wrap = $('haritaWrap');
+  const zoom = $('haritaZoom');
+  if(!zoom || !wrap) return;
 
-  const fields = ['YSL 1', 'YSL 2', 'YSL 3', 'YSL 4'];
-  
-  fields.forEach(field => {
-    if (currentFilter !== 'all' && currentFilter !== field) return;
+  if(!sahaNo){
+    zoom.style.transform = 'translate(0px, 0px) scale(1)';
+    return;
+  }
 
-    const title = document.createElement('div');
-    title.className = 'field-group-title';
-    title.textContent = field + ' (' + Object.keys(LOCATIONS).filter(k => LOCATIONS[k].field === field).length + ' lokasyon)';
-    content.appendChild(title);
+  const sinir = sahaSinirlariniBul(sahaNo);
+  if(!sinir){
+    zoom.style.transform = 'translate(0px, 0px) scale(1)';
+    return;
+  }
 
-    Object.entries(LOCATIONS)
-      .filter(([_, loc]) => loc.field === field)
-      .forEach(([name, _]) => {
-        const pct = occupancyData[name]?.percentage || 0;
-        const updatedAt = occupancyData[name]?.updatedAt;
+  const PAY = 0.2; // sahanın etrafında bırakılacak boşluk payı
+  const genislik = Math.max(sinir.maxX - sinir.minX, 0.02) * (1 + PAY * 2);
+  const yukseklik = Math.max(sinir.maxY - sinir.minY, 0.02) * (1 + PAY * 2);
+  const cx = (sinir.minX + sinir.maxX) / 2;
+  const cy = (sinir.minY + sinir.maxY) / 2;
 
-        const card = document.createElement('div');
-        card.className = 'location-card' + (selectedLocation === name ? ' selected' : '');
-        card.onclick = () => selectLocation(name);
+  let S = Math.min(1 / genislik, 1 / yukseklik);
+  S = Math.min(Math.max(S, 1), 5); // en az mevcut görünüm kadar, en fazla 5 kat
 
-        card.innerHTML = `
-          <div class="loc-indicator" style="background:${getColor(pct)}">${pct}%</div>
-          <div class="loc-info">
-            <div class="loc-name">${name}</div>
-            <div class="loc-date">${updatedAt ? formatDate(updatedAt) : 'Henüz güncellenmedi'}</div>
-            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${getTextColor(pct)}"></div></div>
-          </div>
-        `;
-        content.appendChild(card);
-      });
-  });
+  const rect = wrap.getBoundingClientRect();
+  const Tx = rect.width / 2 - S * cx * rect.width;
+  const Ty = rect.height / 2 - S * cy * rect.height;
+
+  zoom.style.transform = `translate(${Tx}px, ${Ty}px) scale(${S})`;
 }
 
-function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+window.addEventListener('resize', () => haritaZoomUygula(SECILI_SAHA));
+
+function duzenleModuAcKapat(){
+  DUZENLE_MODU = !DUZENLE_MODU;
+  $('duzenleBtn').classList.toggle('aktif', DUZENLE_MODU);
+  $('duzenleIpucu').textContent = DUZENLE_MODU ? 'Düzenleme modu açık — köşe noktalarını sürükleyerek sınırları ayarlayın' : '';
+  haritaCiz();
 }
 
-// Stats
-function updateStats() {
-  const values = Object.values(occupancyData).map(d => d.percentage || 0);
-  const empty = values.filter(v => v === 0).length;
-  const partial = values.filter(v => v > 0 && v < 80).length;
-  const full = values.filter(v => v >= 80).length;
-  const avg = values.length ? Math.round(values.reduce((a,b) => a+b, 0) / values.length) : 0;
-
-  document.getElementById('statEmpty').textContent = empty;
-  document.getElementById('statPartial').textContent = partial;
-  document.getElementById('statFull').textContent = full;
-  document.getElementById('statAvg').textContent = avg + '%';
+function panelAc(lok){
+  PANEL_LOKASYON_ID = lok.id;
+  $('panelKod').textContent = lok.kod;
+  $('panelAlt').textContent = `${lok.saha_no}. Saha`;
+  $('panelSlider').value = lok.doluluk_yuzde || 0;
+  $('panelSayi').value = lok.doluluk_yuzde || 0;
+  $('panelNot').value = lok.doluluk_notu || '';
+  $('panelSonGuncelleme').textContent = lok.guncelleme_tarihi
+    ? `Son güncelleme: ${lok.guncelleme_tarihi} — ${lok.guncelleyen || '—'}`
+    : 'Henüz güncelleme yapılmadı.';
+  $('panelOverlay').classList.add('acik');
+}
+function panelKapat(){
+  $('panelOverlay').classList.remove('acik');
+  PANEL_LOKASYON_ID = null;
+}
+function panelSliderDegisti(){ $('panelSayi').value = $('panelSlider').value; }
+function panelSayiDegisti(){
+  let v = Math.max(0, Math.min(100, parseFloat($('panelSayi').value) || 0));
+  $('panelSayi').value = v;
+  $('panelSlider').value = v;
+}
+async function panelKaydet(){
+  if(PANEL_LOKASYON_ID === null) return;
+  const yuzde = parseFloat($('panelSayi').value) || 0;
+  const notu = $('panelNot').value;
+  try{
+    const r = await fetch(`/api/saha-doluluk/lokasyon/${PANEL_LOKASYON_ID}/doluluk`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({doluluk_yuzde: yuzde, doluluk_notu: notu})
+    });
+    if(!r.ok) throw new Error('kaydedilemedi');
+    panelKapat();
+    await verileriYukle();
+  }catch(e){
+    console.error(e);
+    alert('Kaydedilemedi, tekrar deneyin.');
+  }
 }
 
-// Selection
-function selectLocation(name) {
-  selectedLocation = name;
-  const pct = occupancyData[name]?.percentage || 0;
-
-  document.getElementById('editPanel').style.display = 'block';
-  document.getElementById('editTitle').textContent = name;
-  document.getElementById('occupancySlider').value = pct;
-  document.getElementById('sliderValue').textContent = pct + '%';
-  document.getElementById('sliderValue').style.color = getTextColor(pct);
-
-  renderOverlays();
-  renderSidebar();
-
-  // Scroll card into view
-  const cards = document.querySelectorAll('.location-card.selected');
-  if (cards.length) cards[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+async function alanSilConfirm(lok){
+  var onay = (typeof onayla === "function")
+    ? await onayla(`"${lok.kod}" kalıcı olarak silinecek. Devam edilsin mi?`, "Alanı Sil", {onayText: "Sil", tip: "uyari"})
+    : confirm(`"${lok.kod}" silinsin mi?`);
+  if(!onay) return;
+  try{
+    const r = await fetch(`/api/saha-doluluk/lokasyon/${lok.id}`, { method: 'DELETE' });
+    const d = await r.json();
+    if(!r.ok || d.durum !== 'tamam') throw new Error(d.mesaj || 'silinemedi');
+    if (typeof toast === "function") toast(`"${lok.kod}" silindi`, "basari");
+    await verileriYukle();
+  }catch(e){
+    console.error(e);
+    if (typeof bildirim === "function") bildirim(e.message, "Hata", "hata"); else alert(e.message);
+  }
 }
 
-function resetSelection() {
-  selectedLocation = null;
-  document.getElementById('editPanel').style.display = 'none';
-  renderOverlays();
-  renderSidebar();
+function yeniAlanAc(){
+  $('yaKod').value = '';
+  $('yaAd').value = '';
+  $('yaSaha').value = String(SECILI_SAHA || 1);
+  $('yeniAlanOverlay').classList.add('acik');
+}
+function yeniAlanKapat(){
+  $('yeniAlanOverlay').classList.remove('acik');
+}
+async function yeniAlanKaydet(){
+  const kod = $('yaKod').value.trim();
+  const ad = $('yaAd').value.trim();
+  const sahaNo = parseInt($('yaSaha').value, 10);
+  if(!kod){ alert('Kod/kısa ad boş olamaz.'); return; }
+  try{
+    const r = await fetch('/api/saha-doluluk/lokasyon/yeni', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({kod, ad, saha_no: sahaNo})
+    });
+    const d = await r.json();
+    if(!r.ok || d.durum !== 'tamam') throw new Error(d.mesaj || 'eklenemedi');
+    yeniAlanKapat();
+    if (typeof toast === "function") toast(`"${kod}" eklendi — köşelerini yerleştirmek için Alanları Düzenle modunu kullan`, "basari");
+    if(!DUZENLE_MODU) duzenleModuAcKapat();
+    await verileriYukle();
+  }catch(e){
+    console.error(e);
+    alert(e.message);
+  }
 }
 
-function onSliderChange(val) {
-  const pct = parseInt(val);
-  document.getElementById('sliderValue').textContent = pct + '%';
-  document.getElementById('sliderValue').style.color = getTextColor(pct);
-}
-
-function saveOccupancy() {
-  if (!selectedLocation) return;
-  const pct = parseInt(document.getElementById('occupancySlider').value);
-  occupancyData[selectedLocation] = {
-    percentage: pct,
-    updatedAt: new Date().toISOString()
-  };
-  saveData();
-  renderOverlays();
-  renderSidebar();
-  updateStats();
-  showToast('✅ ' + selectedLocation + ' — %' + pct + ' kaydedildi');
-}
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
-}
-
-// Filter
-function filterField(field, btn) {
-  currentFilter = field;
-  document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  renderSidebar();
-}
-
-// Zoom
-function zoomIn() {
-  zoomLevel = Math.min(zoomLevel + 0.2, 3);
-  applyZoom();
-}
-
-function zoomOut() {
-  zoomLevel = Math.max(zoomLevel - 0.2, 0.5);
-  applyZoom();
-}
-
-function zoomReset() {
-  zoomLevel = 1;
-  applyZoom();
-}
-
-function applyZoom() {
-  const img = document.getElementById('ortofoto');
-  img.style.width = (1400 * zoomLevel) + 'px';
-}
-
-function init() {
-  const img = document.getElementById('ortofoto');
-
-  img.onerror = function() {
-    console.error("Ortofoto yüklenemedi:", img.src);
-    img.style.display = 'none';
-
-    const mapInner = document.getElementById('mapInner');
-    mapInner.style.width = '1400px';
-    mapInner.style.height = '990px';
-    mapInner.style.background = 'linear-gradient(135deg, var(--bg) 0%, var(--surface2) 100%)';
-  };
-
-  img.src = '/assets/images/ortofoto_web.jpg';
-
-  loadData();
-  renderOverlays();
-  renderSidebar();
-  updateStats();
-}
-
-init();
+legendCiz();
+verileriYukle();
 </script>
 </body>
 </html>
