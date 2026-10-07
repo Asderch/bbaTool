@@ -10,6 +10,10 @@
 <script src="/assets/js/theme.js?v={{ APP_VERSION }}"></script>
 <script src="/assets/js/popup.js" defer></script>
 <style>
+/* Konum renkleri — her yerde aynı anlam: Depoda mavi, Tadilatta sarı, Akkuyu'da aqua, Kesin çıkan turuncu.
+   (Veri görselleştirme paleti; açık/koyu temada ayrı adımlar, renk körlüğü ayrımı doğrulandı.) */
+:root{--k-depo:#2a78d6;--k-tadilat:#eda100;--k-nakil:#1baf7a;--k-kesin:#eb6834}
+[data-theme="dark"]{--k-depo:#3987e5;--k-tadilat:#c98500;--k-nakil:#199e70;--k-kesin:#d95926}
 .nd-main{margin-left:220px;min-height:100vh;background:var(--bg-content);display:flex;flex-direction:column}
 .nd-topbar{background:rgba(31,31,31,.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:0.5px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;gap:8px;flex-wrap:wrap}
 [data-theme="light"] .nd-topbar{background:rgba(255,255,255,.8)}
@@ -19,49 +23,100 @@
 .nd-topbar-right{display:flex;align-items:center;gap:6px}
 .nd-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-white);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
 .nd-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--bg-hover)}
-/* "Geri" <a class="nd-btn"> tarayıcı varsayılan link stilini (altı çizili, mavi renk)
-   devralmasın — button'larla aynı görünsün. */
+.nd-btn:disabled{opacity:.6;cursor:wait}
 a.nd-btn, a.nd-btn:visited{text-decoration:none !important;color:var(--text2) !important}
 a.nd-btn:hover{text-decoration:none !important;border-color:var(--primary) !important;color:var(--primary) !important;background:var(--bg-hover) !important}
 .nd-content{padding:20px 24px;flex:1}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
 .kpi-card{background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;transition:all .2s ease}
-.kpi-card:hover{border-color:var(--primary);box-shadow:0 4px 16px rgba(62,207,142,.06);transform:translateY(-1px)}
-.kpi-card.accent-blue{border-top:2px solid var(--blue)}.kpi-card.accent-teal{border-top:2px solid var(--teal)}.kpi-card.accent-red{border-top:2px solid var(--red)}.kpi-card.accent-amber{border-top:2px solid var(--amber)}.kpi-card.accent-green{border-top:2px solid var(--green)}.kpi-card.accent-purple{border-top:2px solid var(--purple)}
-.kpi-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:5px}
+.kpi-card:hover{border-color:var(--primary)}
+.kpi-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:6px}
 .kpi-value{font-size:22px;font-weight:700;color:var(--text);line-height:1}
-.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.kpi-value small{font-size:12px;font-weight:600;color:var(--text3);margin-left:3px}
+.kpi-sub{font-size:10.5px;color:var(--text3);margin-top:5px}
+.kpi-card.kucuk .kpi-value{font-size:17px}
+.sw{width:9px;height:9px;border-radius:3px;flex-shrink:0;display:inline-block}
+.sw.depo{background:var(--k-depo)}.sw.tadilat{background:var(--k-tadilat)}.sw.nakil{background:var(--k-nakil)}.sw.kesin{background:var(--k-kesin)}
 .kpi-fark-detay{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .fark-yon{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px}
 .fark-fazla{color:var(--red);background:rgba(239,68,68,.14)}
 .fark-eksik{color:var(--blue);background:rgba(59,130,246,.14)}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 .grid-6040{display:grid;grid-template-columns:2fr 3fr;gap:14px;margin-bottom:14px}
-.card{background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px;transition:border-color .2s}
+.card{background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px;transition:border-color .2s;margin-bottom:14px}
+.grid-2 .card,.grid-6040 .card{margin-bottom:0}
 .card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
 .card-sub{font-size:11px;color:var(--text3);margin-bottom:14px}
+.bolum-baslik{font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+.bolum-baslik:first-child{margin-top:0}
 .chart-wrap{position:relative;width:100%}
 .donut-legend{display:flex;flex-direction:column;gap:5px;justify-content:center}
 .legend-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text2)}
 .legend-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
-.rapor-filtre{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:16px;background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px}
+/* Filtre çubuğu */
+.rapor-filtre{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:16px;background:var(--bg-white);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;position:sticky;top:58px;z-index:5}
 .rapor-filtre-grup{display:flex;flex-direction:column;gap:3px}
 .rapor-filtre-grup label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
-.rapor-filtre-grup input,.rapor-filtre-grup select{padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-hover);color:var(--text);font-size:12px;font-family:inherit}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.rapor-filtre-grup input,.rapor-filtre-grup select{padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-hover);color:var(--text);font-size:12px;font-family:inherit;height:32px;box-sizing:border-box}
+.rapor-filtre-grup select{min-width:170px}
+.hizli{display:flex;gap:4px;flex-wrap:wrap}
+.hizli button{padding:6px 10px;height:32px;font-size:11px}
+.hizli button.aktif{border-color:var(--primary);color:var(--primary)}
+.filtre-not{font-size:10.5px;color:var(--text3);flex-basis:100%;margin-top:-2px}
+.filtre-not b{color:var(--text2)}
+/* Konum çubuğu (tek yatay %100 yığılmış çubuk) */
+.konum-bar{display:flex;height:22px;border-radius:6px;overflow:hidden;gap:2px;background:var(--bg-white);margin:4px 0 10px}
+.konum-bar > div{height:100%;min-width:0;transition:width .3s}
+.konum-bar > div:first-child{border-radius:6px 0 0 6px}.konum-bar > div:last-child{border-radius:0 6px 6px 0}
+.konum-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--text2)}
+.konum-legend span{display:inline-flex;align-items:center;gap:6px}
+.konum-legend b{color:var(--text);font-variant-numeric:tabular-nums}
+.konum-not{font-size:11px;color:var(--text3);margin-top:10px}
+.konum-not .uyari{color:var(--amber)}
+/* Tablolar */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;flex-wrap:wrap}
 .search-box{background:var(--bg-hover);border:0.5px solid var(--border);border-radius:var(--radius);padding:7px 12px;color:var(--text);font-size:12px;width:260px;outline:none;font-family:inherit;transition:border-color .15s}
 .search-box:focus{border-color:var(--primary)}
 .search-box::placeholder{color:var(--text3)}
 .table-wrap{overflow-x:auto}
 .table-wrap table{width:100%;border-collapse:collapse;font-size:12px}
-.table-wrap th{background:var(--bg-hover);color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;padding:8px 10px;text-align:left;font-size:10px;border-bottom:0.5px solid var(--border);position:sticky;top:0}
+.table-wrap th{background:var(--bg-hover);color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;padding:8px 10px;text-align:left;font-size:10px;border-bottom:0.5px solid var(--border);position:sticky;top:0;white-space:nowrap}
+.table-wrap th.siralanabilir{cursor:pointer;user-select:none}
+.table-wrap th.siralanabilir:hover{color:var(--text)}
+.table-wrap th .ok{opacity:.5;margin-left:3px}
 .table-wrap td{padding:8px 10px;border-bottom:0.5px solid var(--border);color:var(--text);font-size:12px}
 .table-wrap tr:hover td{background:var(--bg-hover)}
-.r{text-align:right}
+.table-wrap tfoot td{font-weight:700;background:var(--bg-hover);border-top:1px solid var(--border)}
+.r{text-align:right;font-variant-numeric:tabular-nums}
+.muted{color:var(--text3)}
+.mini-bar{display:flex;height:8px;width:120px;border-radius:3px;overflow:hidden;gap:1px;background:var(--bg-hover)}
+.mini-bar > div{height:100%}
+.tikla{cursor:pointer}
+.tikla:hover .irs-link{text-decoration:underline}
+.irs-link{color:var(--primary);font-weight:600;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.irs-link i{font-size:10px;opacity:.6}
+.firma-link{color:var(--text);font-weight:600;cursor:pointer}
+.firma-link:hover{color:var(--primary);text-decoration:underline}
 .fark-rozet{color:var(--red);font-weight:700}
+.gun{display:inline-block;min-width:34px;text-align:center;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;background:var(--bg-hover);color:var(--text2)}
+.gun.orta{background:rgba(245,158,11,.15);color:var(--amber)}
+.gun.uzun{background:rgba(239,68,68,.14);color:var(--red)}
+.sekmeler{display:flex;gap:6px;flex-wrap:wrap}
+.sekme{padding:6px 12px;border-radius:999px;border:0.5px solid var(--border);background:var(--bg-white);color:var(--text2);font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.sekme .n{opacity:.6;margin-left:4px;font-weight:600}
+.sekme.aktif{background:var(--primary);border-color:var(--primary);color:#fff}
+.alt-sekmeler{display:flex;gap:5px;flex-wrap:wrap;margin:-4px 0 10px}
+.alt-sekme{padding:3px 9px;border-radius:999px;border:0.5px solid var(--border);background:transparent;color:var(--text3);font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.alt-sekme.aktif{border-color:var(--primary);color:var(--primary)}
+.tip-rozet{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;background:rgba(245,158,11,.15);color:var(--amber);white-space:nowrap}
+.tip-rozet.kotu{background:rgba(239,68,68,.14);color:var(--red)}
+.trend-not{font-size:11px;color:var(--text3);margin-top:8px}
+.trend-not .uyari{color:var(--amber)}
 .no-data{text-align:center;color:var(--text3);padding:50px 20px;font-size:12px}
 .no-data i{font-size:28px;margin-bottom:10px;display:block;opacity:.25}
-@media(max-width:900px){.grid-2,.grid-6040{grid-template-columns:1fr}}
+.bos-satir{text-align:center;color:var(--text3);padding:24px 10px !important}
+.yukleniyor{opacity:.55;transition:opacity .2s}
+@media(max-width:1100px){.grid-2,.grid-6040{grid-template-columns:1fr}.rapor-filtre{position:static}}
 </style>
 </head>
 <body>
@@ -108,11 +163,12 @@ a.nd-btn:hover{text-decoration:none !important;border-color:var(--primary) !impo
       <div>
         <div class="topbar-breadcrumb"><a href="/">Ana Sayfa</a><span class="bc-sep">›</span><a href="/fason">Fason Takip</a><span class="bc-sep">›</span><span class="bc-current">Rapor</span></div>
         <div class="nd-topbar-title">Fason Raporu</div>
-        <div class="nd-topbar-sub">Canlı veriden — irsaliye/kalem bazlı</div>
+        <div class="nd-topbar-sub">Canlı veriden — kalem ve hareket bazlı</div>
       </div>
     </div>
     <div class="nd-topbar-right">
       <a class="nd-btn" href="/fason"><i class="fa-solid fa-arrow-left"></i> Geri</a>
+      <button class="nd-btn" id="excelBtn" onclick="excelAktar()"><i class="fa-solid fa-file-excel"></i> Excel'e Aktar</button>
       <button class="nd-btn" onclick="verileriYukle()"><i class="fa-solid fa-arrows-rotate"></i> Yenile</button>
       <button class="topbar-tema-toggle" id="temaToggleTopbar" onclick="temaToggle()"><i class="fa-solid fa-sun"></i></button>
       <div class="topbar-avatar" title="Profil">{{ (session.kullanici or "?")[:2]|upper }}</div>
@@ -120,16 +176,97 @@ a.nd-btn:hover{text-decoration:none !important;border-color:var(--primary) !impo
   </div>
 
   <div class="nd-content">
+    <!-- FİLTRE -->
+    <div class="rapor-filtre">
+      <div class="rapor-filtre-grup"><label for="fBaslangic">Başlangıç</label><input type="date" id="fBaslangic"></div>
+      <div class="rapor-filtre-grup"><label for="fBitis">Bitiş</label><input type="date" id="fBitis"></div>
+      <div class="rapor-filtre-grup"><label for="fFirma">Firma</label>
+        <select id="fFirma"><option value="">Tüm firmalar</option><option value="__yok__">— Firma atanmamış —</option></select>
+      </div>
+      <div class="rapor-filtre-grup"><label>Hızlı</label>
+        <div class="hizli" id="hizliAralik">
+          <button class="nd-btn" data-aralik="ay" onclick="hizliAralik('ay')">Bu ay</button>
+          <button class="nd-btn" data-aralik="3ay" onclick="hizliAralik('3ay')">Son 3 ay</button>
+          <button class="nd-btn" data-aralik="yil" onclick="hizliAralik('yil')">Bu yıl</button>
+          <button class="nd-btn" data-aralik="tumu" onclick="hizliAralik('tumu')">Tümü</button>
+        </div>
+      </div>
+      <div class="rapor-filtre-grup"><label>&nbsp;</label><button class="nd-btn" onclick="filtreUygula()" style="height:32px;color:var(--primary);border-color:var(--primary)"><i class="fa-solid fa-filter"></i> Uygula</button></div>
+      <div class="filtre-not" id="filtreNot"><b>Tarih</b> kalemin giriş tarihine (sadece ZMM068 belge tarihi) uygulanır; aylık hareket grafiklerinde hareketin kendi tarihine.</div>
+    </div>
+
     <div id="raporYok" class="no-data" style="display:none">
       <i class="fa-solid fa-chart-line"></i><div>Rapor verisi yüklenemedi. "Yenile" ile tekrar deneyin.</div>
     </div>
 
     <div id="raporIcerik">
+      <!-- 1) MALZEME NEREDE -->
+      <div class="bolum-baslik"><i class="fa-solid fa-location-dot"></i> Malzeme nerede</div>
+      <div class="kpi-grid" id="konumKpi"></div>
+      <div class="card">
+        <div class="card-title">Girişin dağılımı</div>
+        <div class="card-sub" id="konumAlt">Yükleniyor…</div>
+        <div class="konum-bar" id="konumBar" role="img" aria-label="Giriş miktarının depoda, tadilatta, Akkuyu'da ve kesin çıkan olarak dağılımı"></div>
+        <div class="konum-legend" id="konumLegend"></div>
+        <div class="konum-not" id="konumNot"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="card-title" style="margin-bottom:0">Firma bazlı</div>
+            <div class="card-sub" style="margin-bottom:0">Firma adına tıklayınca rapor o firmaya süzülür · başlığa tıklayınca sıralanır</div>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:420px;overflow-y:auto">
+          <table>
+            <thead><tr id="firmaBaslik"></tr></thead>
+            <tbody id="firmaTB"></tbody>
+            <tfoot id="firmaTF"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- 2) AYLIK HAREKET -->
+      <div class="bolum-baslik"><i class="fa-solid fa-chart-column"></i> Aylık hareket (kg)</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Giriş ve kesin çıkış</div>
+          <div class="card-sub">Giriş: belge tarihine göre · Kesin çıkış: Çıkış + Çıkış (A63) hareket tarihine göre</div>
+          <div class="chart-wrap" style="height:260px"><canvas id="chartTrendAna"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Tadilat gönderimi ve nakil</div>
+          <div class="card-sub">Hareket tarihine göre · tadilattan dönüş bilgisi üzerine gelince görünür</div>
+          <div class="chart-wrap" style="height:260px"><canvas id="chartTrendYan"></canvas></div>
+        </div>
+      </div>
+      <div class="trend-not" id="trendNot"></div>
+
+      <!-- 3) TAKİP -->
+      <div class="bolum-baslik"><i class="fa-solid fa-list-check"></i> Takip</div>
+      <div class="card">
+        <div class="section-header">
+          <div class="sekmeler" id="takipSekmeler"></div>
+          <input class="search-box" id="takipAra" placeholder="İrsaliye, malzeme, SAP kodu, firma ara..." oninput="takipCiz()">
+        </div>
+        <div class="alt-sekmeler" id="kontrolAltSekmeler" style="display:none"></div>
+        <div class="table-wrap" style="max-height:440px;overflow-y:auto">
+          <table>
+            <thead><tr id="takipBaslik"></tr></thead>
+            <tbody id="takipTB"></tbody>
+          </table>
+        </div>
+        <div class="trend-not" id="takipNot"></div>
+      </div>
+
+      <!-- 4) GENEL / DURUM / KANTAR -->
+      <div class="bolum-baslik"><i class="fa-solid fa-chart-pie"></i> Genel</div>
       <div class="kpi-grid" id="kpiAlani"></div>
 
       <div class="grid-6040">
         <div class="card">
-          <div class="card-title">Durum Dağılımı</div>
+          <div class="card-title">Durum dağılımı</div>
           <div class="card-sub">Kalem sayısı bazında</div>
           <div style="display:flex;align-items:center;gap:20px;padding-top:6px">
             <div class="chart-wrap" style="height:200px;width:200px;flex-shrink:0"><canvas id="chartDurum"></canvas></div>
@@ -137,41 +274,23 @@ a.nd-btn:hover{text-decoration:none !important;border-color:var(--primary) !impo
           </div>
         </div>
         <div class="card">
-          <div class="card-title">Durum Bazlı Miktar</div>
-          <div class="card-sub">Giriş miktarı toplamı</div>
+          <div class="card-title">Durum bazlı miktar</div>
+          <div class="card-sub">Giriş miktarı toplamı (kg)</div>
           <div class="chart-wrap" style="height:260px"><canvas id="chartDurumMiktar"></canvas></div>
-        </div>
-      </div>
-
-      <div class="grid-6040">
-        <div class="card">
-          <div class="card-title">Firma Bazlı</div>
-          <div class="card-sub">İrsaliye sayısı</div>
-          <div class="chart-wrap" style="height:280px"><canvas id="chartFirma"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Firma Detay</div>
-          <div class="card-sub">Kalem, giriş miktarı ve tutar</div>
-          <div class="table-wrap" style="max-height:280px;overflow-y:auto">
-            <table>
-              <thead><tr><th>Firma</th><th class="r">İrsaliye</th><th class="r">Giriş</th><th class="r">Tutar</th></tr></thead>
-              <tbody id="firmaTB"></tbody>
-            </table>
-          </div>
         </div>
       </div>
 
       <div class="card">
         <div class="section-header">
           <div>
-            <div class="card-title" style="margin-bottom:0">Kantar Farkı Olan Kalemler</div>
+            <div class="card-title" style="margin-bottom:0">Kantar farkı olan kalemler</div>
             <div class="card-sub" id="kantarOzet" style="margin-bottom:0">Yükleniyor…</div>
           </div>
-          <input class="search-box" id="kantarAra" placeholder="Malzeme, irsaliye no, firma, durum ara (ör. stok, çıkış)..." oninput="kantarAraDebounce()">
+          <input class="search-box" id="kantarAra" placeholder="Malzeme, irsaliye no, SAP kodu, firma, durum ara..." oninput="kantarAraDebounce()">
         </div>
         <div class="table-wrap" style="max-height:420px;overflow-y:auto">
           <table>
-            <thead><tr><th>İrsaliye No</th><th>Firma</th><th>Malzeme</th><th>SAP Kodu</th><th class="r">Giriş</th><th class="r">OTIS Giriş</th><th class="r">Fark</th><th>Sebep</th><th>Durum</th></tr></thead>
+            <thead><tr><th>İrsaliye No</th><th>Giriş Tarihi</th><th>Firma</th><th>Malzeme</th><th>SAP Kodu</th><th class="r">Giriş</th><th class="r">OTIS Giriş</th><th class="r">Fark</th><th>Sebep</th><th>Durum</th></tr></thead>
             <tbody id="kantarTB"></tbody>
           </table>
         </div>
@@ -184,140 +303,338 @@ a.nd-btn:hover{text-decoration:none !important;border-color:var(--primary) !impo
 <script>
 function $(id){return document.getElementById(id)}
 let ch = {};
-const CL=['#86B48F','#eab308','#ef4444','#6366f1','#a78bfa','#f472b6','#2dd4bf'];
-const DURUM_RENK={'Stok':'#6366f1','Çıkış':'#eab308','Çıkış (A63)':'#f472b6','Tadilat':'#a78bfa','Nakil':'#2dd4bf','Aspro':'#ef4444','Belirlenmedi':'#4e5568'};
 
-// Grafiklerin eksen/ızgara renkleri açık ve koyu temada farklı olmalı — sabit
-// (beyaz bazlı) renk açık temada görünmüyordu. Aktif temayı okuyup buna göre üretiyoruz.
-function acikTemaMi(){
-  return document.documentElement.getAttribute('data-theme') === 'light';
+// ── Tema ve renkler ──
+function acikTemaMi(){ return document.documentElement.getAttribute('data-theme') === 'light' }
+function cssVar(ad){ return getComputedStyle(document.documentElement).getPropertyValue(ad).trim() }
+function konumRenk(){
+  return { depo: cssVar('--k-depo') || '#2a78d6', tadilat: cssVar('--k-tadilat') || '#eda100',
+           nakil: cssVar('--k-nakil') || '#1baf7a', kesin: cssVar('--k-kesin') || '#eb6834' }
+}
+// Durum renkleri konum renkleriyle aynı anlamı taşır (Stok = depoda, Tadilat, Nakil, Çıkış = kesin çıkan)
+function durumRenk(d){
+  const k = konumRenk()
+  return ({'Stok':k.depo,'Tadilat':k.tadilat,'Nakil':k.nakil,'Çıkış':k.kesin,'Çıkış (A63)':acikTemaMi()?'#e87ba4':'#d55181',
+           'Aspro':acikTemaMi()?'#4a3aa7':'#9085e9','Belirlenmedi':acikTemaMi()?'#a3a3a3':'#5c5c5c'})[d] || (acikTemaMi()?'#a3a3a3':'#5c5c5c')
 }
 function temaRenkleri(){
   if (acikTemaMi()){
-    return {
-      grid: 'rgba(0,0,0,.06)',
-      ax: 'rgba(0,0,0,.5)',
-      tt: {backgroundColor:'#1f1f1f',titleColor:'#f5f5f5',bodyColor:'#cfcfcf',borderColor:'#2a2a2a',borderWidth:1,padding:10,cornerRadius:8,titleFont:{weight:600},bodyFont:{size:11}}
-    };
+    return { grid:'rgba(0,0,0,.06)', ax:'rgba(0,0,0,.55)', yuzey:'#ffffff',
+      tt:{backgroundColor:'#1f1f1f',titleColor:'#f5f5f5',bodyColor:'#cfcfcf',footerColor:'#a3a3a3',borderColor:'#2a2a2a',borderWidth:1,padding:10,cornerRadius:8,titleFont:{weight:600},bodyFont:{size:11},footerFont:{size:10,weight:400}} }
   }
-  return {
-    grid: 'rgba(255,255,255,.04)',
-    ax: 'rgba(255,255,255,.3)',
-    tt: {backgroundColor:'#1f1f1f',titleColor:'#ededed',bodyColor:'#a0a0a0',borderColor:'#2a2a2a',borderWidth:1,padding:10,cornerRadius:8,titleFont:{weight:600},bodyFont:{size:11}}
-  };
+  return { grid:'rgba(255,255,255,.05)', ax:'rgba(255,255,255,.45)', yuzey:'#1a1a19',
+    tt:{backgroundColor:'#1f1f1f',titleColor:'#ededed',bodyColor:'#a0a0a0',footerColor:'#8a8a8a',borderColor:'#2a2a2a',borderWidth:1,padding:10,cornerRadius:8,titleFont:{weight:600},bodyFont:{size:11},footerFont:{size:10,weight:400}} }
 }
-let CT = temaRenkleri();
-function tazeleOpsiyonlar(){
-  CT = temaRenkleri();
-  return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:CT.tt},scales:{x:{ticks:{color:CT.ax,font:{size:10}},grid:{color:CT.grid}},y:{ticks:{color:CT.ax,font:{size:10}},grid:{color:CT.grid}}}};
+let CT = temaRenkleri()
+function eksenOps(){
+  CT = temaRenkleri()
+  return {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:CT.tt},
+    scales:{x:{ticks:{color:CT.ax,font:{size:10}},grid:{display:false},border:{color:CT.grid}},
+            y:{beginAtZero:true,ticks:{color:CT.ax,font:{size:10},callback:v=>fKisa(v)},grid:{color:CT.grid},border:{display:false}}}}
 }
-let bO = tazeleOpsiyonlar();
-
 function mk(id,c){const el=$(id);if(!el)return;if(ch[id])ch[id].destroy();ch[id]=new Chart(el,c)}
-function fSayi(n){return (n||0).toLocaleString('tr-TR',{maximumFractionDigits:1})}
+
+function fSayi(n,ondalik){return (n||0).toLocaleString('tr-TR',{maximumFractionDigits:ondalik==null?1:ondalik})}
+function fKg(n){ return fSayi(n,0) }
+function fKisa(n){ n=Number(n)||0; const a=Math.abs(n); if(a>=1e6) return fSayi(n/1e6,1)+' Mn'; if(a>=1e3) return fSayi(n/1e3,0)+' B'; return fSayi(n,0) }
 function fPara(n){return '$' + fSayi(n)}
+function yuzde(p,t){ return t>0 ? (100*p/t) : 0 }
+function escHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
 
 async function cikisYap() {
   const s = await onayla("Çıkış yapmak istediğinize emin misiniz?", "Çıkış Yap", {onayText:"Çıkış Yap", tip:"uyari"})
   if (s) window.location.href = "/logout"
 }
 
-// Tema değişince (sidebar/topbar toggle, theme.js tarafından data-theme'i değiştirir)
-// tüm grafikleri güncel renklerle yeniden çiz.
-new MutationObserver(function(){
-  bO = tazeleOpsiyonlar();
-  verileriYukle();
-}).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+// Tema değişince veriyi yeniden ÇEKMEDEN sadece grafikleri ve renkli alanları yeniden çiz
+let SON = {}
+new MutationObserver(function(){ requestAnimationFrame(hepsiniCiz) })
+  .observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']})
+
+// ── Filtre ──
+function bugunISO(d){ d = d || new Date(); return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10) }
+function qs(){
+  const p = new URLSearchParams()
+  if ($('fBaslangic').value) p.set('baslangic', $('fBaslangic').value)
+  if ($('fBitis').value) p.set('bitis', $('fBitis').value)
+  if ($('fFirma').value) p.set('firma', $('fFirma').value)
+  return p
+}
+function qsStr(){ const s = qs().toString(); return s ? '?' + s : '' }
+function filtreUygula(){
+  history.replaceState(null, '', location.pathname + qsStr())
+  hizliIsaretle()
+  verileriYukle()
+}
+function hizliAralik(tip){
+  const n = new Date()
+  if (tip === 'tumu'){ $('fBaslangic').value = ''; $('fBitis').value = '' }
+  else {
+    let b
+    if (tip === 'ay') b = new Date(n.getFullYear(), n.getMonth(), 1)
+    else if (tip === '3ay') b = new Date(n.getFullYear(), n.getMonth() - 2, 1)
+    else b = new Date(n.getFullYear(), 0, 1)
+    $('fBaslangic').value = bugunISO(b); $('fBitis').value = bugunISO(n)
+  }
+  filtreUygula()
+}
+function hizliIsaretle(){
+  const b = $('fBaslangic').value, s = $('fBitis').value, n = new Date(), bugun = bugunISO(n)
+  const es = {ay: bugunISO(new Date(n.getFullYear(), n.getMonth(), 1)), '3ay': bugunISO(new Date(n.getFullYear(), n.getMonth() - 2, 1)), yil: bugunISO(new Date(n.getFullYear(), 0, 1))}
+  document.querySelectorAll('#hizliAralik button').forEach(btn => {
+    const t = btn.dataset.aralik
+    btn.classList.toggle('aktif', t === 'tumu' ? (!b && !s) : (b === es[t] && s === bugun))
+  })
+}
+function firmaSec(id){ $('fFirma').value = id == null ? '__yok__' : String(id); filtreUygula() }
+
+async function firmalariYukle(){
+  try {
+    const r = await fetch('/api/fason/firmalar'); if (!r.ok) return
+    const liste = await r.json()
+    const sel = $('fFirma'), secili = new URLSearchParams(location.search).get('firma') || ''
+    liste.forEach(f => { const o = document.createElement('option'); o.value = f.id; o.textContent = f.ad; sel.appendChild(o) })
+    sel.value = secili
+  } catch(e){}
+}
+
+// ── Veri yükleme ──
+async function getJson(url){ const r = await fetch(url); if (!r.ok) throw new Error(url + ' → ' + r.status); return r.json() }
 
 async function verileriYukle(){
+  const q = qsStr()
+  $('raporIcerik').classList.add('yukleniyor')
   try{
-    const [ozetR, durumR] = await Promise.all([
-      fetch('/api/fason/rapor/ozet'),
-      fetch('/api/fason/rapor/durum-dagilimi'),
-    ]);
-    if(!ozetR.ok || !durumR.ok) throw new Error('sunucu hatasi');
-    const ozet = await ozetR.json();
-    const durum = await durumR.json();
-
-    $('kpiAlani').innerHTML = `
-      <div class="kpi-card accent-purple"><div class="kpi-label">Toplam İrsaliye</div><div class="kpi-value">${ozet.toplam_irsaliye}</div></div>
-      <div class="kpi-card accent-blue"><div class="kpi-label">Toplam Kalem</div><div class="kpi-value">${ozet.toplam_kalem}</div></div>
-      <div class="kpi-card accent-green"><div class="kpi-label">Toplam Giriş</div><div class="kpi-value">${fSayi(ozet.toplam_giris_miktari)}</div><div class="kpi-sub">OTIS: ${fSayi(ozet.toplam_otis_giris_miktari)}</div></div>
-      <div class="kpi-card accent-red">
-        <div class="kpi-label">Kantar Farklı Kalem</div>
-        <div class="kpi-value">${ozet.kantar_farkli_kalem}</div>
-        <div class="kpi-fark-detay">
-          <span class="fark-yon fark-fazla"><i class="fa-solid fa-arrow-up"></i> ${fSayi(ozet.kantar_farkli_fazla_kg)} kg</span>
-          <span class="fark-yon fark-eksik"><i class="fa-solid fa-arrow-down"></i> ${fSayi(ozet.kantar_farkli_eksik_kg)} kg</span>
-        </div>
-      </div>
-      <div class="kpi-card accent-amber"><div class="kpi-label">Stokta Bekleyen</div><div class="kpi-value">${fSayi(ozet.stokta_bekleyen_kg)} kg</div><div class="kpi-sub">${fPara(ozet.stokta_bekleyen_tutar)}</div></div>
-      <div class="kpi-card accent-teal"><div class="kpi-label">Toplam Tutar</div><div class="kpi-value">${fPara(ozet.toplam_tutar)}</div></div>
-    `;
-
-    const renkler = durum.map(d => DURUM_RENK[d.durum] || '#4e5568');
-    mk('chartDurum',{type:'doughnut',data:{labels:durum.map(d=>d.durum),datasets:[{data:durum.map(d=>d.adet),backgroundColor:renkler,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:CT.tt}}});
-    $('durumLegend').innerHTML = durum.map((d,i)=>`<div class="legend-item"><span class="legend-dot" style="background:${renkler[i]}"></span>${d.durum} (${d.adet})</div>`).join('');
-
-    mk('chartDurumMiktar',{type:'bar',data:{labels:durum.map(d=>d.durum),datasets:[{data:durum.map(d=>d.miktar),backgroundColor:renkler,borderRadius:5,borderSkipped:false}]},options:{...bO,indexAxis:'y'}});
-
-    $('raporIcerik').style.display = 'block';
-    $('raporYok').style.display = 'none';
+    const [konum, trend, takip, ozet, durum] = await Promise.all([
+      getJson('/api/fason/rapor/konum' + q),
+      getJson('/api/fason/rapor/hareket-trend' + q),
+      getJson('/api/fason/rapor/takip' + q),
+      getJson('/api/fason/rapor/ozet' + q),
+      getJson('/api/fason/rapor/durum-dagilimi' + q),
+    ])
+    SON = {konum, trend, takip, ozet, durum}
+    hepsiniCiz()
+    $('raporIcerik').style.display = 'block'
+    $('raporYok').style.display = 'none'
   }catch(e){
-    console.error(e);
-    $('raporIcerik').style.display = 'none';
-    $('raporYok').style.display = 'block';
-    return;
+    console.error(e)
+    $('raporIcerik').style.display = 'none'
+    $('raporYok').style.display = 'block'
+  }finally{
+    $('raporIcerik').classList.remove('yukleniyor')
   }
-
-  await firmaAnalizYukle();
-  await kantarFarkiYukle();
+  kantarFarkiYukle()
 }
 
-function escHtml(s){
-  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function hepsiniCiz(){
+  if (!SON.konum) return
+  konumCiz(SON.konum)
+  firmaCiz()
+  trendCiz(SON.trend)
+  takipSekmeleriCiz(); takipCiz()
+  genelCiz(SON.ozet, SON.durum)
 }
 
-async function firmaAnalizYukle(){
-  const r = await fetch('/api/fason/rapor/firma-analiz');
-  if (!r.ok) return;
-  const veri = await r.json();
+// ── 1) Malzeme nerede ──
+function konumCiz(k){
+  const t = k.toplam, g = t.giris || 0
+  const kalan = g - t.kesin
+  const kart = (sw, lbl, val, alt) => `<div class="kpi-card"><div class="kpi-label">${sw ? `<span class="sw ${sw}"></span>` : ''}${lbl}</div><div class="kpi-value">${fKg(val)}<small>kg</small></div>${alt ? `<div class="kpi-sub">${alt}</div>` : ''}</div>`
+  $('konumKpi').innerHTML =
+    kart('', 'SAP Giriş', g, `${fSayi(k.kalem_sayisi,0)} kalem · ${fSayi(k.irsaliye_sayisi,0)} irsaliye`) +
+    kart('depo', 'Depoda', t.depoda, `%${fSayi(yuzde(t.depoda,g))}`) +
+    kart('tadilat', 'Tadilatta', t.tadilatta, `%${fSayi(yuzde(t.tadilatta,g))}`) +
+    kart('nakil', "Akkuyu'da", t.nakilde, `%${fSayi(yuzde(t.nakilde,g))}`) +
+    kart('kesin', 'Kesin Çıkan', t.kesin, `%${fSayi(yuzde(t.kesin,g))} · Çıkış + A63`) +
+    kart('', 'Henüz çıkmamış', kalan, 'Depoda + tadilatta + Akkuyu\'da')
 
-  const ilkN = veri.slice(0, 10);
-  mk('chartFirma',{
-    type:'bar',
-    data:{labels:ilkN.map(f=>f.firma), datasets:[{data:ilkN.map(f=>f.irsaliye_sayisi), backgroundColor:CL[0]+'cc', borderRadius:5, borderSkipped:false}]},
-    options:{...bO, indexAxis:'y'}
-  });
-
-  $('firmaTB').innerHTML = veri.map(f => `
-    <tr><td>${escHtml(f.firma)}</td><td class="r">${f.irsaliye_sayisi}</td><td class="r">${fSayi(f.toplam_giris)}</td><td class="r">${fPara(f.toplam_tutar)}</td></tr>
-  `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3)">Veri yok</td></tr>';
+  const dilimler = [['depo','Depoda',t.depoda],['tadilat','Tadilatta',t.tadilatta],['nakil',"Akkuyu'da",t.nakilde],['kesin','Kesin çıkan',t.kesin]]
+  const renk = {depo:'var(--k-depo)',tadilat:'var(--k-tadilat)',nakil:'var(--k-nakil)',kesin:'var(--k-kesin)'}
+  $('konumBar').innerHTML = g > 0 ? dilimler.filter(d => d[2] > 0).map(d =>
+    `<div style="width:${yuzde(d[2],g)}%;background:${renk[d[0]]}" title="${d[1]}: ${fKg(d[2])} kg (%${fSayi(yuzde(d[2],g))})"></div>`).join('') : ''
+  $('konumLegend').innerHTML = dilimler.map(d =>
+    `<span><span class="sw ${d[0]}"></span>${d[1]} <b>${fKg(d[2])} kg</b> <span class="muted">%${fSayi(yuzde(d[2],g))}</span></span>`).join('')
+  $('konumAlt').textContent = g > 0 ? `${fKg(g)} kg girişin bugünkü konumu` : 'Filtreye uyan kalem yok'
+  const notlar = []
+  if (k.durumdan_tahmini) notlar.push(`${fSayi(k.durumdan_tahmini,0)} kalemin hareket kaydı yok ya da miktarı eksik; konumu durumundan tahmin edildi.`)
+  if (k.giris_tarihsiz) notlar.push(`${fSayi(k.giris_tarihsiz,0)} kalemin ZMM068 belge tarihi yok; tarih filtresine ve aylık girişe dahil edilmez.`)
+  if (k.miktari_eksik) notlar.push(`<span class="uyari">${fSayi(k.miktari_eksik,0)} kalemde miktarı girilmemiş hareket var</span> — Fason ekranındaki "Çıkış Miktarları" Excel'inden doldurabilirsin.`)
+  $('konumNot').innerHTML = notlar.join(' ')
 }
 
-let kantarAraZamanlayici = null;
-function kantarAraDebounce(){
-  clearTimeout(kantarAraZamanlayici);
-  kantarAraZamanlayici = setTimeout(kantarFarkiYukle, 300);
+// Firma tablosu (sıralanabilir)
+const FIRMA_KOLONLAR = [
+  ['firma','Firma',false],['irsaliye','İrsaliye',true],['kalem','Kalem',true],['giris','SAP Giriş',true],
+  ['depoda','Depoda',true],['tadilatta','Tadilatta',true],['nakilde',"Akkuyu'da",true],['kesin','Kesin Çıkan',true],
+  ['cikis_orani','Çıkış %',true],['_bar','Dağılım',null],['tutar','Tutar',true]
+]
+let FIRMA_SIRA = {alan:'giris', azalan:true}
+function firmaSirala(alan){
+  if (FIRMA_SIRA.alan === alan) FIRMA_SIRA.azalan = !FIRMA_SIRA.azalan
+  else FIRMA_SIRA = {alan, azalan: alan !== 'firma'}
+  firmaCiz()
+}
+function firmaCiz(){
+  const liste = (SON.konum && SON.konum.firmalar || []).slice()
+  const a = FIRMA_SIRA.alan, yon = FIRMA_SIRA.azalan ? -1 : 1
+  liste.sort((x,y) => a === 'firma' ? yon * String(x.firma).localeCompare(String(y.firma),'tr') : yon * ((x[a] ?? -1) - (y[a] ?? -1)))
+  $('firmaBaslik').innerHTML = FIRMA_KOLONLAR.map(([alan,ad,sayi]) => {
+    if (sayi === null) return `<th>${ad}</th>`
+    const ok = FIRMA_SIRA.alan === alan ? `<i class="fa-solid fa-arrow-${FIRMA_SIRA.azalan?'down':'up'} ok"></i>` : ''
+    return `<th class="siralanabilir ${sayi?'r':''}" onclick="firmaSirala('${alan}')">${ad}${ok}</th>`
+  }).join('')
+  const renk = {depoda:'var(--k-depo)',tadilatta:'var(--k-tadilat)',nakilde:'var(--k-nakil)',kesin:'var(--k-kesin)'}
+  const miniBar = f => f.giris > 0 ? `<div class="mini-bar" title="Depoda %${fSayi(yuzde(f.depoda,f.giris))} · Tadilatta %${fSayi(yuzde(f.tadilatta,f.giris))} · Akkuyu'da %${fSayi(yuzde(f.nakilde,f.giris))} · Kesin %${fSayi(yuzde(f.kesin,f.giris))}">` +
+    ['depoda','tadilatta','nakilde','kesin'].filter(x => f[x] > 0).map(x => `<div style="width:${yuzde(f[x],f.giris)}%;background:${renk[x]}"></div>`).join('') + '</div>' : ''
+  $('firmaTB').innerHTML = liste.map(f => `
+    <tr>
+      <td><span class="firma-link" onclick="firmaSec(${f.firma_id == null ? 'null' : f.firma_id})" title="Raporu bu firmaya süz">${escHtml(f.firma)}</span></td>
+      <td class="r">${fSayi(f.irsaliye,0)}</td><td class="r">${fSayi(f.kalem,0)}</td>
+      <td class="r">${fKg(f.giris)}</td><td class="r">${fKg(f.depoda)}</td>
+      <td class="r">${f.tadilatta > 0 ? fKg(f.tadilatta) : '<span class="muted">—</span>'}</td>
+      <td class="r">${f.nakilde > 0 ? fKg(f.nakilde) : '<span class="muted">—</span>'}</td>
+      <td class="r">${fKg(f.kesin)}</td>
+      <td class="r">${f.cikis_orani == null ? '—' : '%' + fSayi(f.cikis_orani)}</td>
+      <td>${miniBar(f)}</td>
+      <td class="r">${fPara(f.tutar)}</td>
+    </tr>`).join('') || '<tr><td colspan="11" class="bos-satir">Veri yok</td></tr>'
+  const t = SON.konum ? SON.konum.toplam : null
+  $('firmaTF').innerHTML = t && liste.length > 1 ? `<tr><td>Toplam</td><td class="r">${fSayi(SON.konum.irsaliye_sayisi,0)}</td><td class="r">${fSayi(SON.konum.kalem_sayisi,0)}</td>
+    <td class="r">${fKg(t.giris)}</td><td class="r">${fKg(t.depoda)}</td><td class="r">${fKg(t.tadilatta)}</td><td class="r">${fKg(t.nakilde)}</td>
+    <td class="r">${fKg(t.kesin)}</td><td class="r">%${fSayi(yuzde(t.kesin,t.giris))}</td><td></td><td class="r">${fPara(t.tutar)}</td></tr>` : ''
 }
 
+// ── 2) Aylık hareket ──
+const AY_AD = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara']
+function ayEtiket(a){ const [y,m] = a.split('-'); return AY_AD[(+m)-1] + ' ' + y.slice(2) }
+function trendCiz(tr){
+  const k = konumRenk(), etiket = tr.aylar.map(ayEtiket), s = tr.seriler
+  const bar = (ad, veri, renk) => ({label:ad, data:veri, backgroundColor:renk, borderRadius:{topLeft:4,topRight:4}, borderSkipped:'bottom', maxBarThickness:22, categoryPercentage:.7, barPercentage:.9})
+  const ops = (ekstraFooter) => {
+    const o = eksenOps()
+    o.plugins.legend = {display:true, position:'top', align:'start', labels:{color:CT.ax, boxWidth:10, boxHeight:10, useBorderRadius:true, borderRadius:3, font:{size:11}}}
+    o.plugins.tooltip = Object.assign({}, CT.tt, {mode:'index', intersect:false, callbacks:{
+      label: c => ` ${c.dataset.label}: ${fKg(c.parsed.y)} kg`,
+      footer: ekstraFooter || (() => '')
+    }})
+    o.interaction = {mode:'index', intersect:false}
+    return o
+  }
+  mk('chartTrendAna', {type:'bar', data:{labels:etiket, datasets:[bar('Giriş', s.giris, k.depo), bar('Kesin çıkış', s.kesin, k.kesin)]}, options:ops()})
+  mk('chartTrendYan', {type:'bar', data:{labels:etiket, datasets:[bar('Tadilat gönderimi', s.tadilat_gidis, k.tadilat), bar('Nakil (Akkuyu)', s.nakil, k.nakil)]},
+    options:ops(items => { const i = items[0] ? items[0].dataIndex : -1; const d = i >= 0 ? s.tadilat_donus[i] : 0; return d > 0 ? `Tadilattan dönüş: ${fKg(d)} kg` : '' })})
+  const notlar = []
+  if (!tr.aylar.length) notlar.push('Filtreye uyan hareket yok.')
+  if (tr.tarihsiz_hareket) notlar.push(`<span class="uyari"><i class="fa-solid fa-triangle-exclamation"></i> ${fSayi(tr.tarihsiz_hareket,0)} hareketin (${fKg(tr.tarihsiz_kg)} kg) tarihi girilmemiş</span> — bunlar aylık grafiklerde görünmez. Fason ekranındaki "Çıkış Miktarları" Excel'inin Tarih sütunundan toplu doldurabilirsin.`)
+  $('trendNot').innerHTML = notlar.join(' ')
+}
+
+// ── 3) Takip ──
+let TAKIP_SEKME = 'tadilatta', KONTROL_TIP = ''
+const KONTROL_ETIKET = {miktar_eksik:'Miktar girilmemiş', fazla_cikis:'Girişten fazla çıkış', cikis_kalan:'Çıkış ama kalan var', hareketsiz_cikis:'Çıkış ama irsaliyesi yok'}
+function takipSekme(s){ TAKIP_SEKME = s; KONTROL_TIP = ''; takipSekmeleriCiz(); takipCiz() }
+function kontrolTip(t){ KONTROL_TIP = t; takipSekmeleriCiz(); takipCiz() }
+function takipSekmeleriCiz(){
+  const n = SON.takip ? SON.takip.sayilar : {}
+  const sek = [['tadilatta','Tadilatta bekleyen','tadilat'],['nakilde',"Akkuyu'da bekleyen",'nakil'],['kontrol','Kontrol gereken','']]
+  $('takipSekmeler').innerHTML = sek.map(([id,ad,sw]) =>
+    `<button class="sekme ${TAKIP_SEKME===id?'aktif':''}" onclick="takipSekme('${id}')">${sw ? `<span class="sw ${sw}" style="margin-right:6px"></span>` : ''}${ad}<span class="n">${fSayi(n[id]||0,0)}</span></button>`).join('')
+  const alt = $('kontrolAltSekmeler')
+  if (TAKIP_SEKME === 'kontrol' && SON.takip){
+    const ks = SON.takip.kontrol_sayilari || {}
+    alt.style.display = ''
+    alt.innerHTML = `<button class="alt-sekme ${KONTROL_TIP===''?'aktif':''}" onclick="kontrolTip('')">Tümü</button>` +
+      Object.keys(KONTROL_ETIKET).filter(t => ks[t]).map(t => `<button class="alt-sekme ${KONTROL_TIP===t?'aktif':''}" onclick="kontrolTip('${t}')">${KONTROL_ETIKET[t]} · ${fSayi(ks[t],0)}</button>`).join('')
+  } else alt.style.display = 'none'
+}
+function irsaliyeLinki(irsId, kalemId){
+  const p = new URLSearchParams({irsaliye: irsId, kalem: kalemId, kaynak: 'rapor'})
+  return '/fason?' + p.toString()
+}
+function irsaliyeyeGit(irsId, kalemId, ev){
+  if (ev && ev.target.closest('a')) return
+  if (window.getSelection && String(window.getSelection()).length) return
+  window.location.href = irsaliyeLinki(irsId, kalemId)
+}
+function irsHucre(x){ return `<a class="irs-link" href="${irsaliyeLinki(x.irsaliye_id, x.id)}">${escHtml(x.irsaliye_no)} <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` }
+function tarihTR(iso){ return iso ? iso.slice(8,10)+'.'+iso.slice(5,7)+'.'+iso.slice(0,4) : '' }
+function girisTd(x){ return `<td style="white-space:nowrap">${x.giris_tarihi ? tarihTR(x.giris_tarihi) : '<span class="muted" title="ZMM068 belge tarihi yok">—</span>'}</td>` }
+function gunRozet(g){ if (g == null) return '<span class="muted" title="Gönderim tarihi girilmemiş">—</span>'; const s = g > 90 ? 'uzun' : g > 30 ? 'orta' : ''; return `<span class="gun ${s}">${g}</span>` }
+function takipCiz(){
+  if (!SON.takip) return
+  const ara = $('takipAra').value.trim().toLocaleLowerCase('tr-TR')
+  const uyar = x => !ara || [x.irsaliye_no, x.malzeme_tanim, x.sap_kodu, x.firma, x.gonderim_irsaliye].some(v => String(v||'').toLocaleLowerCase('tr-TR').includes(ara))
+  let liste = (SON.takip[TAKIP_SEKME] || []).filter(uyar)
+  if (TAKIP_SEKME === 'kontrol' && KONTROL_TIP) liste = liste.filter(x => x.tip === KONTROL_TIP)
+  const satir = (x, ic) => `<tr class="tikla" onclick="irsaliyeyeGit(${Number(x.irsaliye_id)}, ${Number(x.id)}, event)" title="İrsaliyeyi aç">${ic}</tr>`
+  if (TAKIP_SEKME === 'kontrol'){
+    $('takipBaslik').innerHTML = '<th>Sorun</th><th>İrsaliye No</th><th>Giriş Tarihi</th><th>Firma</th><th>Malzeme</th><th>SAP Kodu</th><th>Durum</th><th class="r">SAP Giriş</th><th class="r">Miktar</th>'
+    $('takipTB').innerHTML = liste.map(x => satir(x,
+      `<td><span class="tip-rozet ${x.tip==='fazla_cikis'?'kotu':''}" title="${escHtml(x.aciklama)}">${KONTROL_ETIKET[x.tip]||x.tip}</span></td><td>${irsHucre(x)}</td>${girisTd(x)}<td>${escHtml(x.firma)}</td>
+       <td>${escHtml(x.malzeme_tanim)}</td><td>${escHtml(x.sap_kodu)||'—'}</td><td>${escHtml(x.durum)||'—'}</td>
+       <td class="r">${fSayi(x.giris)}</td><td class="r">${x.kg == null ? '—' : fSayi(x.kg)}</td>`)).join('') || '<tr><td colspan="9" class="bos-satir">Kontrol gereken kalem yok 👍</td></tr>'
+    $('takipNot').textContent = 'Satıra tıklayınca ilgili irsaliye açılır, kalem vurgulanır; hareketleri "Çıkış / Hareket" hücresinden düzeltebilirsin.'
+  } else {
+    const ad = TAKIP_SEKME === 'tadilatta' ? 'Gönderim' : 'Nakil'
+    $('takipBaslik').innerHTML = `<th>İrsaliye No</th><th>Giriş Tarihi</th><th>Firma</th><th>Malzeme</th><th>SAP Kodu</th><th class="r">Miktar</th><th>${ad} İrsaliyesi</th><th>${ad} Tarihi</th><th class="r" title="Gönderimden bu yana geçen gün">Gün</th>`
+    $('takipTB').innerHTML = liste.map(x => satir(x,
+      `<td>${irsHucre(x)}</td>${girisTd(x)}<td>${escHtml(x.firma)}</td><td>${escHtml(x.malzeme_tanim)}</td><td>${escHtml(x.sap_kodu)||'—'}</td>
+       <td class="r">${fSayi(x.kg)}</td><td>${escHtml(x.gonderim_irsaliye)||'<span class="muted">—</span>'}</td>
+       <td>${x.gonderim_tarihi ? tarihTR(x.gonderim_tarihi) : '<span class="muted">—</span>'}</td>
+       <td class="r">${gunRozet(x.gun)}</td>`)).join('') || `<tr><td colspan="9" class="bos-satir">${TAKIP_SEKME==='tadilatta'?'Tadilatta':"Akkuyu'da"} bekleyen malzeme yok</td></tr>`
+    const toplam = liste.reduce((s,x) => s + (x.kg||0), 0)
+    const tarihsiz = liste.filter(x => x.gun == null).length
+    $('takipNot').textContent = `${fSayi(liste.length,0)} kalem · ${fKg(toplam)} kg` + (tarihsiz ? ` · ${fSayi(tarihsiz,0)} kalemin gönderim tarihi girilmemiş (gün hesaplanamıyor)` : '') + ' · 30 günü geçenler turuncu, 90 günü geçenler kırmızı.'
+  }
+  const n = SON.takip.sayilar[TAKIP_SEKME] || 0
+  if (n > (SON.takip[TAKIP_SEKME]||[]).length) $('takipNot').textContent += ` İlk ${(SON.takip[TAKIP_SEKME]||[]).length} kayıt gösteriliyor; tamamı Excel'de.`
+}
+
+// ── 4) Genel ──
+function genelCiz(ozet, durum){
+  $('kpiAlani').innerHTML = `
+    <div class="kpi-card kucuk"><div class="kpi-label">İrsaliye</div><div class="kpi-value">${fSayi(ozet.toplam_irsaliye,0)}</div></div>
+    <div class="kpi-card kucuk"><div class="kpi-label">Kalem</div><div class="kpi-value">${fSayi(ozet.toplam_kalem,0)}</div></div>
+    <div class="kpi-card kucuk"><div class="kpi-label">OTIS Giriş</div><div class="kpi-value">${fKg(ozet.toplam_otis_giris_miktari)}<small>kg</small></div><div class="kpi-sub">SAP: ${fKg(ozet.toplam_giris_miktari)} kg</div></div>
+    <div class="kpi-card kucuk">
+      <div class="kpi-label">Kantar farklı kalem</div>
+      <div class="kpi-value">${fSayi(ozet.kantar_farkli_kalem,0)}</div>
+      <div class="kpi-fark-detay">
+        <span class="fark-yon fark-fazla" title="SAP girişi OTIS'ten fazla"><i class="fa-solid fa-arrow-up"></i> ${fSayi(ozet.kantar_farkli_fazla_kg)} kg</span>
+        <span class="fark-yon fark-eksik" title="SAP girişi OTIS'ten az"><i class="fa-solid fa-arrow-down"></i> ${fSayi(ozet.kantar_farkli_eksik_kg)} kg</span>
+      </div>
+    </div>
+    <div class="kpi-card kucuk"><div class="kpi-label">Toplam tutar</div><div class="kpi-value">${fPara(ozet.toplam_tutar)}</div></div>`
+
+  const renkler = durum.map(d => durumRenk(d.durum))
+  mk('chartDurum',{type:'doughnut',data:{labels:durum.map(d=>d.durum),datasets:[{data:durum.map(d=>d.adet),backgroundColor:renkler,borderWidth:2,borderColor:temaRenkleri().yuzey}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:Object.assign({},CT.tt,{callbacks:{label:c=>` ${c.label}: ${fSayi(c.parsed,0)} kalem`}})}}})
+  const toplamAdet = durum.reduce((s,d)=>s+d.adet,0)
+  $('durumLegend').innerHTML = durum.map((d,i)=>`<div class="legend-item"><span class="legend-dot" style="background:${renkler[i]}"></span>${escHtml(d.durum)} <b style="color:var(--text);margin-left:auto;padding-left:10px">${fSayi(d.adet,0)}</b> <span class="muted">%${fSayi(yuzde(d.adet,toplamAdet))}</span></div>`).join('')
+  const o = eksenOps(); o.indexAxis = 'y'
+  o.scales = {x:{beginAtZero:true,ticks:{color:CT.ax,font:{size:10},callback:v=>fKisa(v)},grid:{color:CT.grid},border:{display:false}}, y:{ticks:{color:CT.ax,font:{size:11}},grid:{display:false}}}
+  o.plugins.tooltip = Object.assign({}, CT.tt, {callbacks:{label:c=>` ${fKg(c.parsed.x)} kg`}})
+  mk('chartDurumMiktar',{type:'bar',data:{labels:durum.map(d=>d.durum),datasets:[{data:durum.map(d=>d.miktar),backgroundColor:renkler,borderRadius:{topRight:4,bottomRight:4},borderSkipped:'left',maxBarThickness:22}]},options:o})
+}
+
+// ── Kantar farkı ──
+let kantarAraZamanlayici = null
+function kantarAraDebounce(){ clearTimeout(kantarAraZamanlayici); kantarAraZamanlayici = setTimeout(kantarFarkiYukle, 300) }
 async function kantarFarkiYukle(){
-  const p = new URLSearchParams();
-  const ara = $('kantarAra').value.trim();
-  if (ara) p.set('ara', ara);
-  p.set('limit', 200);
-
-  const r = await fetch('/api/fason/rapor/kantar-farki?' + p.toString());
-  if (!r.ok) return;
-  const veri = await r.json();
-
+  const p = qs()
+  const ara = $('kantarAra').value.trim()
+  if (ara) p.set('ara', ara)
+  p.set('limit', 200)
+  const r = await fetch('/api/fason/rapor/kantar-farki?' + p.toString())
+  if (!r.ok) return
+  const veri = await r.json()
   $('kantarOzet').textContent = ara
     ? `${veri.gosterilen} sonuç ("${ara}" için)`
-    : `Toplam ${veri.toplam} kalemde fark var — en büyük ${veri.gosterilen} tanesi gösteriliyor`;
-
+    : `Toplam ${veri.toplam} kalemde fark var — en büyük ${veri.gosterilen} tanesi gösteriliyor`
   $('kantarTB').innerHTML = veri.kalemler.map(k => `
-    <tr>
-      <td>${escHtml(k.irsaliye_no)}</td>
+    <tr class="tikla" onclick="irsaliyeyeGit(${Number(k.irsaliye_id)}, ${Number(k.id)}, event)" title="İrsaliyeyi aç">
+      <td>${irsHucre({irsaliye_id:k.irsaliye_id, id:k.id, irsaliye_no:k.irsaliye_no})}</td>
+      ${girisTd(k)}
       <td>${escHtml(k.firma_ad)}</td>
       <td>${escHtml(k.malzeme_tanim)}</td>
       <td>${escHtml(k.sap_kodu) || '—'}</td>
@@ -327,10 +644,31 @@ async function kantarFarkiYukle(){
       <td>${escHtml(k.fark_sebebi) || '—'}</td>
       <td>${escHtml(k.durum) || '—'}</td>
     </tr>
-  `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3)">Sonuç yok</td></tr>';
+  `).join('') || '<tr><td colspan="10" class="bos-satir">Sonuç yok</td></tr>'
 }
 
-verileriYukle();
+// ── Excel ──
+async function excelAktar(){
+  const btn = $('excelBtn'), eski = btn.innerHTML
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Hazırlanıyor...'
+  try {
+    const r = await fetch('/api/fason/rapor/excel' + qsStr())
+    const d = await r.json()
+    if (d.durum === 'ok') { if (typeof toast === 'function') toast(d.mesaj + ' · Klasör açıldı', 'basari') }
+    else if (typeof bildirim === 'function') bildirim(d.mesaj, 'Hata', 'hata')
+  } catch(e) { if (typeof bildirim === 'function') bildirim(e.message, 'Bağlantı Hatası', 'hata') }
+  finally { btn.disabled = false; btn.innerHTML = eski }
+}
+
+// ── Başlangıç: URL'deki filtreyi uygula ──
+(async function(){
+  const p = new URLSearchParams(location.search)
+  if (p.get('baslangic')) $('fBaslangic').value = p.get('baslangic')
+  if (p.get('bitis')) $('fBitis').value = p.get('bitis')
+  await firmalariYukle()
+  hizliIsaretle()
+  verileriYukle()
+})()
 </script>
 </body>
 </html>
